@@ -11,9 +11,9 @@ private:
     glm::mat4 m_ProjectionMatrix;
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
-    glm::mat4 GetViewMatrix() const;      // 获取视图矩阵
-    glm::mat4 GetProjectionMatrix() const;// 获取投影矩阵
+    inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // 获取视图矩阵
+    inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }// 获取投影矩阵
     void SetPosition(const glm::vec3& position);
-    void SetRotation(const glm::vec3& rotation);
+    void SetRotation(const float& yaw, const float& pitch);
     void Update(float deltaTime);         // 根据输入更新摄像机
 };
