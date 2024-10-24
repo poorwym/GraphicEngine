@@ -10,7 +10,7 @@ public:
     Entity();
     ~Entity();
 
-    unsigned int GetID() const;                   // 获取实体的唯一ID
+    inline unsigned int GetID() const { return m_ID; };                   // 获取实体的唯一ID
     void AddComponent(Component* component);      // 添加组件
     void RemoveComponent(Component* component);   // 移除组件
     template<typename T>
