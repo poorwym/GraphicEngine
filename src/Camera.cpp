@@ -1,8 +1,11 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.inl>
+#include <glm/ext/matrix_clip_space.hpp>
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
+    :m_CameraPosition(glm::vec3(1.0f, 0.0f, 0.0f)),
+    m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
+    m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f))
 {
     m_ProjectionMatrix = glm::perspective(
         glm::radians(fov),      // йс╫г (Field of View)
@@ -46,7 +49,7 @@ void Camera::SetRotation(const float& yaw, const float& pitch)
 
     m_TargetPosition = m_CameraPosition + length * cameraDirection;
 
-    glm::mat4 viewMatrix = glm::lookAt(m_CameraPosition, m_TargetPosition, m_UpDirection);
+    m_ViewMatrix = glm::lookAt(m_CameraPosition, m_TargetPosition, m_UpDirection);
 }
 
 void Camera::Update(float deltaTime)

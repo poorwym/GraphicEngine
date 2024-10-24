@@ -1,5 +1,11 @@
 #pragma once
 #include <vector>
+// 顶点结构体，包含位置信息、法线、UV 等
+struct Vertex {
+    glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 TexCoords;
+};
 
 class Mesh {
 public:
@@ -21,9 +27,3 @@ private:
     void SetupMesh();                          // 设置 VAO/VBO/EBO
 };
 
-// 顶点结构体，包含位置信息、法线、UV 等
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-};
