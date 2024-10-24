@@ -25,6 +25,7 @@
 
 #include "test/TestClearColor.h"
 #include "test/TestTexture2D.h"
+#include "Camera.h"
 
 int main(void)
 {
@@ -60,6 +61,9 @@ int main(void)
     GLCall(glEnable(GL_BLEND));
     GLCall(glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA));
 
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+
     /* Loop until the user closes the window */
     //ImGui initialization
     ImGui::CreateContext();
@@ -75,6 +79,19 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
 
+    //Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    // 定义视口宽高
+    float width = 1920.0f;
+    float height = 1080.0f;
+    float aspect_ratio = width / height;
+
+    // 定义视野角度（以弧度为单位）、近平面和远平面
+    float fov = glm::radians(45.0f); // 45度视野角
+    float near_plane = 0.1f;
+    float far_plane = 100.0f;
+
+    Camera camera(fov, aspect_ratio, near_plane, far_plane);
+
     Renderer renderer;
     test::Test* currentTest = nullptr;
     test::TestMenu* testMenu = new test::TestMenu(currentTest);// 初始化菜单
@@ -86,6 +103,7 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
         renderer.Clear();
         ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW

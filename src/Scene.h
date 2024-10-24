@@ -4,6 +4,9 @@
 #include <vector>
 
 class Scene {
+private:
+    std::vector<Entity*> entities;
+    unsigned int m_RendererID;
 public:
     void Load(const std::string& filePath);   // 加载场景
     void Save(const std::string& filePath);   // 保存场景

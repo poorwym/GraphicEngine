@@ -19,11 +19,11 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 	unsigned int offset = 0;
 	for (unsigned int i = 0; i < elements.size(); i++) {
 		const auto& element = elements[i];
-		GLCall(glEnableVertexAttribArray(i));//0表示启用顶点属性（！！非常重要一定要加，要不然黑屏）
+		GLCall(glEnableVertexAttribArray(i));//i表示启用顶点属性（！！非常重要一定要加，要不然黑屏）
 		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), (const void*)offset));//见熊掌记笔记
 		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
 	}
-	
+
 }
 
 void VertexArray::Bind() const
