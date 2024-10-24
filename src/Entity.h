@@ -6,6 +6,7 @@ class Entity {
 private:
     unsigned int m_ID;
     std::map<unsigned int, Component*> m_Components;
+    glm::mat4 m_LocalTransform;
 public:
     Entity();
     ~Entity();
@@ -13,6 +14,7 @@ public:
     inline unsigned int GetID() const { return m_ID; };                   // 获取实体的唯一ID
     void AddComponent(Component* component);      // 添加组件
     void RemoveComponent(Component* component);   // 移除组件
+    inline glm::mat4 GetLocalTransform() const { return m_LocalTransform; }
     template<typename T>
     T* GetComponent() const;                      // 获取指定类型的组件
 
