@@ -37,7 +37,7 @@ Texture::~Texture()
 
 void Texture::Bind(unsigned int slot) const
 {
-	GLCall(glActiveTexture(GL_TEXTURE0 + slot));//使用槽位0
+	GLCall(glActiveTexture(GL_TEXTURE0 + slot));//使用槽位slot
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
 }
  

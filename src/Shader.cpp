@@ -98,6 +98,11 @@ void Shader::Unbind() const
     glUseProgram(0);
 }
 
+void Shader::setUniformVec3f(const std::string& name, const glm::vec3& value)
+{
+    GLCall(glUniform3f(GetUniformLocation(name), value.x, value.y, value.z));
+}
+
 void Shader::setUniform1i(const std::string& name, int v0)
 {
     GLCall(glUniform1i(GetUniformLocation(name), v0));
@@ -106,6 +111,16 @@ void Shader::setUniform1i(const std::string& name, int v0)
 void Shader::setUniform1f(const std::string& name, float v0)
 {
     GLCall(glUniform1f(GetUniformLocation(name), v0));
+}
+
+void Shader::setUniform2f(const std::string& name, float v0, float v1)
+{
+    GLCall(glUniform2f(GetUniformLocation(name), v0, v1));
+}
+
+void Shader::setUniform3f(const std::string& name, float v0, float v1, float v2)
+{
+    GLCall(glUniform3f(GetUniformLocation(name), v0, v1, v2));
 }
 
 void Shader::setUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
