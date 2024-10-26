@@ -1,30 +1,23 @@
 #pragma once
-#include "Component.h"
+
 #include <map>
+#include <glm/glm.hpp>
+#include "Component.h"
 
 class Entity {
 private:
-    unsigned int m_ID;
     std::map<unsigned int, Component*> m_Components;
     glm::mat4 m_LocalTransform;
 public:
     Entity();
     ~Entity();
 
-    inline unsigned int GetID() const { return m_ID; };                   // 获取实体的唯一ID
     void AddComponent(Component* component);      // 添加组件
     void RemoveComponent(Component* component);   // 移除组件
     inline glm::mat4 GetLocalTransform() const { return m_LocalTransform; }
-    template<typename T>
-    T* GetComponent() const;                      // 获取指定类型的组件
-
+    void Rotate(glm::vec3 rotation);
+    void Translate(glm::vec3 translation);
+    void Scale(glm::vec3 scale);
+    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
     void Update(float deltaTime);                 // 更新实体
 };
-
-extern std::map<unsigned int, Entity*> EntityList;
-
-template<typename T>
-inline T* Entity::GetComponent() const
-{
-    return nullptr;
-}

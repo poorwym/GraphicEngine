@@ -15,5 +15,6 @@ public:
     inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }// 获取投影矩阵
     void SetPosition(const glm::vec3& position);
     void SetRotation(const float& yaw, const float& pitch);
+    void SetTarget(const glm::vec3& target);
     void Update(float deltaTime);         // 根据输入更新摄像机
 };

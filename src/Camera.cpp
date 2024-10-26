@@ -3,7 +3,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
-    :m_CameraPosition(glm::vec3(1.0f, 0.0f, 0.0f)),
+    :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
     m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
     m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f))
 {
@@ -23,11 +23,7 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
 void Camera::SetPosition(const glm::vec3& position)
 {
     m_CameraPosition = position;
-    m_ViewMatrix = glm::lookAt(
-        m_CameraPosition,  // 摄像机的位置
-        m_TargetPosition,  // 摄像机正在看的目标
-        m_UpDirection         // 摄像机的上方向
-    );
+    this->Update(0.0f);
 }
 
 void Camera::SetRotation(const float& yaw, const float& pitch)
@@ -40,7 +36,6 @@ void Camera::SetRotation(const float& yaw, const float& pitch)
     
     // 偏航角 (yaw) 和俯仰角 (pitch)
 
-
     glm::vec3 front;
     front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     front.y = sin(glm::radians(pitch));
@@ -48,11 +43,21 @@ void Camera::SetRotation(const float& yaw, const float& pitch)
     cameraDirection = glm::normalize(front);
 
     m_TargetPosition = m_CameraPosition + length * cameraDirection;
+    this->Update(0.0f);
+}
 
-    m_ViewMatrix = glm::lookAt(m_CameraPosition, m_TargetPosition, m_UpDirection);
+void Camera::SetTarget(const glm::vec3& target)
+{
+    m_TargetPosition = target;
+    this->Update(0.0f);
 }
 
 void Camera::Update(float deltaTime)
 {
+    m_ViewMatrix = glm::lookAt(
+        m_CameraPosition,  // 摄像机的位置
+        m_TargetPosition,  // 摄像机正在看的目标
+        m_UpDirection         // 摄像机的上方向
+    );
     return;
 }

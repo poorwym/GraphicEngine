@@ -7,6 +7,7 @@
 #include "IndexBuffer.h"
 
 #include "Shader.h"
+#include "Camera.h"
 
 #define ASSERT(x) if(!(x)) __debugbreak();
 #define GLCall(x) GLClearError();\
@@ -20,7 +21,6 @@ bool GLLogCall(const char* function, const char* file, int line);
 class Renderer
 {
 public:
-    void Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const;
+    void Draw(const VertexArray& va, const IndexBuffer& ib, const Camera& camera, Shader& shader, glm::mat4 model) const;
     void Clear() const;
-
 };

@@ -26,6 +26,76 @@
 #include "test/TestClearColor.h"
 #include "test/TestTexture2D.h"
 #include "Camera.h"
+#include "Scene.h"
+#include "ResourseManager.h"
+
+void test2D(GLFWwindow* window);
+void test3D(GLFWwindow* window);
+
+std::vector<Vertex> vertices = {
+    // 前面
+    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // 前上左
+    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // 前上右
+    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},  // 前下左
+    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // 前下右
+
+    // 后面
+    {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // 后上左
+    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // 后上右
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 后下左
+    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // 后下右
+
+    // 左面
+    {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 后上左
+    {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 前上左
+    {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 后下左
+    {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 前下左
+
+    // 右面
+    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 后上右
+    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 前上右
+    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 后下右
+    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 前下右
+
+    // 上面
+    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 后上左
+    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 后上右
+    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 前上左
+    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 前上右
+
+    // 下面
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // 后下左
+    {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // 后下右
+    {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // 前下左
+    {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // 前下右
+};
+
+// 立方体的索引
+std::vector<unsigned int> indices = {
+    // 前面
+    0, 1, 2,
+    2, 1, 3,
+
+    // 后面
+    4, 5, 6,
+    6, 5, 7,
+
+    // 左面
+    8, 9, 10,
+    10, 9, 11,
+
+    // 右面
+    12, 13, 14,
+    14, 13, 15,
+
+    // 上面
+    16, 17, 18,
+    18, 17, 19,
+
+    // 下面
+    20, 21, 22,
+    22, 21, 23,
+};
 
 int main(void)
 {
@@ -79,19 +149,16 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
 
-    //Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-    // 定义视口宽高
-    float width = 1920.0f;
-    float height = 1080.0f;
-    float aspect_ratio = width / height;
 
-    // 定义视野角度（以弧度为单位）、近平面和远平面
-    float fov = glm::radians(45.0f); // 45度视野角
-    float near_plane = 0.1f;
-    float far_plane = 100.0f;
+    //test2D(window);
+    test3D(window);
 
-    Camera camera(fov, aspect_ratio, near_plane, far_plane);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
+}
 
+void test2D(GLFWwindow* window) {
     Renderer renderer;
     test::Test* currentTest = nullptr;
     test::TestMenu* testMenu = new test::TestMenu(currentTest);// 初始化菜单
@@ -123,11 +190,11 @@ int main(void)
             ImGui::End();
         }
 
-        
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         /* Swap front and back buffers */
-        
+
         glfwSwapBuffers(window);
 
         /* Poll for and process events */
@@ -138,8 +205,45 @@ int main(void)
     if (currentTest != testMenu) {
         delete testMenu;
     }
+}
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
+void test3D(GLFWwindow* window) {
+    ResourceManager resourceManager;
+    Texture* texture = resourceManager.Load<Texture>("res/Textures/example.png");
+    Mesh mesh(vertices, indices, new Material(texture, texture, texture));
+    Scene scene;
+    Entity entity;
+    entity.AddComponent(new MeshComponent(&mesh));
+    SceneNode node("node1", &entity, nullptr);
+    scene.addNode(&node);
+    Shader* shader = resourceManager.Load<Shader>("res/shaders/Basic.shader");
+
+    // 定义视口宽高
+    float width = 1920.0f;
+    float height = 1080.0f;
+    float aspect_ratio = width / height;
+
+    // 定义视野角度（以弧度为单位）、近平面和远平面
+    float fov = 45.0f; // 45度视野角
+    float near_plane = 0.1f;
+    float far_plane = 100.0f;
+
+    Camera camera(fov, aspect_ratio, near_plane, far_plane);
+    camera.SetPosition(glm::vec3(1, 1, 3));
+
+    while (!glfwWindowShouldClose(window))
+    {
+        /* Render here */
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+        scene.Render(*shader, camera);
+        /* Swap front and back buffers */
+
+        glfwSwapBuffers(window);
+
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
+    //glDeleteProgram(shader);
+
 }
