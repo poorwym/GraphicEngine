@@ -175,16 +175,6 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
 
-
-    //test2D(window);
-    test3D(window);
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
-}
-
-void test2D(GLFWwindow* window) {
     Renderer renderer;
     test::Test* currentTest = nullptr;
     test::TestMenu* testMenu = new test::TestMenu(currentTest);// 初始化菜单
