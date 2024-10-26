@@ -137,8 +137,16 @@
   <ItemGroup>
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraController.cpp" />
+    <ClCompile Include="src\Component.cpp" />
+    <ClCompile Include="src\Entity.cpp" />
+    <ClCompile Include="src\EntityController.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
+    <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneNode.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\test\Test.cpp" />
     <ClCompile Include="src\test\TestClearColor.cpp" />
@@ -190,6 +198,8 @@
     <ClInclude Include="src\VertexBufferLayout.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="document\advice.md" />
+    <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

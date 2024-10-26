@@ -1,31 +1,31 @@
 #pragma once
 #include "Mesh.h"
-#include "Material.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string>
 
 
 class Component {
+protected:
+    std::string m_Type;
+    glm::mat4 m_LocalTransform;
 public:
-    virtual ~Component() = default;
-    virtual void Update(float deltaTime) = 0;     // 更新组件
+    Component();
+    virtual void SetType() {};
+    virtual void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) {};
+    inline std::string GetType() { return m_Type;}
+    virtual void Translate(glm::vec3& translation) {};
+    virtual void Update(float deltaTime) {};
 };
 
-class TransformComponent : public Component {
+class MeshComponent : public Component
+{
+private:
+    Mesh* m_Mesh;
 public:
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-
-    TransformComponent();
+    MeshComponent(Mesh* mesh);
+    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
+    inline void SetType() override { m_Type = "MeshComponent";  } 
     void Update(float deltaTime) override;
 };
 
-class RenderComponent : public Component {
-public:
-    Mesh* mesh;
-    Material* material;
-
-    RenderComponent(Mesh* mesh, Material* material);
-    void Update(float deltaTime) override;
-};

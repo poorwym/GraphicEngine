@@ -2,16 +2,19 @@
 #include <string>
 #include "Entity.h"
 #include <vector>
+#include "SceneNode.h"
+#include "Camera.h"
+#include <map>
 
 class Scene {
 private:
-    std::vector<Entity*> entities;
+    std::map<std::string, SceneNode *> m_SceneNodes;
     unsigned int m_RendererID;
 public:
-    void Load(const std::string& filePath);   // 加载场景
-    void Save(const std::string& filePath);   // 保存场景
+    void load(const std::string& filePath);   // 加载场景
+    void save(const std::string& filePath);   // 保存场景
     void Update(float deltaTime);             // 更新场景
-    void AddEntity(Entity* entity);           // 添加实体
-    void RemoveEntity(Entity* entity);        // 删除实体
-    const std::vector<Entity*>& GetEntities() const; // 获取场景中的实体列表
+    void addNode(SceneNode* node);           // 添加实体
+    void Render(Shader& shader,Camera& camera);
+    void removeNode(SceneNode* node);        // 删除实体
 };
