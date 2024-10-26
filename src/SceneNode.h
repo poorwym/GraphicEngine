@@ -3,12 +3,14 @@
 #include <vector>
 #include "Camera.h"
 #include <string>
+#include <map>
+#include <string>
 
 class SceneNode {
 private:
     std::string m_Name;
     glm::mat4 m_LocalTransform;
-    std::vector<SceneNode*> m_Children;
+    std::map<std::string, SceneNode*> m_Children;
     Entity* m_Entity;
     SceneNode* m_Parent;
 public:

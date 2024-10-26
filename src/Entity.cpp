@@ -1,6 +1,7 @@
 #include "Entity.h"
 
-Entity::Entity()
+Entity::Entity(std::string name)
+	:m_Position(glm::vec3(0.0f)),m_Rotation(glm::vec3(0.0f)), m_Scale(glm::vec3(1.0f)),m_Name(name)
 {
 	m_LocalTransform = glm::mat4(1.0f);
 }
@@ -28,7 +29,6 @@ void Entity::Rotate(glm::vec3 rotation)
 	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
 }
 
 void Entity::Translate(glm::vec3 translation)
@@ -54,5 +54,25 @@ void Entity::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
 
 void Entity::Update(float deltaTime)
 {
+	// 初始化变换矩阵为单位矩阵
+	glm::mat4 transform = glm::mat4(1.0f);
 
+	// 应用缩放
+	transform = glm::scale(transform, m_Scale);
+
+	// 应用旋转，注意旋转的顺序
+	transform = glm::rotate(transform, glm::radians(m_Rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	transform = glm::rotate(transform, glm::radians(m_Rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	transform = glm::rotate(transform, glm::radians(m_Rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	// 应用平移
+	transform = glm::translate(transform, m_Position);
+
+	// 更新本地变换矩阵
+	m_LocalTransform = transform;
+
+	// 更新组件
+	for (auto& pair : m_Components) {
+		pair.second->Update(deltaTime);
+	}
 }

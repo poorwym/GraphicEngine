@@ -11,6 +11,7 @@ public:
     void ScaleEntity(const glm::vec3& scale);     // 缩放物体
     void SelectEntity(Entity* entity);            // 选择一个实体
     void DeselectEntity();                        // MoveEntity取消选择
+    void OnImGuiRender();
 
 private:
     Entity* m_ControlledEntity;

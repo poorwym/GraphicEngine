@@ -3,12 +3,12 @@
 
 void SceneNode::AddChild(SceneNode* child)
 {
-    m_Children.push_back(child);
+    m_Children[child->GetName()] = child;
 }
 
 void SceneNode::RemoveChild(SceneNode* child)
 {
-    m_Children.erase(std::remove(m_Children.begin(), m_Children.end(), child), m_Children.end());
+    m_Children[child->GetName()] = nullptr;
 }
 
 void SceneNode::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
@@ -17,17 +17,17 @@ void SceneNode::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
     if (m_Entity){
         m_Entity->Render(shader, camera, m_GlobalTransform);
     }
-    for (auto child : m_Children) {
-        child->Render(shader, camera, m_GlobalTransform);
+    for (auto& pair : m_Children) {
+        pair.second->Render(shader, camera, m_GlobalTransform);
     }
 }
 
 void SceneNode::Update(float deltaTime)
 {
     m_Entity->Update(deltaTime);
-    for (auto child : m_Children)
+    for (auto& pair : m_Children)
     {
-        child->Update(deltaTime);
+        pair.second->Update(deltaTime);
     }
 }
 

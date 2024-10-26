@@ -28,9 +28,33 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "ResourseManager.h"
+#include "EntityController.h"
+#include "CameraController.h"
+
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = 0.0f; // 上一帧的时间
+
+// 相机控制器和资源管理器
+CameraController* cameraController = nullptr;
+ResourceManager resourceManager;
 
 void test2D(GLFWwindow* window);
 void test3D(GLFWwindow* window);
+
+// 鼠标移动回调函数
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (cameraController)
+        cameraController->ProcessMouseInput(static_cast<float>(xpos), static_cast<float>(ypos));
+}
+
+// 鼠标滚轮回调函数
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if (cameraController)
+        cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
 
 std::vector<Vertex> vertices = {
     // 前面
@@ -120,6 +144,8 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     GLCall(glfwSwapInterval(1));
 
@@ -208,14 +234,14 @@ void test2D(GLFWwindow* window) {
 }
 
 void test3D(GLFWwindow* window) {
-    ResourceManager resourceManager;
+
     Texture* texture = resourceManager.Load<Texture>("res/Textures/example.png");
-    Mesh mesh(vertices, indices, new Material(texture, texture, texture));
+    Mesh* mesh = new Mesh(vertices, indices, new Material(texture, texture, texture));
     Scene scene;
-    Entity entity;
-    entity.AddComponent(new MeshComponent(&mesh));
-    SceneNode node("node1", &entity, nullptr);
-    scene.addNode(&node);
+    Entity* entity = new Entity("My First Entity");
+    entity->AddComponent(new MeshComponent(mesh));
+    SceneNode* node = new SceneNode("node1", entity, nullptr);
+    scene.addNode(node);
     Shader* shader = resourceManager.Load<Shader>("res/shaders/Basic.shader");
 
     // 定义视口宽高
@@ -230,13 +256,41 @@ void test3D(GLFWwindow* window) {
 
     Camera camera(fov, aspect_ratio, near_plane, far_plane);
     camera.SetPosition(glm::vec3(1, 1, 3));
+    cameraController = new CameraController(&camera, window);
+
+    EntityController entityController(entity);
 
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
+         // 获取当前帧的时间
+        float currentFrame = glfwGetTime();
+        // 计算 deltaTime
+        deltaTime = currentFrame - lastFrame;
+        // 更新 lastFrame 为当前帧的时间
+        lastFrame = currentFrame;
+
+        //ImGui 初始化
+        ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
+        ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
+        ImGui::NewFrame(); // ImGui 自身的新帧调用
+
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+        ImGui::Begin("Test");
+        entityController.OnImGuiRender();
+        ImGui::End();
+
+        cameraController->Update(deltaTime);
         scene.Render(*shader, camera);
+        scene.Update(0.0);
+
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
         /* Swap front and back buffers */
 
         glfwSwapBuffers(window);
