@@ -36,11 +36,29 @@ uniform vec3 albedo;
 uniform float metallic;
 uniform float roughness;
 
-// 新增光照相关uniform
-uniform vec3 lightDir;       // 方向光方向
-uniform vec3 lightAmbient;   // 环境光强度
-uniform vec3 lightDiffuse;   // 漫反射光强度
-uniform vec3 lightSpecular;  // 镜面光强度
+// 方向光结构体
+struct DirectionalLight
+{
+    vec3 lightDir;       // 方向光方向
+    vec3 lightAmbient;   // 环境光强度
+    vec3 lightDiffuse;   // 漫反射光强度
+    vec3 lightSpecular;  // 镜面光强度
+};
+uniform DirectionalLight directionalLight;
+
+#define MAX_POINT_LIGHTS 4
+struct PointLight
+{
+    vec3 lightPos;
+    vec3 lightAmbient;   // 环境光强度
+    vec3 lightDiffuse;   // 漫反射光强度
+    vec3 lightSpecular;  // 镜面光强度
+    float m_Constant;   //常数衰减
+    float m_Linear;     //线性衰减
+    float m_Quadratic;  //二次方衰减
+};
+
+uniform PointLight[MAX_POINT_LIGHTS] pointLights;
 
 uniform vec3 viewPos;        // 观察者位置
 
@@ -53,22 +71,22 @@ void main()
     vec3 specularColor = texture(specularMap, TexCoords).rgb; // 采样镜面反射颜色
 
     // 环境光
-    vec3 ambient = lightAmbient * diffuseColor;
+    vec3 ambient = directionalLight.lightAmbient * diffuseColor;
 
     // 漫反射光
     vec3 norm = normalize(Normal);
-    float diff = max(dot(norm, normalize(-lightDir)), 0.0);
-    vec3 diffuse = lightDiffuse * diff * diffuseColor;
+    float diff = max(dot(norm, normalize(-directionalLight.lightDir)), 0.0);
+    vec3 diffuse = directionalLight.lightDiffuse * diff * diffuseColor;
 
     // 镜面光
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(lightDir, norm);
+    vec3 reflectDir = reflect(directionalLight.lightDir, norm);
     
     // 使用 roughness 调整 specular exponent
-    float specularExponent = mix(32.0, 2.0, roughness); // 32 为高光指数，粗糙度越高，指数越低
+    float specularExponent = mix(16.0, 2.0, roughness); // 32 为高光指数，粗糙度越高，指数越低
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularExponent);
     
-    vec3 specular = lightSpecular * spec * specularColor;
+    vec3 specular = directionalLight.lightSpecular * spec * specularColor;
 
     // 合并所有光照
     vec3 result = ambient + diffuse + specular;

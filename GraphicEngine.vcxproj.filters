@@ -220,5 +220,6 @@
     <None Include="document\GLTF.md" />
     <None Include="document\光源的建议.md" />
     <None Include="res\shaders\light.shader" />
+    <None Include="document\PBR.md" />
   </ItemGroup>
 </Project>

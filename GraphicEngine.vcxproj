@@ -206,6 +206,7 @@
   <ItemGroup>
     <None Include="document\advice.md" />
     <None Include="document\GLTF.md" />
+    <None Include="document\PBR.md" />
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
