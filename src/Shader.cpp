@@ -100,7 +100,10 @@ void Shader::Unbind() const
 
 void Shader::setUniformVec3f(const std::string& name, const glm::vec3& value)
 {
-    GLCall(glUniform3f(GetUniformLocation(name), value.x, value.y, value.z));
+    int location = GetUniformLocation(name);
+    if (location != -1) { // È·±£ Uniform ´æÔÚ
+        GLCall(glUniform3f(location, value.x, value.y, value.z));
+    }
 }
 
 void Shader::setUniform1i(const std::string& name, int v0)

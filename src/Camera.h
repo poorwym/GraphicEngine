@@ -2,6 +2,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <string>
+#include "Shader.h"
 
 class Camera {
 private:
@@ -24,5 +25,7 @@ public:
     void ProcessKeyboard(char pressedKey, float deltaTime, float velocity);// 键盘控制
     void ProcessMouseMovement(float xOffset, float yOffset);
     void ProcessMouseScroll(float zoomAngle);
+    void Bind(Shader& shader);
     void Update(float deltaTime);         // 根据输入更新摄像机
+    inline glm::vec3 GetPosition() const { return m_CameraPosition; }
 };

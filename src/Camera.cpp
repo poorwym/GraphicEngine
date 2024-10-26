@@ -1,11 +1,14 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <iostream>
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
-    :m_CameraPosition(glm::vec3(1.0f, 0.0f, 0.0f)),
+    :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
     m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
-    m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f))
+    m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f)),
+    m_Fov(fov),m_AspectRatio(aspectRatio),
+    m_NearClip(nearClip), m_FarClip(farClip)
 {
     m_ProjectionMatrix = glm::perspective(
         glm::radians(m_Fov),      // йс╫г (Field of View)
@@ -85,7 +88,7 @@ void Camera::ProcessMouseScroll(float zoomAngle)
 {
     m_Fov -= zoomAngle;
     if (m_Fov < 1.0f) m_Fov = 1.0f;
-    if (m_Fov > 45.0f) m_Fov = 45.0f;
+    if (m_Fov > 170.0f) m_Fov = 170.0f;
     this->Update(0.0f);
 }
 

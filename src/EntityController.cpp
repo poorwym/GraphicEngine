@@ -9,6 +9,12 @@ EntityController::EntityController(Entity* entity)
 
 }
 
+const char* EntityController::GetImGuiTitle()
+{
+	const char* title = "Entity Controller";
+	return title;
+}
+
 void EntityController::Update(float deltaTime)
 {
 	m_ControlledEntity->Update(deltaTime);

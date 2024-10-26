@@ -142,10 +142,13 @@
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\EntityController.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
+    <ClCompile Include="src\Light.cpp" />
+    <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\SceneNode.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\test\Test.cpp" />
@@ -166,18 +169,21 @@
     <ClInclude Include="src\AnimationSystem.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\CameraController.h" />
+    <ClInclude Include="src\color.h" />
     <ClInclude Include="src\Component.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\EntityController.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\LightController.h" />
     <ClInclude Include="src\Macro.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\ResourseManager.h" />
     <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\SceneManager.h" />
     <ClInclude Include="src\SceneNode.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\test\Test.h" />
@@ -199,8 +205,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="document\advice.md" />
+    <None Include="document\GLTF.md" />
+    <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
+    <None Include="res\shaders\light.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

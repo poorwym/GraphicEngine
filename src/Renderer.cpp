@@ -34,6 +34,9 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera& 
     glm::mat4 proj = camera.GetProjectionMatrix();
     glm::mat4 view = camera.GetViewMatrix();
     glm::mat4 mvp = proj * view * model;
+    shader.setUniformVec3f("viewPos", camera.GetPosition());
+    shader.setUniformMat4f("u_Model", model);
+    shader.setUniformMat4f("u_View", view);
     shader.setUniformMat4f("u_MVP", mvp);
 
     GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));//画三角形，ib.GetCount为indices的长度，GL_UNSIGNED_INT表示索引的类型,nullptr表示索引的指针(因为已经绑定了ibo所以不需要任何指针

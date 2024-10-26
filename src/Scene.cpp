@@ -19,7 +19,7 @@ void Scene::Update(float deltaTime)
 	}
 }
 
-void Scene::addNode(SceneNode* node)
+void Scene::AddNode(SceneNode* node)
 {
 	m_SceneNodes[node->GetName()] = node;
 }
@@ -32,7 +32,7 @@ void Scene::Render(Shader& shader, Camera& camera)
 	}
 }
 
-void Scene::removeNode(SceneNode* node)
+void Scene::RemoveNode(SceneNode* node)
 {
 	m_SceneNodes[node->GetName()] = nullptr;
 }

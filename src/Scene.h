@@ -14,7 +14,7 @@ public:
     void load(const std::string& filePath);   // 加载场景
     void save(const std::string& filePath);   // 保存场景
     void Update(float deltaTime);             // 更新场景
-    void addNode(SceneNode* node);           // 添加实体
+    void AddNode(SceneNode* node);           // 添加实体
     void Render(Shader& shader,Camera& camera);
-    void removeNode(SceneNode* node);        // 删除实体
+    void RemoveNode(SceneNode* node);        // 删除实体
 };

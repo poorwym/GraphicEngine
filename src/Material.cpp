@@ -2,7 +2,7 @@
 
 Material::Material(Texture* diffuse, Texture* normal, Texture* specular)
 	: m_DiffuseMap(nullptr), m_NormalMap(nullptr), m_SpecularMap(nullptr),
-	m_Albedo(glm::vec3(1.0f)), m_Metallic(0.0f), m_Roughness(1.0f)
+	m_Albedo(glm::vec3(1.0f)), m_Metallic(0.5f), m_Roughness(1.0f)
 {
 	m_DiffuseMap = diffuse;
 	m_NormalMap = normal;
@@ -13,6 +13,9 @@ Material::Material(Texture* diffuse, Texture* normal, Texture* specular)
 void Material::Bind(Shader& shader) const
 {
 	shader.Bind();
+	shader.setUniformVec3f("albedo", m_Albedo);
+	shader.setUniform1f("roughness", m_Roughness);
+	shader.setUniform1f("metallic", m_Metallic);
 	if (m_DiffuseMap) {
 		m_DiffuseMap->Bind(0);
 	}

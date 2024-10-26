@@ -1,10 +1,12 @@
 #pragma once
 #include "Entity.h"
+#include <string>
 
 class EntityController {
 public:
     EntityController(Entity* entity);
 
+    const char* GetImGuiTitle();
     void Update(float deltaTime);                 // 根据输入更新实体的状态
     void TranslateEntity(const glm::vec3& direction);  // 移动物体
     void RotateEntity(const glm::vec3& rotation); // 旋转物体
