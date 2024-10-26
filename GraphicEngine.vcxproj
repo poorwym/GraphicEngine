@@ -150,6 +150,7 @@
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\SceneNode.cpp" />
+    <ClCompile Include="src\SceneNodeController.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\test\Test.cpp" />
     <ClCompile Include="src\test\TestClearColor.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\SceneManager.h" />
     <ClInclude Include="src\SceneNode.h" />
+    <ClInclude Include="src\SceneNodeController.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\test\Test.h" />
     <ClInclude Include="src\test\TestClearColor.h" />
@@ -206,6 +208,7 @@
   <ItemGroup>
     <None Include="document\advice.md" />
     <None Include="document\GLTF.md" />
+    <None Include="document\ImGui.md" />
     <None Include="document\PBR.md" />
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />

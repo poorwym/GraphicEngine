@@ -5,12 +5,16 @@
 #include <string>
 #include <map>
 #include <string>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 class SceneNode {
 private:
     std::string m_Name;
     glm::mat4 m_LocalTransform;
     std::map<std::string, SceneNode*> m_Children;
+    glm::vec3 m_Position;
+    glm::vec3 m_Rotation;
     Entity* m_Entity;
     SceneNode* m_Parent;
 public:
@@ -21,5 +25,10 @@ public:
     void RemoveChild(SceneNode* child);           // ÒÆ³ý×Ó½Úµã
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
     inline std::string GetName() const { return m_Name; }
+    inline glm::vec3 GetPosition() const { return m_Position; }
+    inline glm::vec3 GetRotation() const { return m_Rotation; }
+    void SetPosition(glm::vec3 position);
+    void SetRotation(glm::vec3 rotation);
     void Update(float deltaTime);
+    void OnImGuiTree();
 };

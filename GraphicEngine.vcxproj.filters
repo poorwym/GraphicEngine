@@ -102,6 +102,9 @@
     <ClCompile Include="src\SceneManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\SceneNodeController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -212,6 +215,9 @@
     <ClInclude Include="src\SceneManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\SceneNodeController.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />
@@ -221,5 +227,6 @@
     <None Include="document\光源的建议.md" />
     <None Include="res\shaders\light.shader" />
     <None Include="document\PBR.md" />
+    <None Include="document\ImGui.md" />
   </ItemGroup>
 </Project>

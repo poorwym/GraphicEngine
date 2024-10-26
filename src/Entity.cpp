@@ -24,6 +24,21 @@ void Entity::RemoveComponent(Component* component)
 	}
 }
 
+void Entity::SetPosition(glm::vec3 position)
+{
+	m_Position = position;
+}
+
+void Entity::SetRotation(glm::vec3 rotation)
+{
+	m_Rotation = rotation;
+}
+
+void Entity::SetScale(glm::vec3 scale)
+{
+	m_Scale = scale;
+}
+
 void Entity::Rotate(glm::vec3 rotation)
 {
 	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));

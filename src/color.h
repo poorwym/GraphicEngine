@@ -20,7 +20,6 @@
 #define _LIGHTGREEN glm::vec3(0.5f, 1.0f, 0.5f)
 #define _LIGHTPURPLE glm::vec3(0.5f, 0.5f, 1.0f)
 #define _DARKGREEN glm::vec3(0.0f, 0.5f, 0.0f)
-
 #define _CYAN glm::vec3(0.0f, 1.0f, 1.0f)
 #define _MAGENTA glm::vec3(1.0f, 0.0f, 1.0f)
 #define _MAROON glm::vec3(0.5f, 0.0f, 0.0f)

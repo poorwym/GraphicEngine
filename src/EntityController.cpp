@@ -50,8 +50,15 @@ void EntityController::OnImGuiRender()
 	if (m_ControlledEntity != nullptr)
     {
 		ImGui::Text("Entity: %s", m_ControlledEntity->m_Name.c_str());
-        ImGui::SliderFloat3("Translation", &(m_ControlledEntity->m_Position.x), -5.0f, 5.0f);
-        ImGui::SliderFloat3("Rotation", &(m_ControlledEntity->m_Rotation.x), -180.0f, 180.0f);
+		// Translation
+		glm::vec3 Position = m_ControlledEntity->GetPosition();
+        ImGui::SliderFloat3("Translation", &(Position.x), -5.0f, 5.0f);
+		m_ControlledEntity->SetPosition(Position);
+		// Rotation
+		glm::vec3 Rotation = m_ControlledEntity->m_Rotation;
+        ImGui::SliderFloat3("Rotation", &(Rotation.x), -180.0f, 180.0f);
+		m_ControlledEntity->m_Rotation = Rotation;
+		// Scale
 		float scale = m_ControlledEntity->m_Scale.x;
 		ImGui::SliderFloat("Scale", &(scale), 0.1f, 5.0f);
 		m_ControlledEntity->m_Scale = glm::vec3(scale);

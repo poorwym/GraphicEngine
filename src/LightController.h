@@ -15,6 +15,7 @@ class DirectionalLightController : public LightController {
 private:
 	DirectionalLight* m_SelectedLight;
 public:
+	DirectionalLightController();
 	DirectionalLightController(DirectionalLight* selectedLight);
 	const char* GetImGuiTitle() override;
 	void OnImGuiRender() override;

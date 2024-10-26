@@ -17,4 +17,5 @@ public:
     void AddNode(SceneNode* node);           // 添加实体
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // 删除实体
+    void OnImGuiTree();
 };

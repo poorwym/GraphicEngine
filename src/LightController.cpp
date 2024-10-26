@@ -5,6 +5,11 @@
 
 
 
+DirectionalLightController::DirectionalLightController()
+	: LightController(nullptr)
+{
+}
+
 DirectionalLightController::DirectionalLightController(DirectionalLight* selectedLight)
 	: LightController(selectedLight)
 {

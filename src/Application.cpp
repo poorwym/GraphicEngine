@@ -29,7 +29,7 @@
 #include "LightController.h"
 #include "SceneManager.h"
 #include<map>
-
+DirectionalLightController directionalLightController;
 
 template<typename T>
 void ImGuiRender(const char * name, T& item) {
@@ -186,6 +186,8 @@ int main(void)
     // 初始化平台/渲染绑定
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
+    ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5倍
+
     
 
     test3D(window);
@@ -194,13 +196,13 @@ int main(void)
 void test3D(GLFWwindow* window) {
 
     Texture* diffuseMap = resourceManager.Load<Texture>("res/Textures/example.png");
-    Mesh* mesh1 = new Mesh(vertices, indices, new Material(diffuseMap, diffuseMap, diffuseMap));
-    Mesh* mesh2 = new Mesh(vertices, indices, new Material(diffuseMap, diffuseMap, diffuseMap));
+    Mesh* mesh = new Mesh(vertices, indices, new Material(diffuseMap, diffuseMap, diffuseMap));
     Scene* scene = new Scene();
     SceneManager sceneManager(scene);
 
-    sceneManager.AddEntity(mesh1,"My First Entity", "node1");
-    sceneManager.AddEntity(mesh2,"My Second Entity", "node2");
+    sceneManager.AddEntity(mesh,"My First Entity", "node1", nullptr);
+    sceneManager.AddEntity(mesh,"My Second Entity", "node2", nullptr);
+    sceneManager.AddEntity(mesh, "My Third Entity", "node3", sceneNodeList["node1"]);
 
     Shader* shader = resourceManager.Load<Shader>("res/shaders/light.shader");
 
@@ -220,7 +222,7 @@ void test3D(GLFWwindow* window) {
 
     
     DirectionalLight light(_WHITE, 1.0f, glm::vec3(1.0f));
-    DirectionalLightController directionalLightController(&light);
+    directionalLightController = DirectionalLightController(&light);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -240,11 +242,7 @@ void test3D(GLFWwindow* window) {
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
-        for (auto& pair : entityControllerList) {
-            ImGuiRender(pair.first, *pair.second);
-        }
-
-        ImGuiRender("Direction Light",directionalLightController);
+        scene->OnImGuiTree();
 
         cameraController->Update(deltaTime);
 

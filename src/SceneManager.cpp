@@ -1,27 +1,15 @@
 #include "SceneManager.h"
 
-std::map<const char*, Entity*> entityList;
-std::map<const char*, SceneNode*> sceneNodeList;
-std::map<const char*, LightController*> lightControllerList;
-std::map<const char*, EntityController*> entityControllerList;
+// 修改键类型为 std::string
+std::map<std::string, Entity*> entityList;
+std::map<std::string, SceneNode*> sceneNodeList;
+std::map<std::string, LightController*> lightControllerList;
+std::map<std::string, EntityController*> entityControllerList;
+std::map<std::string, SceneNodeController*> sceneNodeControllerList;
 
 SceneManager::SceneManager(Scene* scene)
 {
-	m_Scene = scene;
-}
-
-void SceneManager::AddEntity(Mesh* mesh, const char* entityName, const char* sceneNodeName)
-{
-    Entity* entity = new Entity(entityName);
-    entity->AddComponent(new MeshComponent(mesh));
-    SceneNode* node = new SceneNode(sceneNodeName, entity, nullptr);
-    m_Scene->AddNode(node);
-
-    EntityController* entityController = new EntityController(entity);
-
-    entityList[entityName]=entity;
-    sceneNodeList[sceneNodeName]=node;
-    entityControllerList[entityName]=entityController;
+    m_Scene = scene;
 }
 
 void SceneManager::AddEntity(Mesh* mesh, const char* entityName, const char* sceneNodeName, SceneNode* parent)
@@ -29,12 +17,10 @@ void SceneManager::AddEntity(Mesh* mesh, const char* entityName, const char* sce
     Entity* entity = new Entity(entityName);
     entity->AddComponent(new MeshComponent(mesh));
     SceneNode* node = new SceneNode(sceneNodeName, entity, nullptr);
-    parent->AddChild(node);
-
-
-    EntityController* entityController = new EntityController(entity);
-
-    entityList[entityName] = entity;
-    sceneNodeList[sceneNodeName] = node;
-    entityControllerList[entityName] = entityController;
+    parent ? parent->AddChild(node) : m_Scene->AddNode(node);
+    // 使用 std::string 作为键
+    entityList[std::string(entityName)] = entity;
+    sceneNodeList[std::string(sceneNodeName)] = node;
+    entityControllerList[std::string(entityName)] = new EntityController(entity);
+    sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
 }
