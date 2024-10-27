@@ -31,17 +31,6 @@
 #include<map>
 DirectionalLightController directionalLightController;
 
-template<typename T>
-void ImGuiRender(const char * name, T& item) {
-    static int id = 0;
-    ImGui::PushID(id++);
-    ImGui::Begin(name);
-    
-    item.OnImGuiRender();
-    
-    ImGui::End();
-    ImGui::PopID();
-}
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
@@ -203,6 +192,7 @@ void test3D(GLFWwindow* window) {
     sceneManager.AddEntity(mesh,"My First Entity", "node1", nullptr);
     sceneManager.AddEntity(mesh,"My Second Entity", "node2", nullptr);
     sceneManager.AddEntity(mesh, "My Third Entity", "node3", sceneNodeList["node1"]);
+    sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node4", sceneNodeList["node1"]);
 
     Shader* shader = resourceManager.Load<Shader>("res/shaders/light.shader");
 
@@ -221,8 +211,8 @@ void test3D(GLFWwindow* window) {
     cameraController = new CameraController(&camera, window);
 
     
-    DirectionalLight light(_WHITE, 1.0f, glm::vec3(1.0f));
-    directionalLightController = DirectionalLightController(&light);
+    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    directionalLightController = DirectionalLightController(light);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -247,8 +237,10 @@ void test3D(GLFWwindow* window) {
         cameraController->Update(deltaTime);
 
         shader->Bind();
-        light.Bind(*shader);
-        light.Update(deltaTime);
+        shader->setUniform1i("numPointLights", pointLightID.size());
+
+        scene->SetDirectionalLight(light);
+        scene->BindLight(*shader, glm::mat4(1.0f));
         scene->Render(*shader, camera);
         scene->Update(0.0);
 

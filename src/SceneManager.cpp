@@ -6,6 +6,8 @@ std::map<std::string, SceneNode*> sceneNodeList;
 std::map<std::string, LightController*> lightControllerList;
 std::map<std::string, EntityController*> entityControllerList;
 std::map<std::string, SceneNodeController*> sceneNodeControllerList;
+std::map<std::string, PointLight *> pointLightList;
+std::map<PointLight *,unsigned int> pointLightID;
 
 SceneManager::SceneManager(Scene* scene)
 {
@@ -23,4 +25,14 @@ void SceneManager::AddEntity(Mesh* mesh, const char* entityName, const char* sce
     sceneNodeList[std::string(sceneNodeName)] = node;
     entityControllerList[std::string(entityName)] = new EntityController(entity);
     sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+}
+
+void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent)
+{
+    SceneNode* node = new SceneNode(sceneNodeName, light, nullptr);
+    parent ? parent->AddChild(node) : m_Scene->AddNode(node);
+    pointLightList[light->GetName()] = light;
+    pointLightID[light] = pointLightList.size() - 1;
+    PointLightController* pointLightController = new PointLightController(light);
+    lightControllerList[light->GetName()] = pointLightController;
 }

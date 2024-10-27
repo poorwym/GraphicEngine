@@ -27,3 +27,7 @@ public:
     void SetMetallic(Shader& shader, float value);
     void SetRoughness(Shader& shader, float value);
 };
+
+class PBRMaterial{
+private:
+};

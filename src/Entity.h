@@ -18,7 +18,7 @@ public:
     Entity(std::string name);
     ~Entity();
 
-    inline std::string getName() { return m_Name; }
+    inline std::string GetName() { return m_Name; }
     void AddComponent(Component* component);      // 添加组件
     void RemoveComponent(Component* component);   // 移除组件
     inline glm::mat4 GetLocalTransform() const { return m_LocalTransform; }

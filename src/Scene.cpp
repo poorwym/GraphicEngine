@@ -3,7 +3,13 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "LightController.h"
+#include "color.h"
 extern DirectionalLightController directionalLightController;
+
+Scene::Scene()
+	:m_DirLight(nullptr)
+{
+}
 
 void Scene::load(const std::string& filePath)
 {
@@ -17,6 +23,7 @@ void Scene::save(const std::string& filePath)
 
 void Scene::Update(float deltaTime)
 {
+	m_DirLight->Update(deltaTime);
 	for (auto& pair : m_SceneNodes)
 	{
 		SceneNode* node = pair.second;
@@ -27,6 +34,20 @@ void Scene::Update(float deltaTime)
 void Scene::AddNode(SceneNode* node)
 {
 	m_SceneNodes[node->GetName()] = node;
+}
+
+void Scene::SetDirectionalLight(DirectionalLight* dirLight)
+{
+	m_DirLight = dirLight;
+}
+
+void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
+{
+	m_DirLight->Bind(shader, globalTransform);
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		node->BindLight(shader, globalTransform);
+	}
 }
 
 void Scene::Render(Shader& shader, Camera& camera)
@@ -50,6 +71,7 @@ void Scene::OnImGuiTree()
 		{
 			ImGui::OpenPopup("DirectionalLightController");
 		}
+		ImGui::PopStyleColor(3);
 		if (ImGui::BeginPopup("DirectionalLightController"))
 		{
 			directionalLightController.OnImGuiRender();

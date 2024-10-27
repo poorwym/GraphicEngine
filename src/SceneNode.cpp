@@ -15,6 +15,17 @@ void SceneNode::RemoveChild(SceneNode* child)
     m_Children[child->GetName()] = nullptr;
 }
 
+void SceneNode::BindLight(Shader& shader, glm::mat4 globalTranform)
+{
+    glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
+    if(m_PointLight){
+        m_PointLight->Bind(shader, m_GlobalTransform);
+    }
+    for (auto& pair : m_Children) {
+        pair.second->BindLight(shader, m_GlobalTransform);
+    }
+}
+
 void SceneNode::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
 {
     glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
@@ -48,7 +59,10 @@ void SceneNode::Update(float deltaTime)
     transform = glm::translate(transform, m_Position);
 
     m_LocalTransform = transform;
-    m_Entity->Update(deltaTime);
+    if(m_Entity)
+        m_Entity->Update(deltaTime);
+    if(m_PointLight)
+        m_PointLight->Update(deltaTime);
     for (auto& pair : m_Children)
     {
         pair.second->Update(deltaTime);
@@ -59,6 +73,7 @@ void SceneNode::OnImGuiTree()
 {
     if (ImGui::TreeNode(m_Name.c_str()))
     {
+
         if (ImGui::Button("Selected the Node"))
         {
             ImGui::OpenPopup(m_Name.c_str());
@@ -72,19 +87,37 @@ void SceneNode::OnImGuiTree()
             }
             ImGui::EndPopup();
         }
-
-        if (ImGui::Button(m_Entity->getName().c_str()))
-        {
-            ImGui::OpenPopup(m_Entity->getName().c_str());
-        }
-        if (ImGui::BeginPopup(m_Entity->getName().c_str()))
-        {
-            entityControllerList[m_Entity->getName()]->OnImGuiRender();
-            if (ImGui::Button("Close"))
+        //展示所有点光源
+        if(m_PointLight){
+            if (ImGui::Button(m_PointLight->GetName().c_str()))
             {
-                ImGui::CloseCurrentPopup();
+                ImGui::OpenPopup(m_PointLight->GetName().c_str());
             }
-            ImGui::EndPopup();
+            if (ImGui::BeginPopup(m_PointLight->GetName().c_str()))
+            {
+                lightControllerList[m_PointLight->GetName()]->OnImGuiRender();
+                if (ImGui::Button("Close"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+        //展示所有实体
+        if(m_Entity){
+            if (ImGui::Button(m_Entity->GetName().c_str()))
+            {
+                ImGui::OpenPopup(m_Entity->GetName().c_str());
+            }
+            if (ImGui::BeginPopup(m_Entity->GetName().c_str()))
+            {
+                entityControllerList[m_Entity->GetName()]->OnImGuiRender();
+                if (ImGui::Button("Close"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
 
         for (auto& pair : m_Children) {
@@ -92,7 +125,6 @@ void SceneNode::OnImGuiTree()
         }
         ImGui::TreePop();
     }
-
 }
 
 glm::mat4 SceneNode::GetGlobalTransform() const
@@ -104,6 +136,15 @@ SceneNode::SceneNode(std::string name, Entity* entity, SceneNode* parent)
     :m_LocalTransform(glm::mat4(1.0f)),m_Name(name),m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
 {
     m_Entity = entity;
+    m_PointLight = nullptr;
+    m_Parent = parent;
+}
+
+SceneNode::SceneNode(std::string name, PointLight* light, SceneNode* parent)
+    :m_LocalTransform(glm::mat4(1.0f)), m_Name(name), m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
+{
+    m_Entity = nullptr;
+    m_PointLight = light;
     m_Parent = parent;
 }
 
