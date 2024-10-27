@@ -27,6 +27,7 @@ public:
     void AddChild(SceneNode* child);              // 添加子节点
     void RemoveChild(SceneNode* child);           // 移除子节点
     void BindLight(Shader& shader, glm::mat4 globalTranform);
+    void RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 lightDir);
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
     inline std::string GetName() const { return m_Name; }
     inline glm::vec3 GetPosition() const { return m_Position; }

@@ -11,12 +11,15 @@ uniform mat4 u_Model;
 out vec3 FragPos; // 传递给片段着色器世界位置
 out vec3 Normal;  // 传递给片段着色器法线向量
 out vec2 TexCoords; // 传递给片段着色器纹理坐标
+out vec4 FragPosLightSpace;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0);
-    FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 修改
-    Normal = mat3(transpose(inverse(u_Model))) * a_Normal; // 修改
+    FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
+    Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
     TexCoords = a_TexCoords;
 }
 
@@ -71,20 +74,30 @@ uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform int numPointLights;
 
 uniform vec3 viewPos;        // 观察者位置
+in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
+uniform sampler2D shadowMap; // 阴影贴图
+
+
+
 
 // 常量
 const float PI = 3.14159265359;
+const float bias = 0.005;
+
 
 // 函数声明
-vec3 getNormalFromMap();
-float DistributionGGX(vec3 N, vec3 H, float roughness);
-float GeometrySchlickGGX(float NdotV, float roughness);
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-vec3 fresnelSchlick(float cosTheta, vec3 F0);
+vec3 getNormalFromMap();// 获取法线
+float DistributionGGX(vec3 N, vec3 H, float roughness);// GGX Distribution
+float GeometrySchlickGGX(float NdotV, float roughness);// G Smith
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);// G 函数
+vec3 fresnelSchlick(float cosTheta, vec3 F0);// Fresnel Schlick
+float ShadowCalculation(vec4 fragPosLightSpace);
 
 // 主函数
 void main()
 {
+    // 在光照计算中，需要获取 lightDir
+    vec3 lightDir = normalize(-directionalLight.lightDir);
     // 1. 采样材质属性
     vec3 albedo = hasAlbedoMap ? texture(AlbedoMap, TexCoords).rgb : vec3(1.0);
     albedo = pow(albedo, vec3(2.2)); // Gamma校正
@@ -181,8 +194,11 @@ void main()
     // 8. 自发光
     vec3 emission = hasEmissionMap ? texture(EmissionMap, TexCoords).rgb : vec3(0.0);
 
-    // 9. 合并所有光照
-    vec3 color = ambient + directionalLightContribution + emission;
+    // 计算阴影
+     float shadow = ShadowCalculation(FragPosLightSpace);
+
+    // 将阴影应用到光照结果中
+    vec3 color = (ambient + (1.0 - shadow) * (diffuse + specular)) + emission;
 
     // Gamma 校正
     color = pow(color, vec3(1.0/2.2));
@@ -240,4 +256,24 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+
+// 阴影计算函数
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // 透视除法
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // 变换到 [0,1] 范围
+    projCoords = projCoords * 0.5 + 0.5;
+    // 获取当前片段的深度值
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    // 获取当前片段在光空间的深度值
+    float currentDepth = projCoords.z;
+    // 检查是否在阴影中
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    // 如果超出了光照正交投影范围，则不在阴影中
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+    return shadow;
 }

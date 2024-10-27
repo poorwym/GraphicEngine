@@ -31,6 +31,7 @@ public:
     void Rotate(glm::vec3 rotation);
     void Translate(glm::vec3 translation);
     void Scale(glm::vec3 scale);
+    void RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir);
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
     void Update(float deltaTime);                 // 更新实体
 };

@@ -108,6 +108,12 @@
     <ClCompile Include="src\ResourseManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\depthMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FrameBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -224,6 +230,12 @@
     <ClInclude Include="src\vendor\TinyOBJLoader\tiny_obj_loader.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\depthMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FrameBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />
@@ -235,6 +247,6 @@
     <None Include="document\PBR.md" />
     <None Include="document\ImGui.md" />
     <None Include="res\shaders\PBRshader.shader" />
-    <None Include="res\shaders\depth_render.shader" />
+    <None Include="res\shaders\depth_shader.shader" />
   </ItemGroup>
 </Project>

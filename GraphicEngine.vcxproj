@@ -139,8 +139,10 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\CameraController.cpp" />
     <ClCompile Include="src\Component.cpp" />
+    <ClCompile Include="src\depthMap.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\EntityController.cpp" />
+    <ClCompile Include="src\FrameBuffer.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\LightController.cpp" />
@@ -173,8 +175,10 @@
     <ClInclude Include="src\CameraController.h" />
     <ClInclude Include="src\color.h" />
     <ClInclude Include="src\Component.h" />
+    <ClInclude Include="src\depthMap.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\EntityController.h" />
+    <ClInclude Include="src\FrameBuffer.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Light.h" />
@@ -215,7 +219,7 @@
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
-    <None Include="res\shaders\depth_render.shader" />
+    <None Include="res\shaders\depth_shader.shader" />
     <None Include="res\shaders\light.shader" />
     <None Include="res\shaders\PBRshader.shader" />
   </ItemGroup>

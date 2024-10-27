@@ -1,9 +1,8 @@
 #include "Entity.h"
 
 Entity::Entity(std::string name)
-	:m_Position(glm::vec3(0.0f)),m_Rotation(glm::vec3(0.0f)), m_Scale(glm::vec3(1.0f)),m_Name(name)
+	:m_Position(glm::vec3(0.0f)),m_Rotation(glm::vec3(0.0f)), m_Scale(glm::vec3(1.0f)),m_Name(name),m_LocalTransform(glm::mat4(1.0f))
 {
-	m_LocalTransform = glm::mat4(1.0f);
 }
 
 Entity::~Entity()
@@ -56,6 +55,14 @@ void Entity::Scale(glm::vec3 scale)
 {
 	glm::mat4 transform = glm::scale(glm::mat4(1.0f), scale);
 	m_LocalTransform = transform * m_LocalTransform;
+}
+
+void Entity::RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir)
+{
+	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
+	for (auto& pair : m_Components) {
+		pair.second -> RenderDepthMap(shader, m_GlobalTransform, lightDir);
+	}
 }
 
 

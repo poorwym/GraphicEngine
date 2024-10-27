@@ -12,6 +12,7 @@ protected:
 public:
     Component();
     virtual void SetType() {};
+    virtual void RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir) {};
     virtual void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) {};
     inline std::string GetType() { return m_Type;}
     virtual void Translate(glm::vec3& translation) {};
@@ -24,7 +25,8 @@ private:
     Mesh* m_Mesh;
 public:
     MeshComponent(Mesh* mesh);
-    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
+    void RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir) override;
+    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) override;
     inline void SetType() override { m_Type = "MeshComponent";  } 
     void Update(float deltaTime) override;
 };

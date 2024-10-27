@@ -11,6 +11,11 @@ MeshComponent::MeshComponent(Mesh* mesh)
 	SetType();
 }
 
+void MeshComponent::RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir)
+{
+	m_Mesh->RenderDepthMap(shader, globalTransform, lightDir);
+}
+
 void MeshComponent::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
 {
 	glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;

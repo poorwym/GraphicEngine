@@ -19,6 +19,7 @@ public:
     void AddNode(SceneNode* node);           // 添加实体
     void SetDirectionalLight(DirectionalLight* dirLight);
     void BindLight(Shader& shader, glm::mat4 globalTransform);
+    void RenderDepthMap(Shader& shader);
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // 删除实体
     void OnImGuiTree();

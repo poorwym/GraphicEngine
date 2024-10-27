@@ -29,6 +29,7 @@
 #include "LightController.h"
 #include "SceneManager.h"
 #include<map>
+#include"depthMap.h"
 DirectionalLightController directionalLightController;
 
 
@@ -42,7 +43,10 @@ ResourceManager resourceManager;
 void test2D(GLFWwindow* window);
 void test3D(GLFWwindow* window);
 void testPBR(GLFWwindow* window);
-
+void ViewPortInit(int width, int height) {
+    GLCall(glViewport(0, 0, width, height));
+    GLCall(glClear(GL_DEPTH_BUFFER_BIT));
+}
 // 鼠标移动回调函数
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -257,6 +261,7 @@ void test3D(GLFWwindow* window) {
 }
 
 void testPBR(GLFWwindow* window) {
+
     Scene* scene = new Scene();
     SceneManager sceneManager(scene);
 
@@ -268,7 +273,21 @@ void testPBR(GLFWwindow* window) {
     entityList["My First Entity"]->SetScale(glm::vec3(0.1f));
     sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node2", nullptr);
 
-    Shader* shader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
+
+    //这段真的非常非常重要，忘记绑定了。
+    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+    PBRshader->Bind();
+    PBRshader->setUniform1i("AlbedoMap", 0);
+    PBRshader->setUniform1i("NormalMap", 1);
+    PBRshader->setUniform1i("MetallicMap", 2);
+    PBRshader->setUniform1i("RoughnessMap", 3);
+    PBRshader->setUniform1i("AOMap", 4);
+    PBRshader->setUniform1i("EmissionMap", 5);
+    PBRshader->setUniform1i("HeightMap", 6);
+    PBRshader->Unbind();
+
 
     // 定义视口宽高
     float width = 1920.0f;
@@ -310,13 +329,27 @@ void testPBR(GLFWwindow* window) {
 
         cameraController->Update(deltaTime);
 
-        shader->Bind();
-        shader->setUniform1i("numPointLights", pointLightID.size());
+        PBRshader->Bind();
+        PBRshader->setUniform1i("numPointLights", pointLightID.size());
+        PBRshader->Unbind();
 
         scene->SetDirectionalLight(light);
-        scene->BindLight(*shader, glm::mat4(1.0f));
-        scene->Render(*shader, camera);
+
+        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
+
+        depthShader->Bind();
+        scene->BindLight(*depthShader, glm::mat4(1.0f));
+        scene->RenderDepthMap(*depthShader);
         scene->Update(0.0);
+        depthShader->Unbind();
+
+        ViewPortInit(width, height);
+
+        PBRshader->Bind();
+        scene->BindLight(*PBRshader, glm::mat4(1.0f));
+        scene->Render(*PBRshader, camera);
+        scene->Update(0.0);
+        PBRshader->Unbind();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -326,5 +359,4 @@ void testPBR(GLFWwindow* window) {
         /* Poll for and process events */
         glfwPollEvents();
     }
-
 }

@@ -50,6 +50,14 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 	}
 }
 
+void Scene::RenderDepthMap(Shader& shader)
+{
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		node->RenderDepthMap(shader, glm::mat4(1.0f), m_DirLight->GetLightDir());
+	}
+}
+
 void Scene::Render(Shader& shader, Camera& camera)
 {
 	for (auto& pair : m_SceneNodes) {

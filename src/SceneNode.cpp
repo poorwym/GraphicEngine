@@ -26,6 +26,17 @@ void SceneNode::BindLight(Shader& shader, glm::mat4 globalTranform)
     }
 }
 
+void SceneNode::RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 lightDir)
+{
+    glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
+    if (m_Entity) {
+        m_Entity->RenderDepthMap(shader, m_GlobalTransform, lightDir);
+    }
+    for (auto& pair : m_Children) {
+        pair.second->RenderDepthMap(shader, m_GlobalTransform, lightDir);
+    }
+}
+
 void SceneNode::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
 {
     glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
