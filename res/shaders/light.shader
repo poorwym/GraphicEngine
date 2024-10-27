@@ -15,8 +15,8 @@ out vec2 TexCoords; // 传递给片段着色器纹理坐标
 void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0);
-    FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 修改
-    Normal = mat3(transpose(inverse(u_Model))) * a_Normal; // 修改
+    FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界位置
+    Normal = mat3(transpose(inverse(u_Model))) * a_Normal; // 世界法线
     TexCoords = a_TexCoords;
 }
 

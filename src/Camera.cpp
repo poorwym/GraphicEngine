@@ -60,40 +60,41 @@ void Camera::ProcessKeyboard(char pressedKey, float deltaTime, float velocity)
     glm::vec3 z_Axis = glm::normalize(orientation);
     glm::vec3 x_Axis = glm::normalize(glm::cross(z_Axis, m_UpDirection));
     if (pressedKey == 'W') {
-        m_CameraPosition += z_Axis * velocity;
-        m_TargetPosition += z_Axis * velocity;
-    }
-    if (pressedKey == 'S') {
-        m_CameraPosition -= z_Axis * velocity;
-        m_TargetPosition -= z_Axis * velocity;
-    }
-    if (pressedKey == 'D') {
-        m_CameraPosition += x_Axis * velocity;
-        m_TargetPosition += x_Axis * velocity;
-    }
-    if (pressedKey == 'A') {
-        m_CameraPosition -= x_Axis * velocity;
-        m_TargetPosition -= x_Axis * velocity;
+        m_CameraPosition += z_Axis * velocity * m_Rate;
+        m_TargetPosition += z_Axis * velocity * m_Rate;
+    }                                        
+    if (pressedKey == 'S') {                 
+        m_CameraPosition -= z_Axis * velocity * m_Rate;
+        m_TargetPosition -= z_Axis * velocity * m_Rate;
+    }                                         
+    if (pressedKey == 'D') {                  
+        m_CameraPosition += x_Axis * velocity * m_Rate;
+        m_TargetPosition += x_Axis * velocity * m_Rate;
+    }                                       
+    if (pressedKey == 'A') {                
+        m_CameraPosition -= x_Axis * velocity * m_Rate;
+        m_TargetPosition -= x_Axis * velocity * m_Rate;
     }
     this->Update(deltaTime);
 }
 
 void Camera::ProcessMouseMovement(float xOffset, float yOffset)
 {
-    SetRotation(xOffset, yOffset);
+    SetRotation(xOffset * m_Rate, yOffset * m_Rate);
     this->Update(0.0);
 }
 
 void Camera::ProcessMouseScroll(float zoomAngle)
 {
-    m_Fov -= zoomAngle;
+    m_Fov -= zoomAngle * m_Rate;
     if (m_Fov < 1.0f) m_Fov = 1.0f;
-    if (m_Fov > 170.0f) m_Fov = 170.0f;
+    if (m_Fov > 45.0f) m_Fov = 45.0f;
     this->Update(0.0f);
 }
 
 void Camera::Update(float deltaTime)
 {
+    m_Rate = m_Fov / 45.0f;
     m_ProjectionMatrix = glm::perspective(
         glm::radians(m_Fov),      // йс╫г (Field of View)
         m_AspectRatio,            // ©М╦ъ╠х

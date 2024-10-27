@@ -15,7 +15,8 @@ struct Vertex {
 
 class Mesh {
 public:
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
+    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
+    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial);
     ~Mesh();
 
     void Bind() const;                         // 绑定 VAO，准备绘制
@@ -25,7 +26,11 @@ public:
     inline const std::vector<Vertex>& GetVertices() const { return vertices; };
     inline const std::vector<unsigned int>& GetIndices() const { return indices; };
     inline const IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer; };
-    void setMaterial(Texture* diffuse, Texture* normal, Texture* specular);
+
+
+    // 删除拷贝构造函数和拷贝赋值操作符
+    Mesh(const Mesh&) = delete;
+    Mesh& operator=(const Mesh&) = delete;
 
 
 private:
@@ -33,6 +38,7 @@ private:
     IndexBuffer* m_IndexBuffer;
     VertexBuffer* m_VertexBuffer;
     Material* m_Material;
+    PBRMaterial*  m_PBRMaterial;
 
     std::vector<Vertex> vertices;              // 顶点数据
     std::vector<unsigned int> indices;         // 索引数据

@@ -30,4 +30,25 @@ public:
 
 class PBRMaterial{
 private:
+    Texture* m_AO;
+    Texture* m_RoughnessMap;
+    Texture* m_MetallicMap;
+    Texture* m_AlbedoMap;
+    Texture* m_NormalMap;
+    Texture* m_EmissionMap;
+    Texture* m_HeightMap;
+public:
+    PBRMaterial();
+    PBRMaterial(Texture* albedo, Texture* normal, Texture* roughness, Texture* metallic, Texture* ao, Texture* emission, Texture* height);
+    // 绑定材质和纹理
+    void Bind(Shader& shader) const;
+    void Unbind(Shader& shader) const;
+
+    void SetAO(Texture* map);
+    void SetRoughnessMap(Texture* map);
+    void SetMetallicMap(Texture* map);
+    void SetAlbedoMap(Texture* map);
+    void SetNormalMap(Texture* map);
+    void SetEmisionMap(Texture* map);
+    void SetHeightMap(Texture* map);
 };

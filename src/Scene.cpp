@@ -71,7 +71,6 @@ void Scene::OnImGuiTree()
 		{
 			ImGui::OpenPopup("DirectionalLightController");
 		}
-		ImGui::PopStyleColor(3);
 		if (ImGui::BeginPopup("DirectionalLightController"))
 		{
 			directionalLightController.OnImGuiRender();

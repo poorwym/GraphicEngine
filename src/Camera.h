@@ -15,6 +15,7 @@ private:
     float m_NearClip;
     float m_FarClip;
     float m_Fov;
+    float m_Rate;
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
     inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // ªÒ»° ”Õºæÿ’Û

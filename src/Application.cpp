@@ -41,6 +41,7 @@ ResourceManager resourceManager;
 
 void test2D(GLFWwindow* window);
 void test3D(GLFWwindow* window);
+void testPBR(GLFWwindow* window);
 
 // 鼠标移动回调函数
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
@@ -179,7 +180,7 @@ int main(void)
 
     
 
-    test3D(window);
+    testPBR(window);
 }
 
 void test3D(GLFWwindow* window) {
@@ -211,6 +212,79 @@ void test3D(GLFWwindow* window) {
     cameraController = new CameraController(&camera, window);
 
     
+    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    directionalLightController = DirectionalLightController(light);
+
+    while (!glfwWindowShouldClose(window))
+    {
+        /* Render here */
+         // 获取当前帧的时间
+        float currentFrame = glfwGetTime();
+        // 计算 deltaTime
+        deltaTime = currentFrame - lastFrame;
+        // 更新 lastFrame 为当前帧的时间
+        lastFrame = currentFrame;
+
+        //ImGui 初始化
+        ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
+        ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
+        ImGui::NewFrame(); // ImGui 自身的新帧调用
+
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+        scene->OnImGuiTree();
+
+        cameraController->Update(deltaTime);
+
+        shader->Bind();
+        shader->setUniform1i("numPointLights", pointLightID.size());
+
+        scene->SetDirectionalLight(light);
+        scene->BindLight(*shader, glm::mat4(1.0f));
+        scene->Render(*shader, camera);
+        scene->Update(0.0);
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
+
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
+
+}
+
+void testPBR(GLFWwindow* window) {
+    Scene* scene = new Scene();
+    SceneManager sceneManager(scene);
+
+    const std::string filePath = "res/Obj/Rock/";
+    const std::string fileName = "Stone_2.obj";
+
+    Mesh* mesh = resourceManager.LoadOBJ(filePath, fileName);
+    sceneManager.AddEntity(mesh, "My First Entity", "node1", nullptr);
+    entityList["My First Entity"]->SetScale(glm::vec3(0.1f));
+    sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node2", nullptr);
+
+    Shader* shader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+
+    // 定义视口宽高
+    float width = 1920.0f;
+    float height = 1080.0f;
+    float aspect_ratio = width / height;
+
+    // 定义视野角度（以弧度为单位）、近平面和远平面
+    float fov = 30.0f; // 30度视野角
+    float near_plane = 0.1f;
+    float far_plane = 100.0f;
+
+    Camera camera(fov, aspect_ratio, near_plane, far_plane);
+    camera.SetPosition(glm::vec3(1, 1, 3));
+    cameraController = new CameraController(&camera, window);
+
+
     DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
     directionalLightController = DirectionalLightController(light);
 
