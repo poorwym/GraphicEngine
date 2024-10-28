@@ -9,7 +9,8 @@ private:
 	Scene* m_Scene;
 public:
 	SceneManager(Scene* scene);
-	void AddEntity(Mesh* mesh, const char* entityName, const char* sceneNodeName, SceneNode* parent);
+	~SceneManager();
+	void AddEntity(MeshComponent* meshComponent, const char* entityName, const char* sceneNodeName, SceneNode* parent);
 	void AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent);
 };
 

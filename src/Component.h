@@ -22,9 +22,11 @@ public:
 class MeshComponent : public Component
 {
 private:
-    Mesh* m_Mesh;
+    std::vector<Mesh*> m_Meshes;
 public:
-    MeshComponent(Mesh* mesh);
+    MeshComponent();
+    ~MeshComponent();
+    void AddMesh(Mesh* mesh);
     void RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir) override;
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) override;
     inline void SetType() override { m_Type = "MeshComponent";  } 

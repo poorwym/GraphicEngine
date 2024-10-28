@@ -2,14 +2,14 @@
 #include <string>
 #include "Shader.h"
 #include "Texture.h"
-#include "Mesh.h"
 #include "Material.h"
+#include "Component.h"
 
 class ResourceManager {
 public:
     template<typename T>
     T* Load(const std::string& filePath);         // 从文件加载资源
-    Mesh* LoadOBJ(const std::string& filePath, const std::string fileName);
+    MeshComponent* LoadOBJ(const std::string& filePath, const std::string fileName);
     PBRMaterial* LoadPBRMaterial(const std::string& filePath);
 
     template<typename T>

@@ -159,6 +159,21 @@ SceneNode::SceneNode(std::string name, PointLight* light, SceneNode* parent)
     m_Parent = parent;
 }
 
+
+SceneNode::~SceneNode()
+{
+    if (m_Entity) {
+        delete m_Entity;
+    }
+    if (m_PointLight) {
+        delete m_PointLight;
+    }
+    for (auto& pair : m_Children) {
+        delete pair.second;
+    }
+    m_Children.clear();
+}
+
 glm::mat4 SceneNode::GetLocalTransform() const
 {
     return m_Entity ? m_Entity->GetLocalTransform() : glm::mat4(1.0f);

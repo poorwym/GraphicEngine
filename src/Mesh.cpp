@@ -22,73 +22,89 @@ static void shrink(std::vector<Vertex>& vertices) {
     }
 }
 
-static glm::mat4 GetLightSpaceMatrix(glm::vec3 lightDir, glm::mat4 globalTransform) {
-    // 定义场景中心和大小
-    glm::vec3 sceneCenter = globalTransform * glm::vec4(1.0f);
-    float sceneRadius = 100.f;
+static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices[indices[i]];
+        Vertex& v1 = vertices[indices[i + 1]];
+        Vertex& v2 = vertices[indices[i + 2]];
 
-    // 设置光源的位置
-    float distanceFromScene = sceneRadius * 2.0f; // 根据需要调整
-    glm::vec3 lightPos = sceneCenter - lightDir * distanceFromScene;
+        // 计算边和UV差值
+        glm::vec3 edge1 = v1.Position - v0.Position;
+        glm::vec3 edge2 = v2.Position - v0.Position;
+        glm::vec2 deltaUV1 = v1.TexCoords - v0.TexCoords;
+        glm::vec2 deltaUV2 = v2.TexCoords - v0.TexCoords;
 
-    // 确定上向量
-    glm::vec3 up;
-    if (abs(lightDir.x) < 0.001f && abs(lightDir.z) < 0.001f) {
-        up = glm::vec3(0.0f, 0.0f, 1.0f);
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent, bitangent;
+
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent = glm::normalize(tangent);
+
+        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent = glm::normalize(bitangent);
+
+        // 累加切线和双切线
+        v0.Tangent += tangent;
+        v1.Tangent += tangent;
+        v2.Tangent += tangent;
+
+        v0.Bitangent += bitangent;
+        v1.Bitangent += bitangent;
+        v2.Bitangent += bitangent;
     }
-    else {
-        up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    // 归一化切线和双切线
+    for (auto& vertex : vertices) {
+        vertex.Tangent = glm::normalize(vertex.Tangent);
+        vertex.Bitangent = glm::normalize(vertex.Bitangent);
     }
-    // 计算光的视图矩阵
-    glm::mat4 lightView = glm::lookAt(lightPos, sceneCenter, up);
-    // 定义正交投影的参数
-    float orthoSize = sceneRadius * 2.0f;
-    float nearPlane = 0.1f;
-    float farPlane = distanceFromScene + sceneRadius * 2.0f;
-
-    glm::mat4 lightProjection = glm::ortho(
-        -orthoSize, orthoSize,
-        -orthoSize, orthoSize,
-        nearPlane, farPlane
-    );
-
-    // 计算光空间矩阵
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-    return lightSpaceMatrix;
 }
 
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material)
     :m_Material(material),m_PBRMaterial(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
     shrink(vertices);
+    CalcTangent(vertices, indices);//计算切线
+    m_Vertices = vertices;
+    m_Indices = indices;
     m_VAO = new VertexArray();
-    m_VertexBuffer = new VertexBuffer(vertices.data(), vertices.size() * sizeof(Vertex));
+    m_VertexBuffer = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
     VertexBufferLayout layout;
-    layout.Push<float>(3); // Position: 3个浮点数
-    layout.Push<float>(3); // Normal: 3个浮点数
-    layout.Push<float>(2); // TexCoords: 2个浮点数
+    layout.Push<float>(3); // 位置
+    layout.Push<float>(3); // 法线
+    layout.Push<float>(2); // 纹理坐标
+    layout.Push<float>(3); // 切线
+    layout.Push<float>(3); // 双切线
 
-    m_IndexBuffer = new IndexBuffer(indices.data(), indices.size());
+    m_IndexBuffer = new IndexBuffer(m_Indices.data(), m_Indices.size());
 
     m_VAO->AddBuffer(*m_VertexBuffer, layout);
-    m_FrameBuffer = new FrameBuffer(1920, 1280);
 }
 
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial)
     :m_PBRMaterial(PBRmaterial),m_Material(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
     shrink(vertices);
+    CalcTangent(vertices, indices);//计算切线
+    m_Vertices = vertices;
+    m_Indices = indices;
     m_VAO = new VertexArray();
-    m_VertexBuffer = new VertexBuffer(vertices.data(), vertices.size() * sizeof(Vertex));
+    m_VertexBuffer = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
     VertexBufferLayout layout;
     layout.Push<float>(3); // Position: 3个浮点数
     layout.Push<float>(3); // Normal: 3个浮点数
     layout.Push<float>(2); // TexCoords: 2个浮点数
+    layout.Push<float>(3); // 切线
+    layout.Push<float>(3); // 双切线
 
-    m_IndexBuffer = new IndexBuffer(indices.data(), indices.size());
+    m_IndexBuffer = new IndexBuffer(m_Indices.data(), m_Indices.size());
 
     m_VAO->AddBuffer(*m_VertexBuffer, layout);
-    m_FrameBuffer = new FrameBuffer(1920, 1280);
 }
 
 Mesh::~Mesh()
@@ -98,7 +114,6 @@ Mesh::~Mesh()
     delete m_IndexBuffer;
     delete m_Material;
     delete m_PBRMaterial;
-    delete m_FrameBuffer;
 }
 
 void Mesh::Bind() const
@@ -115,11 +130,9 @@ void Mesh::Unbind() const
 
 void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 lightDir)
 {
-    m_FrameBuffer->Bind();
 
     glm::vec3 m_LightDir = glm::normalize(lightDir);
 
-    m_LightSpaceMatrix = GetLightSpaceMatrix(m_LightDir, globalTranform);
 
     shader.Bind();
     shader.setUniformMat4f("lightSpaceMatrix", m_LightSpaceMatrix);
@@ -128,12 +141,11 @@ void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 li
     if (m_Material) m_Material->Bind(shader);
 
     Renderer renderer;
-    renderer.Draw(*m_VAO, *m_IndexBuffer, nullptr, shader, globalTranform, &m_LightSpaceMatrix);
+    renderer.Draw(*m_VAO, *m_IndexBuffer, nullptr, shader, globalTranform);
 
     if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
     if (m_Material) m_Material->Unbind(shader);
 
-    m_FrameBuffer->Unbind();
 }
 
 void Mesh::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
@@ -141,9 +153,6 @@ void Mesh::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
     shader.Bind();
     if(m_PBRMaterial) m_PBRMaterial->Bind(shader);
     if(m_Material) m_Material -> Bind(shader);
-
-    m_FrameBuffer->BindTexture(7, FrameBuffer::DEPTH_ATTACHMENT);
-    shader.setUniform1i("shadowMap", 7);
 
     Renderer renderer;
     renderer.Draw(*m_VAO, *m_IndexBuffer, &camera, shader, globalTranform);

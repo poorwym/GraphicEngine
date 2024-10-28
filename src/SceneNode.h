@@ -22,6 +22,7 @@ private:
 public:
     SceneNode(std::string name, Entity* entity, SceneNode* parent);
     SceneNode(std::string name, PointLight* entity, SceneNode* parent);
+    ~SceneNode();
     glm::mat4 GetLocalTransform() const;          // 获取局部变换矩阵
     glm::mat4 GetGlobalTransform() const;         // 获取全局变换矩阵
     void AddChild(SceneNode* child);              // 添加子节点

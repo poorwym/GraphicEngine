@@ -14,10 +14,50 @@ SceneManager::SceneManager(Scene* scene)
     m_Scene = scene;
 }
 
-void SceneManager::AddEntity(Mesh* mesh, const char* entityName, const char* sceneNodeName, SceneNode* parent)
+SceneManager::~SceneManager()
+{
+    // 删除所有 EntityController
+    for (auto& pair : entityControllerList) {
+        delete pair.second;
+    }
+    entityControllerList.clear();
+
+    // 删除所有 SceneNodeController
+    for (auto& pair : sceneNodeControllerList) {
+        delete pair.second;
+    }
+    sceneNodeControllerList.clear();
+
+    // 删除所有 LightController
+    for (auto& pair : lightControllerList) {
+        delete pair.second;
+    }
+    lightControllerList.clear();
+
+    // 删除所有 PointLight
+    for (auto& pair : pointLightList) {
+        delete pair.second;
+    }
+    pointLightList.clear();
+
+    // 删除所有 SceneNodes
+    for (auto& pair : sceneNodeList) {
+        delete pair.second;
+    }
+    sceneNodeList.clear();
+
+    // 删除 all Entities
+    for (auto& pair : entityList) {
+        delete pair.second;
+    }
+    entityList.clear();
+}
+
+
+void SceneManager::AddEntity(MeshComponent* meshComponent, const char* entityName, const char* sceneNodeName, SceneNode* parent)
 {
     Entity* entity = new Entity(entityName);
-    entity->AddComponent(new MeshComponent(mesh));
+    entity->AddComponent(meshComponent);
     SceneNode* node = new SceneNode(sceneNodeName, entity, nullptr);
     parent ? parent->AddChild(node) : m_Scene->AddNode(node);
     // 使用 std::string 作为键

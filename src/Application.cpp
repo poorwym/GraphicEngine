@@ -21,7 +21,7 @@
 #include "test/TestTexture2D.h"
 #include "Camera.h"
 #include "Scene.h"
-#include "ResourseManager.h"
+#include "ResourceManager.h"
 #include "EntityController.h"
 #include "CameraController.h"
 #include "color.h"
@@ -127,6 +127,27 @@ std::vector<unsigned int> indices = {
     22, 21, 23,
 };
 
+glm::mat4 ComputeLightSpaceMatrix(DirectionalLight* light, const glm::vec3& sceneCenter)
+{
+    glm::vec3 lightDir = glm::normalize(light->GetLightDir());
+    float sceneRadius = 20.0f; // 根据场景规模调整
+    float distanceFromScene = sceneRadius * 2.0f;
+    glm::vec3 lightPos = sceneCenter - lightDir * distanceFromScene;
+
+    // 选择上向量，避免与光方向平行
+    glm::vec3 up = (glm::abs(lightDir.x) < 0.001f && glm::abs(lightDir.z) < 0.001f)
+        ? glm::vec3(0.0f, 0.0f, 1.0f)
+        : glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 lightView = glm::lookAt(lightPos, sceneCenter, up);
+    float orthoSize = sceneRadius * 2.0f;
+    float nearPlane = 0.1f;
+    float farPlane = distanceFromScene + sceneRadius * 2.0f;
+
+    glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, nearPlane, farPlane);
+    return lightProjection * lightView;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -187,95 +208,24 @@ int main(void)
     testPBR(window);
 }
 
-void test3D(GLFWwindow* window) {
-
-    Texture* diffuseMap = resourceManager.Load<Texture>("res/Textures/example.png");
-    Mesh* mesh = new Mesh(vertices, indices, new Material(diffuseMap, diffuseMap, diffuseMap));
-    Scene* scene = new Scene();
-    SceneManager sceneManager(scene);
-
-    sceneManager.AddEntity(mesh,"My First Entity", "node1", nullptr);
-    sceneManager.AddEntity(mesh,"My Second Entity", "node2", nullptr);
-    sceneManager.AddEntity(mesh, "My Third Entity", "node3", sceneNodeList["node1"]);
-    sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node4", sceneNodeList["node1"]);
-
-    Shader* shader = resourceManager.Load<Shader>("res/shaders/light.shader");
-
-    // 定义视口宽高
-    float width = 1920.0f;
-    float height = 1080.0f;
-    float aspect_ratio = width / height;
-
-    // 定义视野角度（以弧度为单位）、近平面和远平面
-    float fov = 45.0f; // 45度视野角
-    float near_plane = 0.1f;
-    float far_plane = 100.0f;
-
-    Camera camera(fov, aspect_ratio, near_plane, far_plane);
-    camera.SetPosition(glm::vec3(1, 1, 3));
-    cameraController = new CameraController(&camera, window);
-
-    
-    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
-    directionalLightController = DirectionalLightController(light);
-
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-         // 获取当前帧的时间
-        float currentFrame = glfwGetTime();
-        // 计算 deltaTime
-        deltaTime = currentFrame - lastFrame;
-        // 更新 lastFrame 为当前帧的时间
-        lastFrame = currentFrame;
-
-        //ImGui 初始化
-        ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
-        ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
-        ImGui::NewFrame(); // ImGui 自身的新帧调用
-
-        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-
-        scene->OnImGuiTree();
-
-        cameraController->Update(deltaTime);
-
-        shader->Bind();
-        shader->setUniform1i("numPointLights", pointLightID.size());
-
-        scene->SetDirectionalLight(light);
-        scene->BindLight(*shader, glm::mat4(1.0f));
-        scene->Render(*shader, camera);
-        scene->Update(0.0);
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
-}
-
 void testPBR(GLFWwindow* window) {
 
     Scene* scene = new Scene();
     SceneManager sceneManager(scene);
 
-    const std::string filePath = "res/Obj/Rock/";
-    const std::string fileName = "Stone_2.obj";
+    const std::string filePath = "res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/";
+    const std::string fileName = "RAN_Halloween_Pumpkin_2024_High_Poly.obj";
 
-    Mesh* mesh = resourceManager.LoadOBJ(filePath, fileName);
-    sceneManager.AddEntity(mesh, "My First Entity", "node1", nullptr);
+    MeshComponent* meshComponent = resourceManager.LoadOBJ(filePath, fileName);
+    sceneManager.AddEntity(meshComponent, "My First Entity", "node1", nullptr);
     entityList["My First Entity"]->SetScale(glm::vec3(0.1f));
     sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node2", nullptr);
 
     Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-
+    /*
+    
+    */
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     PBRshader->Bind();
@@ -286,6 +236,9 @@ void testPBR(GLFWwindow* window) {
     PBRshader->setUniform1i("AOMap", 4);
     PBRshader->setUniform1i("EmissionMap", 5);
     PBRshader->setUniform1i("HeightMap", 6);
+    PBRshader->setUniform1i("DissolveTextureMap", 8);
+    PBRshader->setUniform1i("ShadowMap", 7);
+    PBRshader->setUniform1i("SpecularExponentTextureMap", 9);
     PBRshader->Unbind();
 
 
@@ -306,7 +259,7 @@ void testPBR(GLFWwindow* window) {
 
     DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
     directionalLightController = DirectionalLightController(light);
-
+    FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -324,6 +277,7 @@ void testPBR(GLFWwindow* window) {
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+        glm::mat4 lightSpaceMatrix = ComputeLightSpaceMatrix(light, glm::vec3(0.0f));
 
         scene->OnImGuiTree();
 
@@ -335,17 +289,25 @@ void testPBR(GLFWwindow* window) {
 
         scene->SetDirectionalLight(light);
 
+        depthFBO.Bind();
+
         ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
 
         depthShader->Bind();
+        depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
         scene->BindLight(*depthShader, glm::mat4(1.0f));
         scene->RenderDepthMap(*depthShader);
         scene->Update(0.0);
         depthShader->Unbind();
 
+        depthFBO.Unbind();
+
         ViewPortInit(width, height);
 
         PBRshader->Bind();
+        depthFBO.BindTexture(7, FrameBuffer::DEPTH_ATTACHMENT);
+        PBRshader->setUniform1i("ShadowMap", 7);
+        PBRshader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
         scene->BindLight(*PBRshader, glm::mat4(1.0f));
         scene->Render(*PBRshader, camera);
         scene->Update(0.0);

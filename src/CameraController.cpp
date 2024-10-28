@@ -8,6 +8,12 @@ CameraController::CameraController(Camera* camera, GLFWwindow* window)
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
+CameraController::~CameraController()
+{
+    delete camera;
+    delete window;
+}
+
 void CameraController::Update(float deltaTime)
 {
     ProcessKeyboardInput(deltaTime);

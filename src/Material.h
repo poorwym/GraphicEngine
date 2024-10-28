@@ -4,6 +4,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Shader.h"
 #include "Texture.h"
+#include"TinyOBJLoader/tiny_obj_loader.h"
 
 class Material {
 private:
@@ -30,6 +31,15 @@ public:
 
 class PBRMaterial{
 private:
+    glm::vec3   m_Ambient;
+    glm::vec3   m_Diffuse;
+    glm::vec3   m_Specular;
+    glm::vec3   m_Transmittance;
+    glm::vec3   m_Emission;
+    float       m_Shininess;
+    float       m_Ior;
+    float       m_d;
+    int         m_Illum;
     Texture* m_AO;
     Texture* m_RoughnessMap;
     Texture* m_MetallicMap;
@@ -37,8 +47,12 @@ private:
     Texture* m_NormalMap;
     Texture* m_EmissionMap;
     Texture* m_HeightMap;
+    Texture* m_SpecularExponentTextureMap;
+    Texture* m_DissolveTextureMap;
 public:
     PBRMaterial();
+    PBRMaterial(const std::string& filePath, const tinyobj::material_t& m);
+    ~PBRMaterial();
     PBRMaterial(Texture* albedo, Texture* normal, Texture* roughness, Texture* metallic, Texture* ao, Texture* emission, Texture* height);
     // 绑定材质和纹理
     void Bind(Shader& shader) const;

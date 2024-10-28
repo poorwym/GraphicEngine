@@ -4,32 +4,54 @@
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
 layout(location = 2) in vec2 a_TexCoords;
+layout(location = 3) in vec3 a_Tangent;
+layout(location = 4) in vec3 a_Bitangent;
 
 uniform mat4 u_MVP;
 uniform mat4 u_Model;    
 
-out vec3 FragPos; // 传递给片段着色器世界位置
-out vec3 Normal;  // 传递给片段着色器法线向量
-out vec2 TexCoords; // 传递给片段着色器纹理坐标
+out VS_OUT {
+    vec3 FragPos;
+    vec2 TexCoords;
+    vec3 Tangent;
+    vec3 Bitangent;
+    vec3 Normal;
+} vs_out;
 out vec4 FragPosLightSpace;
 uniform mat4 lightSpaceMatrix;
 
 void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0);
-    FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
-    Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
-    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
-    TexCoords = a_TexCoords;
+    vs_out.FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
+    vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
+    FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    vs_out.TexCoords = a_TexCoords;
+    vs_out.Tangent = a_Tangent;
+    vs_out.Bitangent = a_Bitangent;
 }
 
 #shader fragment
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoords; // 片段着色器接受的纹理坐标
-in vec3 FragPos;   // 片段着色器接受的世界位置
-in vec3 Normal;    // 片段着色器接受的法线向量
+in VS_OUT {//顶点着色器输出
+    vec3 FragPos;//片元位置，世界空间
+    vec2 TexCoords;//纹理坐标
+    vec3 Tangent;//切线
+    vec3 Bitangent;//副切线
+    vec3 Normal;//片元法线，世界空间
+} fs_in;
+
+uniform vec3 Ambient;
+uniform vec3 Diffuse;
+uniform vec3 Specular;
+uniform vec3 Transmittance;
+uniform vec3 Emission;
+uniform float Shininess;
+uniform float Ior;
+uniform float d;
+uniform int Illum;
 
 // 材质属性
 uniform bool hasNormalMap;
@@ -39,15 +61,20 @@ uniform bool hasAlbedoMap;
 uniform bool hasAO;
 uniform bool hasMetallicMap;
 uniform bool hasRoughnessMap;
+uniform bool hasDissolveTextureMap;
+uniform bool hasSpecularExponentTextureMap;
 
 // 纹理采样器
-uniform sampler2D AlbedoMap;       // 漫反射贴图
-uniform sampler2D NormalMap;       // 法线贴图
-uniform sampler2D MetallicMap;     // 金属度贴图
-uniform sampler2D RoughnessMap;    // 粗糙度贴图
-uniform sampler2D AOMap;           // 环境遮蔽贴图
-uniform sampler2D EmissionMap;     // 自发光贴图
-uniform sampler2D HeightMap;       // 高度贴图（可选）
+uniform sampler2D AlbedoMap;       // 漫反射贴图         slot 0
+uniform sampler2D NormalMap;       // 法线贴图              slot1               
+uniform sampler2D MetallicMap;     // 金属度贴图         slot2
+uniform sampler2D RoughnessMap;    // 粗糙度贴图         slot3
+uniform sampler2D AOMap;           // 环境遮蔽贴图        slot4
+uniform sampler2D EmissionMap;     // 自发光贴图         slot5
+uniform sampler2D HeightMap;       // 高度贴图（可选）      slot6
+uniform sampler2D ShadowMap;       // 阴影贴图              slot7
+uniform sampler2D DissolveTextureMap; //透明度贴图           slot8 
+uniform sampler2D SpecularExponentTextureMap; //镜面指数贴图  slot9
 
 // 光源结构体
 struct DirectionalLight
@@ -75,159 +102,23 @@ uniform int numPointLights;
 
 uniform vec3 viewPos;        // 观察者位置
 in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
-uniform sampler2D shadowMap; // 阴影贴图
-
-
-
 
 // 常量
 const float PI = 3.14159265359;
-const float bias = 0.005;
 
 
-// 函数声明
-vec3 getNormalFromMap();// 获取法线
-float DistributionGGX(vec3 N, vec3 H, float roughness);// GGX Distribution
-float GeometrySchlickGGX(float NdotV, float roughness);// G Smith
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);// G 函数
-vec3 fresnelSchlick(float cosTheta, vec3 F0);// Fresnel Schlick
+
 float ShadowCalculation(vec4 fragPosLightSpace);
-
 // 主函数
 void main()
 {
-    // 在光照计算中，需要获取 lightDir
-    vec3 lightDir = normalize(-directionalLight.lightDir);
-    // 1. 采样材质属性
-    vec3 albedo = hasAlbedoMap ? texture(AlbedoMap, TexCoords).rgb : vec3(1.0);
-    albedo = pow(albedo, vec3(2.2)); // Gamma校正
-
-    float metallic = hasMetallicMap ? texture(MetallicMap, TexCoords).r : 0.0;
-    float roughness = hasRoughnessMap ? texture(RoughnessMap, TexCoords).r : 0.5;
-    float ao = hasAO ? texture(AOMap, TexCoords).r : 1.0;
-
-    // 2. 获取法线
-    vec3 N = normalize(Normal);
-    if (hasNormalMap)
-    {
-        N = getNormalFromMap();
-    }
-
-    // 3. 视线向量
-    vec3 V = normalize(viewPos - FragPos);
-
-    // 4. 基础反射率（F0）
-    vec3 F0 = vec3(0.04); // 非金属材质的F0
-    F0 = mix(F0, albedo, metallic); // 金属材质的F0为Albedo颜色
-
-    // 5. 环境光贡献初始化
-    vec3 ambient = directionalLight.lightAmbient * albedo * ao;
-
-    // 6. 方向光贡献
-    // 方向光漫反射
-    vec3 L = normalize(-directionalLight.lightDir); // 光线方向
-    vec3 H = normalize(V + L); // 半向量
-
-    // Cook-Torrance BRDF
-    float NDF = DistributionGGX(N, H, roughness);
-    float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-    vec3 numerator = NDF * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 防止除以0
-    vec3 specular = numerator / denominator;
-
-    // 漫反射计算
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic; // 金属材质没有漫反射
-
-    vec3 diffuse = kD * albedo / PI;
-
-    // 方向光的总贡献
-    float NdotL = max(dot(N, L), 0.0);
-    vec3 directionalLightContribution = (diffuse + specular) * directionalLight.lightDiffuse * NdotL;
-
-    // 7. 点光源贡献
-    for(int i = 0; i < numPointLights; i++)
-    {
-        // 光源方向
-        vec3 Lp = normalize(pointLights[i].lightPos - FragPos);
-        vec3 Hp = normalize(V + Lp);
-
-        // 漫反射
-        float NdotLp = max(dot(N, Lp), 0.0);
-        float NdotHp = max(dot(N, Hp), 0.0);
-        float VdotHp = max(dot(V, Hp), 0.0);
-
-        // 分布函数
-        float NDF_p = DistributionGGX(N, Hp, roughness);
-        // 几何遮蔽
-        float G_p = GeometrySmith(N, V, Lp, roughness);
-        // Fresnel
-        vec3 F_p = fresnelSchlick(NdotHp, F0);
-
-        // Cook-Torrance BRDF
-        vec3 numerator_p = NDF_p * G_p * F_p;
-        float denominator_p = 4.0 * max(dot(N, V), 0.0) * max(dot(N, Lp), 0.0) + 0.001;
-        vec3 specular_p = numerator_p / denominator_p;
-
-        // 漫反射
-        vec3 kS_p = F_p;
-        vec3 kD_p = vec3(1.0) - kS_p;
-        kD_p *= 1.0 - metallic;
-
-        vec3 diffuse_p = kD_p * albedo / PI;
-
-        // 点光源的衰减
-        float distance = length(pointLights[i].lightPos - FragPos);
-        float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + 
-                                   pointLights[i].quadratic * (distance * distance));
-
-        // 点光源的贡献
-        vec3 pointLightContribution = (diffuse_p + specular_p) * pointLights[i].lightDiffuse * NdotLp * attenuation;
-
-        ambient += pointLights[i].lightAmbient * albedo * ao;
-        directionalLightContribution += pointLightContribution;
-    }
-
-    // 8. 自发光
-    vec3 emission = hasEmissionMap ? texture(EmissionMap, TexCoords).rgb : vec3(0.0);
-
-    // 计算阴影
-     float shadow = ShadowCalculation(FragPosLightSpace);
-
-    // 将阴影应用到光照结果中
-    vec3 color = (ambient + (1.0 - shadow) * (diffuse + specular)) + emission;
-
-    // Gamma 校正
-    color = pow(color, vec3(1.0/2.2));
-
-    FragColor = vec4(color, 1.0);  // 最终颜色
+    vec3 AmbientColor = texture(AlbedoMap, fs_in.TexCoords).rgb;
+    float dirShadow = ShadowCalculation(FragPosLightSpace);
+    FragColor = vec4(AmbientColor * (1 - dirShadow) ,1.0);
 }
 
-// 获取法线贴图中的法线
-vec3 getNormalFromMap()
-{
-    vec3 tangentNormal = texture(NormalMap, TexCoords).rgb;
-    tangentNormal = tangentNormal * 2.0 - 1.0;
-    return normalize(tangentNormal);
-}
 
-// 分布函数：GGX/Trowbridge-Reitz
-float DistributionGGX(vec3 N, vec3 H, float roughness)
-{
-    float a      = roughness*roughness;
-    float a2     = a*a;
-    float NdotH  = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH*NdotH;
 
-    float nom   = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-
-    return nom / denom;
-}
 
 // 几何遮蔽函数：Schlick-GGX
 float GeometrySchlickGGX(float NdotV, float roughness)
@@ -255,11 +146,12 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 // Fresnel 方程：Schlick近似
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
+    
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-
-// 阴影计算函数
+const int sampleRate = 5;
+const float bias = 0.0005;
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
     // 透视除法
@@ -267,11 +159,23 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // 变换到 [0,1] 范围
     projCoords = projCoords * 0.5 + 0.5;
     // 获取当前片段的深度值
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float closestDepth = texture(ShadowMap, projCoords.xy).r;
     // 获取当前片段在光空间的深度值
     float currentDepth = projCoords.z;
     // 检查是否在阴影中
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(ShadowMap, 0);
+    // 使用 3x3 样本
+    for(int x = -sampleRate; x <= sampleRate; ++x)
+    {
+        for(int y = -sampleRate; y <= sampleRate; ++y)
+        {
+            float pcfDepth = texture(ShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= sampleRate*sampleRate*4;
+    
     // 如果超出了光照正交投影范围，则不在阴影中
     if(projCoords.z > 1.0)
         shadow = 0.0;

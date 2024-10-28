@@ -7,6 +7,9 @@ Entity::Entity(std::string name)
 
 Entity::~Entity()
 {
+	for (auto& pair : m_Components) {
+		delete pair.second; // 释放每个组件
+	}
 }
 
 void Entity::AddComponent(Component* component)

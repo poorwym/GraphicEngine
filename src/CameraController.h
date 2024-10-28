@@ -5,6 +5,7 @@
 class CameraController {
 public:
     CameraController(Camera* camera, GLFWwindow* window);
+    ~CameraController();
 
     void Update(float deltaTime);               // 根据输入更新摄像机
     void ProcessKeyboardInput(float deltaTime); // 处理键盘输入控制摄像机

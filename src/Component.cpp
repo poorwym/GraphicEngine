@@ -5,21 +5,37 @@ Component::Component()
 	m_LocalTransform = glm::mat4(1.0f);
 }
 
-MeshComponent::MeshComponent(Mesh* mesh)
-	:m_Mesh(mesh)
+
+
+MeshComponent::MeshComponent()
 {
 	SetType();
 }
 
-void MeshComponent::RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir)
+MeshComponent::~MeshComponent()
 {
-	m_Mesh->RenderDepthMap(shader, globalTransform, lightDir);
+	for (auto& mesh : m_Meshes) {
+		delete mesh;
+	}
 }
 
-void MeshComponent::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
+void MeshComponent::AddMesh(Mesh* mesh)
 {
-	glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
-	m_Mesh->Render(shader, camera, m_GlobalTransform);
+	m_Meshes.push_back(mesh);
+}
+
+void MeshComponent::RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir)
+{
+	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
+	for (auto& mesh : m_Meshes)
+		mesh->RenderDepthMap(shader, globalTransform, lightDir);
+}
+
+void MeshComponent::Render(Shader& shader, Camera& camera, glm::mat4 globalTransform)
+{
+	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
+	for (auto& mesh : m_Meshes)
+		mesh->Render(shader, camera, m_GlobalTransform);
 }
 
 void MeshComponent::Update(float deltaTime)
