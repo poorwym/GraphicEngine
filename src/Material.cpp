@@ -86,6 +86,7 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	m_Specular(glm::vec3(0.1f)), m_Transmittance(glm::vec3(0.0f)),
 	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2)
 {
+	std::cout << "Load Texture " << filePath << std::endl;
 	if(m.emission) m_Emission = glm::vec3(m.emission[0], m.emission[1], m.emission[2]);
 	if (m.diffuse) m_Diffuse = glm::vec3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
 	if (m.specular) m_Specular = glm::vec3(m.specular[0], m.specular[1], m.specular[2]);
@@ -98,27 +99,35 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 
 	if (m.diffuse_texname.size() > 0){//1
 		m_AlbedoMap = new Texture(filePath+m.diffuse_texname.c_str());
+		std::cout << filePath + m.diffuse_texname.c_str() << std::endl;
 	}
 	if (m.bump_texname.size() > 0){//2
 		m_NormalMap = new Texture(filePath+m.bump_texname.c_str());
+		std::cout << filePath + m.bump_texname.c_str() << std::endl;
 	}
 	if (m.emissive_texname.size()) {//3
 		m_EmissionMap = new Texture(filePath+m.emissive_texname.c_str());
+		std::cout << filePath + m.emissive_texname.c_str() << std::endl;
 	}
 	if (m.alpha_texname.size()) {//4
 		m_HeightMap = new Texture(filePath+m.alpha_texname.c_str());
+		std::cout << filePath + m.alpha_texname.c_str() << std::endl;
 	}
 	if (m.roughness_texname.size()) {//5
 		m_RoughnessMap = new Texture(filePath+m.roughness_texname.c_str());
+		std::cout << filePath + m.roughness_texname.c_str() << std::endl;
 	}
 	if (m.metallic_texname.size()) {//6
 		m_MetallicMap = new Texture(filePath+m.metallic_texname.c_str());
+		std::cout << filePath + m.metallic_texname.c_str() << std::endl;
 	}
 	if (m.normal_texname.size()) {//7
 		m_NormalMap = new Texture(filePath+m.normal_texname.c_str());
+		std::cout << filePath + m.normal_texname.c_str() << std::endl;
 	}
 	if (m.specular_highlight_texname.size()) {//8
 		m_SpecularExponentTextureMap = new Texture(filePath+m.specular_highlight_texname.c_str());
+		std::cout << filePath + m.specular_highlight_texname.c_str() << std::endl;
 	}
 }
 PBRMaterial::~PBRMaterial()

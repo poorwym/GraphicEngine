@@ -114,6 +114,9 @@
     <ClCompile Include="src\FrameBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\SkyBox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -239,6 +242,9 @@
     <ClInclude Include="src\SubMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\SkyBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />
@@ -252,5 +258,6 @@
     <None Include="res\shaders\PBRshader.shader" />
     <None Include="res\shaders\depth_shader.shader" />
     <None Include="document\mtl.md" />
+    <None Include="res\shaders\skybox.shader" />
   </ItemGroup>
 </Project>

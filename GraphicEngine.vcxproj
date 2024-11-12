@@ -155,6 +155,7 @@
     <ClCompile Include="src\SceneNode.cpp" />
     <ClCompile Include="src\SceneNodeController.cpp" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\SkyBox.cpp" />
     <ClCompile Include="src\test\Test.cpp" />
     <ClCompile Include="src\test\TestClearColor.cpp" />
     <ClCompile Include="src\test\TestTexture2D.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="src\SceneNode.h" />
     <ClInclude Include="src\SceneNodeController.h" />
     <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\SkyBox.h" />
     <ClInclude Include="src\SubMesh.h" />
     <ClInclude Include="src\test\Test.h" />
     <ClInclude Include="src\test\TestClearColor.h" />
@@ -224,6 +226,7 @@
     <None Include="res\shaders\depth_shader.shader" />
     <None Include="res\shaders\light.shader" />
     <None Include="res\shaders\PBRshader.shader" />
+    <None Include="res\shaders\skybox.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

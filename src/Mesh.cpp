@@ -1,25 +1,8 @@
 #include "Mesh.h"
 #include "Texture.h"
 #include "depthMap.h"
-
 static void shrink(std::vector<Vertex>& vertices) {
-    float max_Value = vertices[0].Position.x;
-    float min_Value = vertices[0].Position.x;
-    for (auto& v : vertices) {
-        min_Value = std::min(min_Value, v.Position.x);
-        max_Value = std::max(max_Value, v.Position.x);
-        min_Value = std::min(min_Value, v.Position.y);
-        max_Value = std::max(max_Value, v.Position.y);
-        min_Value = std::min(min_Value, v.Position.z);
-        max_Value = std::max(max_Value, v.Position.z);
-    }
-    float shrink_rate = std::max(abs(max_Value), abs(min_Value));
-
-    for (auto& v : vertices) {
-        v.Position.x /= shrink_rate / 3;
-        v.Position.y /= shrink_rate / 3;
-        v.Position.z /= shrink_rate / 3;
-    }
+    ;
 }
 
 static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
@@ -68,7 +51,6 @@ static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigne
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material)
     :m_Material(material),m_PBRMaterial(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
-    shrink(vertices);
     CalcTangent(vertices, indices);//计算切线
     m_Vertices = vertices;
     m_Indices = indices;
@@ -89,7 +71,6 @@ Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indic
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial)
     :m_PBRMaterial(PBRmaterial),m_Material(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
-    shrink(vertices);
     CalcTangent(vertices, indices);//计算切线
     m_Vertices = vertices;
     m_Indices = indices;

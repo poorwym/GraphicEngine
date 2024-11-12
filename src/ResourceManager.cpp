@@ -18,7 +18,8 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
         std::cerr << "TinyOBJLoader Error: " << err << std::endl;
         return nullptr;
     }
-
+    std::cout << "shapes = " << shapes.size() << std::endl;
+    std::cout << "materials= " << materials.size() << std::endl;
 
     // 加载所有材质
     std::vector<PBRMaterial*> loadedMaterials;

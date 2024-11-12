@@ -4,6 +4,7 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "LightController.h"
 #include "color.h"
+#include "SceneManager.h"
 extern DirectionalLightController directionalLightController;
 
 Scene::Scene()
@@ -24,6 +25,25 @@ void Scene::save(const std::string& filePath)
 void Scene::Update(float deltaTime)
 {
 	m_DirLight->Update(deltaTime);
+	//earth
+	SceneNode* node_earth = sceneNodeList["node2"];
+	static float angleEarth = 0.0f;
+	angleEarth += 50 * deltaTime;
+	if (angleEarth > 180) {
+		angleEarth -= 360;
+	}
+	node_earth->SetRotation(glm::vec3(0.0f, angleEarth, 0.0f));
+	//moon
+	SceneNode* node_Moon = sceneNodeList["node3"];
+	
+	static float angleMoon = 0.0f;
+
+	angleMoon += 300 * deltaTime;
+	if (angleMoon > 180) {
+		angleMoon -= 360;
+	}
+	node_Moon->SetRotation(glm::vec3(0.0f, angleMoon, 0.0f));
+
 	for (auto& pair : m_SceneNodes)
 	{
 		SceneNode* node = pair.second;

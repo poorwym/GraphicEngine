@@ -114,7 +114,7 @@ void main()
 {
     vec3 AmbientColor = texture(AlbedoMap, fs_in.TexCoords).rgb;
     float dirShadow = ShadowCalculation(FragPosLightSpace);
-    FragColor = vec4(AmbientColor * (1 - dirShadow) ,1.0);
+    FragColor = vec4(AmbientColor ,1.0);
 }
 
 

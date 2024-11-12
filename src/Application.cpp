@@ -16,6 +16,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "SkyBox.h"
 
 #include "test/TestClearColor.h"
 #include "test/TestTexture2D.h"
@@ -156,8 +157,8 @@ int main(void)
     if (!glfwInit())
         return -1;
     
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//设置OpenGL版本主版本号 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);//设置OpenGL版本次版本号
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
 
 
@@ -171,6 +172,7 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+    glewExperimental = GL_TRUE; // 启用实验性功能以确保现代 OpenGL 功能可用
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -213,13 +215,28 @@ void testPBR(GLFWwindow* window) {
     Scene* scene = new Scene();
     SceneManager sceneManager(scene);
 
-    const std::string filePath = "res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/";
-    const std::string fileName = "RAN_Halloween_Pumpkin_2024_High_Poly.obj";
+    const std::string filePath = "res/Obj/sun/";
+    const std::string fileName = "sol.obj";
+    //load sun
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/sun/", "sol.obj");
+    sceneManager.AddEntity(meshComponent1, "Sun", "node1", nullptr);
+    entityList["Sun"]->SetScale(glm::vec3(0.00001f));
+    //load earth
+    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/earth/", "sol.obj");
+    sceneManager.AddEntity(meshComponent2, "Earth", "node2", sceneNodeList["node1"]);
+    entityList["Earth"]->SetScale(glm::vec3(0.000005f));
 
-    MeshComponent* meshComponent = resourceManager.LoadOBJ(filePath, fileName);
-    sceneManager.AddEntity(meshComponent, "My First Entity", "node1", nullptr);
-    entityList["My First Entity"]->SetScale(glm::vec3(0.1f));
-    sceneManager.AddPointLight(new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(1.0f)), "node2", nullptr);
+    MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/moon/", "sol.obj");
+    sceneManager.AddEntity(meshComponent3, "Moon", "node3", sceneNodeList["node2"]);
+    entityList["Moon"]->SetScale(glm::vec3(0.000001f));
+
+
+    SceneNode* node_earth = sceneNodeList["node2"];
+    node_earth->SetPosition(glm::vec3(3.0,0.0,0.0));
+
+    SceneNode* node_Moon = sceneNodeList["node3"];
+    node_Moon->SetPosition(glm::vec3(1.0, 0.0, 0.0));
+    node_Moon->SetRotation(glm::vec3(0.0, 0.0, 30.0f));
 
     Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
@@ -259,7 +276,20 @@ void testPBR(GLFWwindow* window) {
 
     DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
     directionalLightController = DirectionalLightController(light);
-    FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+    //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+    std::vector<std::string> faces
+    {
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg"
+    };
+
+    // 创建天空盒实例
+    Skybox skybox(faces);
+    CubeMapFBO cubeMapFBO(1024, 1024);
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -278,6 +308,7 @@ void testPBR(GLFWwindow* window) {
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
         glm::mat4 lightSpaceMatrix = ComputeLightSpaceMatrix(light, glm::vec3(0.0f));
+        skybox.Draw(camera);
 
         scene->OnImGuiTree();
 
@@ -287,8 +318,9 @@ void testPBR(GLFWwindow* window) {
         PBRshader->setUniform1i("numPointLights", pointLightID.size());
         PBRshader->Unbind();
 
+        
         scene->SetDirectionalLight(light);
-
+        /*
         depthFBO.Bind();
 
         ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -301,16 +333,16 @@ void testPBR(GLFWwindow* window) {
         depthShader->Unbind();
 
         depthFBO.Unbind();
-
-        ViewPortInit(width, height);
+        */
+        //ViewPortInit(width, height);
 
         PBRshader->Bind();
-        depthFBO.BindTexture(7, FrameBuffer::DEPTH_ATTACHMENT);
+        //depthFBO.BindTexture(7, FrameBuffer::DEPTH_ATTACHMENT);
         PBRshader->setUniform1i("ShadowMap", 7);
         PBRshader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
         scene->BindLight(*PBRshader, glm::mat4(1.0f));
         scene->Render(*PBRshader, camera);
-        scene->Update(0.0);
+        scene->Update(deltaTime);
         PBRshader->Unbind();
 
         ImGui::Render();
