@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
+#define Y_LOCKED false
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
@@ -56,7 +57,7 @@ void Camera::SetTarget(const glm::vec3& target)
 void Camera::ProcessKeyboard(char pressedKey, float deltaTime, float velocity)
 {
     glm::vec3 orientation = m_TargetPosition - m_CameraPosition;
-    orientation.y = 0.0f;
+    if(Y_LOCKED) orientation.y = 0.0f;
     glm::vec3 z_Axis = glm::normalize(orientation);
     glm::vec3 x_Axis = glm::normalize(glm::cross(z_Axis, m_UpDirection));
     if (pressedKey == 'W') {

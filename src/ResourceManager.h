@@ -9,7 +9,7 @@ class ResourceManager {
 public:
     template<typename T>
     T* Load(const std::string& filePath);         // 从文件加载资源
-    MeshComponent* LoadOBJ(const std::string& filePath, const std::string fileName);
+    MeshComponent* LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate);
     PBRMaterial* LoadPBRMaterial(const std::string& filePath);
 
     template<typename T>

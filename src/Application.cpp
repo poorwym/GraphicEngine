@@ -34,6 +34,7 @@
 DirectionalLightController directionalLightController;
 
 
+
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
@@ -163,7 +164,7 @@ int main(void)
 
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1920, 1080, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -218,25 +219,27 @@ void testPBR(GLFWwindow* window) {
     const std::string filePath = "res/Obj/sun/";
     const std::string fileName = "sol.obj";
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/sun/", "sol.obj");
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/sun/", "sol.obj", 0.00001f);
     sceneManager.AddEntity(meshComponent1, "Sun", "node1", nullptr);
-    entityList["Sun"]->SetScale(glm::vec3(0.00001f));
     //load earth
-    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/earth/", "sol.obj");
+    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/earth/", "sol.obj", 0.000005f);
     sceneManager.AddEntity(meshComponent2, "Earth", "node2", sceneNodeList["node1"]);
-    entityList["Earth"]->SetScale(glm::vec3(0.000005f));
 
-    MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/moon/", "sol.obj");
+    MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/moon/", "sol.obj", 0.000001f);
     sceneManager.AddEntity(meshComponent3, "Moon", "node3", sceneNodeList["node2"]);
-    entityList["Moon"]->SetScale(glm::vec3(0.000001f));
-
+    //load venus
+    MeshComponent* meshComponent4 = resourceManager.LoadOBJ("res/Obj/venus/", "sol.obj", 0.000003f);
+    sceneManager.AddEntity(meshComponent4, "Venus", "node4", sceneNodeList["node1"]);
 
     SceneNode* node_earth = sceneNodeList["node2"];
     node_earth->SetPosition(glm::vec3(3.0,0.0,0.0));
 
     SceneNode* node_Moon = sceneNodeList["node3"];
-    node_Moon->SetPosition(glm::vec3(1.0, 0.0, 0.0));
+    node_Moon->SetPosition(glm::vec3(0.5, 0.0, 0.0));
     node_Moon->SetRotation(glm::vec3(0.0, 0.0, 30.0f));
+
+    SceneNode* node_Venus = sceneNodeList["node4"];
+    node_Venus->SetPosition(glm::vec3(2.0, 0.0, 0.0));
 
     Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
@@ -260,8 +263,8 @@ void testPBR(GLFWwindow* window) {
 
 
     // 定义视口宽高
-    float width = 1920.0f;
-    float height = 1080.0f;
+    float width = WINDOW_WIDTH;
+    float height = WINDOW_HEIGHT;
     float aspect_ratio = width / height;
 
     // 定义视野角度（以弧度为单位）、近平面和远平面
@@ -290,7 +293,7 @@ void testPBR(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     CubeMapFBO cubeMapFBO(1024, 1024);
-    DepthMapFBO depthMapFBO(1920, 1080);
+    DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     while (!glfwWindowShouldClose(window))
     {

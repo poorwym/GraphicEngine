@@ -35,8 +35,8 @@ namespace test
         };
 
         // 定义视口宽高
-        float width = 1920.0f;
-        float height = 1080.0f;
+        float width = WINDOW_WIDTH;
+        float height = WINDOW_HEIGHT;
         float aspect_ratio = width / height;
 
         // 定义视野角度（以弧度为单位）、近平面和远平面

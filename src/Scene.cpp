@@ -21,28 +21,28 @@ void Scene::save(const std::string& filePath)
 {
 
 }
-
+static void PlanetRotate(SceneNode* node, float rate, float deltaTime, float& angle) {
+	angle += rate * deltaTime;
+	if (angle > 180) {
+		angle -= 360;
+	}
+	node->SetRotation(glm::vec3(0.0f, angle, 0.0f));
+}
 void Scene::Update(float deltaTime)
 {
 	m_DirLight->Update(deltaTime);
 	//earth
 	SceneNode* node_earth = sceneNodeList["node2"];
-	static float angleEarth = 0.0f;
-	angleEarth += 50 * deltaTime;
-	if (angleEarth > 180) {
-		angleEarth -= 360;
-	}
-	node_earth->SetRotation(glm::vec3(0.0f, angleEarth, 0.0f));
+	static float angle1 = 0.0f;
+	PlanetRotate(node_earth, 50, deltaTime, angle1);
 	//moon
 	SceneNode* node_Moon = sceneNodeList["node3"];
-	
-	static float angleMoon = 0.0f;
-
-	angleMoon += 300 * deltaTime;
-	if (angleMoon > 180) {
-		angleMoon -= 360;
-	}
-	node_Moon->SetRotation(glm::vec3(0.0f, angleMoon, 0.0f));
+	static float angle2 = 0.0f;
+	PlanetRotate(node_Moon, 300, deltaTime, angle2);
+	//Venus
+	SceneNode* node_Venus = sceneNodeList["node4"];
+	static float angle3 = 0.0f;
+	PlanetRotate(node_Venus, 200, deltaTime, angle3);
 
 	for (auto& pair : m_SceneNodes)
 	{

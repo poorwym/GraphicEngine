@@ -19,7 +19,7 @@ struct Vertex {
 class Mesh {
 public:
     Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
-    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial);
+    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial, float scaleRate);
     ~Mesh();
 
     void Bind() const;                         // 绑定 VAO，准备绘制

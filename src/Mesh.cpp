@@ -1,8 +1,12 @@
 #include "Mesh.h"
 #include "Texture.h"
 #include "depthMap.h"
-static void shrink(std::vector<Vertex>& vertices) {
-    ;
+static void scale(std::vector<Vertex>& vertices, float scaleRate) {
+    for (Vertex& vertex : vertices) {
+        vertex.Position.x *= scaleRate;
+        vertex.Position.y *= scaleRate;
+        vertex.Position.z *= scaleRate;
+    }
 }
 
 static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
@@ -68,9 +72,10 @@ Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indic
     m_VAO->AddBuffer(*m_VertexBuffer, layout);
 }
 
-Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial)
+Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial, float scaleRate)
     :m_PBRMaterial(PBRmaterial),m_Material(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
+    scale(vertices, scaleRate);
     CalcTangent(vertices, indices);//º∆À„«–œﬂ
     m_Vertices = vertices;
     m_Indices = indices;

@@ -7,7 +7,7 @@
 #endif 
 #include "TinyOBJLoader/tiny_obj_loader.h"
 
-MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::string fileName)
+MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate = 1)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -88,7 +88,7 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
         std::vector<Vertex>& vertices = materialVerticesMap[materialID];
         std::vector<unsigned int>& indices = materialIndicesMap[materialID];
 
-        Mesh* mesh = new Mesh(vertices, indices, loadedMaterials[materialID]);
+        Mesh* mesh = new Mesh(vertices, indices, loadedMaterials[materialID], scaleRate);
         meshComponent->AddMesh(mesh);
     }
 
