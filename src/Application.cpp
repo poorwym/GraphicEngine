@@ -290,6 +290,8 @@ void testPBR(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     CubeMapFBO cubeMapFBO(1024, 1024);
+    DepthMapFBO depthMapFBO(1920, 1080);
+
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -320,26 +322,25 @@ void testPBR(GLFWwindow* window) {
 
         
         scene->SetDirectionalLight(light);
-        /*
-        depthFBO.Bind();
-
-        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
-
+        //bind
+        depthMapFBO.Bind();
         depthShader->Bind();
-        depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
-        scene->BindLight(*depthShader, glm::mat4(1.0f));
+        glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
+        depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
         scene->RenderDepthMap(*depthShader);
         scene->Update(0.0);
-        depthShader->Unbind();
 
-        depthFBO.Unbind();
-        */
+        //Unbind
+        depthShader->Unbind();
+        depthMapFBO.Unbind();
         //ViewPortInit(width, height);
 
+        depthMapFBO.BindTexture(10);
+
         PBRshader->Bind();
-        //depthFBO.BindTexture(7, FrameBuffer::DEPTH_ATTACHMENT);
+        
         PBRshader->setUniform1i("ShadowMap", 7);
-        PBRshader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
+        PBRshader->setUniform1i("ViewDepthMap", 10);
         scene->BindLight(*PBRshader, glm::mat4(1.0f));
         scene->Render(*PBRshader, camera);
         scene->Update(deltaTime);

@@ -60,11 +60,11 @@ void Entity::Scale(glm::vec3 scale)
 	m_LocalTransform = transform * m_LocalTransform;
 }
 
-void Entity::RenderDepthMap(Shader& shader, glm::mat4 globalTransform, glm::vec3 lightDir)
+void Entity::RenderDepthMap(Shader& shader, glm::mat4 globalTransform)
 {
 	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
 	for (auto& pair : m_Components) {
-		pair.second -> RenderDepthMap(shader, m_GlobalTransform, lightDir);
+		pair.second -> RenderDepthMap(shader, m_GlobalTransform);
 	}
 }
 

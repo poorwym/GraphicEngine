@@ -24,6 +24,7 @@ protected:
 };
 
 class DepthMapFBO : public FrameBuffer {
+public:
     DepthMapFBO(unsigned int width, unsigned int height);
     ~DepthMapFBO();
     void BindTexture(unsigned int slot) const override;

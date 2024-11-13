@@ -109,15 +109,8 @@ void Mesh::Unbind() const
     m_IndexBuffer->Unbind();
 }
 
-void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 lightDir)
+void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform)
 {
-
-    glm::vec3 m_LightDir = glm::normalize(lightDir);
-
-
-    shader.Bind();
-    shader.setUniformMat4f("lightSpaceMatrix", m_LightSpaceMatrix);
-
     if (m_PBRMaterial) m_PBRMaterial->Bind(shader);
     if (m_Material) m_Material->Bind(shader);
 
@@ -126,7 +119,6 @@ void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform, glm::vec3 li
 
     if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
     if (m_Material) m_Material->Unbind(shader);
-
 }
 
 void Mesh::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)

@@ -74,7 +74,7 @@ void Scene::RenderDepthMap(Shader& shader)
 {
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
-		node->RenderDepthMap(shader, glm::mat4(1.0f), m_DirLight->GetLightDir());
+		node->RenderDepthMap(shader, glm::mat4(1.0f));
 	}
 }
 

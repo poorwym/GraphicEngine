@@ -8,7 +8,7 @@ layout(location = 3) in vec3 a_Tangent;
 layout(location = 4) in vec3 a_Bitangent;
 
 uniform mat4 u_MVP;
-uniform mat4 u_Model;    
+uniform mat4 u_Model;
 
 out VS_OUT {
     vec3 FragPos;
@@ -75,6 +75,7 @@ uniform sampler2D HeightMap;       // 高度贴图（可选）      slot6
 uniform sampler2D ShadowMap;       // 阴影贴图              slot7
 uniform sampler2D DissolveTextureMap; //透明度贴图           slot8 
 uniform sampler2D SpecularExponentTextureMap; //镜面指数贴图  slot9
+uniform sampler2D ViewDepthMap; //视觉深度贴图 slot 10
 
 // 光源结构体
 struct DirectionalLight
@@ -107,14 +108,14 @@ in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
 const float PI = 3.14159265359;
 
 
-
+bool IsVisible(vec3 fragPos);
 float ShadowCalculation(vec4 fragPosLightSpace);
 // 主函数
 void main()
 {
     vec3 AmbientColor = texture(AlbedoMap, fs_in.TexCoords).rgb;
     float dirShadow = ShadowCalculation(FragPosLightSpace);
-    FragColor = vec4(AmbientColor ,1.0);
+    if(IsVisible(fs_in.FragPos)) FragColor = vec4(AmbientColor ,1.0);
 }
 
 
@@ -180,4 +181,15 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     if(projCoords.z > 1.0)
         shadow = 0.0;
     return shadow;
+}
+
+bool IsVisible(vec3 fragPos){
+    vec3 projCoords = fragPos;
+    // 变换到 [0,1] 范围
+    projCoords = projCoords * 0.5 + 0.5;
+    // 获取当前片段的深度值
+    float closestDepth = texture(ViewDepthMap, projCoords.xy).r;
+    // 获取当前片段在光空间的深度值
+    float currentDepth = projCoords.z;
+    return closestDepth == currentDepth;
 }
