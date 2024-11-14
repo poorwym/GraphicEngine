@@ -28,6 +28,7 @@ public:
     virtual void Bind(Shader& shader, glm::mat4 globalTransform) {};
     virtual std::string GetType() const { return "Light"; };
     virtual void Update(float deltaTime);
+    virtual glm::mat4 ComputeLightSpaceMatrix(glm::vec3 sceneCenter) { return glm::mat4(0.0f); };
 };
 
 class DirectionalLight : public Light {
@@ -41,6 +42,7 @@ public:
     void Bind(Shader& shader, glm::mat4 globalTransform) override;
     std::string GetType() const override { return "DirectionalLight"; };
     void Update(float deltaTime) override;
+    glm::mat4 ComputeLightSpaceMatrix(glm::vec3 sceneCenter) override;
 };
 
 class PointLight : public Light {

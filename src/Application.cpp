@@ -33,8 +33,6 @@
 #include"depthMap.h"
 DirectionalLightController directionalLightController;
 
-
-
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
@@ -42,112 +40,23 @@ float lastFrame = 0.0f; // 上一帧的时间
 CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
-void test2D(GLFWwindow* window);
-void test3D(GLFWwindow* window);
 void testPBR(GLFWwindow* window);
-void ViewPortInit(int width, int height) {
+static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     GLCall(glClear(GL_DEPTH_BUFFER_BIT));
 }
 // 鼠标移动回调函数
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
     if (cameraController)
         cameraController->ProcessMouseInput(static_cast<float>(xpos), static_cast<float>(ypos));
 }
 
 // 鼠标滚轮回调函数
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
-}
-
-
-std::vector<Vertex> vertices = {
-    // 前面
-    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // 前上左
-    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // 前上右
-    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},  // 前下左
-    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // 前下右
-
-    // 后面
-    {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // 后上左
-    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // 后上右
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 后下左
-    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // 后下右
-
-    // 左面
-    {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 后上左
-    {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 前上左
-    {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 后下左
-    {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 前下左
-
-    // 右面
-    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 后上右
-    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 前上右
-    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 后下右
-    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 前下右
-
-    // 上面
-    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 后上左
-    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 后上右
-    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 前上左
-    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 前上右
-
-    // 下面
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // 后下左
-    {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // 后下右
-    {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // 前下左
-    {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // 前下右
-};
-
-// 立方体的索引
-std::vector<unsigned int> indices = {
-    // 前面
-    0, 1, 2,
-    2, 1, 3,
-
-    // 后面
-    4, 5, 6,
-    6, 5, 7,
-
-    // 左面
-    8, 9, 10,
-    10, 9, 11,
-
-    // 右面
-    12, 13, 14,
-    14, 13, 15,
-
-    // 上面
-    16, 17, 18,
-    18, 17, 19,
-
-    // 下面
-    20, 21, 22,
-    22, 21, 23,
-};
-
-glm::mat4 ComputeLightSpaceMatrix(DirectionalLight* light, const glm::vec3& sceneCenter)
-{
-    glm::vec3 lightDir = glm::normalize(light->GetLightDir());
-    float sceneRadius = 20.0f; // 根据场景规模调整
-    float distanceFromScene = sceneRadius * 2.0f;
-    glm::vec3 lightPos = sceneCenter - lightDir * distanceFromScene;
-
-    // 选择上向量，避免与光方向平行
-    glm::vec3 up = (glm::abs(lightDir.x) < 0.001f && glm::abs(lightDir.z) < 0.001f)
-        ? glm::vec3(0.0f, 0.0f, 1.0f)
-        : glm::vec3(0.0f, 1.0f, 0.0f);
-
-    glm::mat4 lightView = glm::lookAt(lightPos, sceneCenter, up);
-    float orthoSize = sceneRadius * 2.0f;
-    float nearPlane = 0.1f;
-    float farPlane = distanceFromScene + sceneRadius * 2.0f;
-
-    glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, nearPlane, farPlane);
-    return lightProjection * lightView;
 }
 
 int main(void)
@@ -204,35 +113,26 @@ int main(void)
     // 初始化平台/渲染绑定
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
-    ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5倍
-
-    
-
+    ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
     testPBR(window);
 }
-
-void testPBR(GLFWwindow* window) {
-
-    Scene* scene = new Scene();
-    SceneManager sceneManager(scene);
-
-    const std::string filePath = "res/Obj/sun/";
-    const std::string fileName = "sol.obj";
+static void LoadModel(SceneManager& sceneManager) {
     //load sun
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/sun/", "sol.obj", 0.00001f);
     sceneManager.AddEntity(meshComponent1, "Sun", "node1", nullptr);
     //load earth
     MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/earth/", "sol.obj", 0.000005f);
     sceneManager.AddEntity(meshComponent2, "Earth", "node2", sceneNodeList["node1"]);
-
+    //load moon
     MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/moon/", "sol.obj", 0.000001f);
     sceneManager.AddEntity(meshComponent3, "Moon", "node3", sceneNodeList["node2"]);
     //load venus
     MeshComponent* meshComponent4 = resourceManager.LoadOBJ("res/Obj/venus/", "sol.obj", 0.000003f);
     sceneManager.AddEntity(meshComponent4, "Venus", "node4", sceneNodeList["node1"]);
-
+}
+static void InitModel() {
     SceneNode* node_earth = sceneNodeList["node2"];
-    node_earth->SetPosition(glm::vec3(3.0,0.0,0.0));
+    node_earth->SetPosition(glm::vec3(3.0, 0.0, 0.0));
 
     SceneNode* node_Moon = sceneNodeList["node3"];
     node_Moon->SetPosition(glm::vec3(0.5, 0.0, 0.0));
@@ -240,12 +140,16 @@ void testPBR(GLFWwindow* window) {
 
     SceneNode* node_Venus = sceneNodeList["node4"];
     node_Venus->SetPosition(glm::vec3(2.0, 0.0, 0.0));
+}
 
+void testPBR(GLFWwindow* window) {
+
+    Scene* scene = new Scene();
+    SceneManager sceneManager(scene);
+    LoadModel(sceneManager);
+    InitModel();
     Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-    /*
-    
-    */
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     PBRshader->Bind();
@@ -276,7 +180,6 @@ void testPBR(GLFWwindow* window) {
     camera.SetPosition(glm::vec3(1, 1, 3));
     cameraController = new CameraController(&camera, window);
 
-
     DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
     directionalLightController = DirectionalLightController(light);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -289,12 +192,11 @@ void testPBR(GLFWwindow* window) {
         "res/skybox/star.jpg",
         "res/skybox/star.jpg"
     };
-
     // 创建天空盒实例
     Skybox skybox(faces);
     CubeMapFBO cubeMapFBO(1024, 1024);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-
+    DepthMapFBO shadowMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -312,7 +214,6 @@ void testPBR(GLFWwindow* window) {
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-        glm::mat4 lightSpaceMatrix = ComputeLightSpaceMatrix(light, glm::vec3(0.0f));
         skybox.Draw(camera);
 
         scene->OnImGuiTree();
@@ -322,28 +223,35 @@ void testPBR(GLFWwindow* window) {
         PBRshader->Bind();
         PBRshader->setUniform1i("numPointLights", pointLightID.size());
         PBRshader->Unbind();
-
         
         scene->SetDirectionalLight(light);
-        //bind
+        //render shadow
+        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
+        shadowMapFBO.Bind();
+        depthShader->Bind();
+        glm::mat4 lightSpaceMatrix = light->ComputeLightSpaceMatrix(glm::vec3(0.0f));
+        depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);
+        scene->RenderDepthMap(*depthShader);
+        depthShader->Unbind();
+        shadowMapFBO.Unbind();
+        //bind shadowMap
+        shadowMapFBO.BindTexture(7);
+        //render visibility
+        ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         depthMapFBO.Bind();
         depthShader->Bind();
         glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
         depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
         scene->RenderDepthMap(*depthShader);
-        scene->Update(0.0);
-
-        //Unbind
         depthShader->Unbind();
         depthMapFBO.Unbind();
-        //ViewPortInit(width, height);
-
+        //bind visibilityMap
         depthMapFBO.BindTexture(10);
-
+        //render
         PBRshader->Bind();
-        
         PBRshader->setUniform1i("ShadowMap", 7);
         PBRshader->setUniform1i("ViewDepthMap", 10);
+        PBRshader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
         scene->BindLight(*PBRshader, glm::mat4(1.0f));
         scene->Render(*PBRshader, camera);
         scene->Update(deltaTime);

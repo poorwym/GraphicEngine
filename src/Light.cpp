@@ -49,6 +49,27 @@ void DirectionalLight::Update(float deltaTime)
 	m_LightSpecular = m_Intensity * m_Color;
 }
 
+glm::mat4 DirectionalLight::ComputeLightSpaceMatrix(glm::vec3 sceneCenter)
+{
+	glm::vec3 lightDir = m_LightDir;
+	float sceneRadius = 200.0f; // 根据场景规模调整
+	float distanceFromScene = sceneRadius * 2.0f;
+	glm::vec3 lightPos = sceneCenter - lightDir * distanceFromScene;
+
+	// 选择上向量，避免与光方向平行
+	glm::vec3 up = (glm::abs(lightDir.x) < 0.001f && glm::abs(lightDir.z) < 0.001f)
+		? glm::vec3(0.0f, 0.0f, 1.0f)
+		: glm::vec3(0.0f, 1.0f, 0.0f);
+
+	glm::mat4 lightView = glm::lookAt(lightPos, sceneCenter, up);
+	float orthoSize = sceneRadius * 2.0f;
+	float nearPlane = 0.1f;
+	float farPlane = distanceFromScene + sceneRadius * 2.0f;
+
+	glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, nearPlane, farPlane);
+	return lightProjection * lightView;
+}
+
 Light::Light(const std::string& name, glm::vec3 color, float intensity)
 	:m_Name(name), m_Color(color), m_Intensity(intensity)
 {

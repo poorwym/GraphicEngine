@@ -110,16 +110,41 @@ const float PI = 3.14159265359;
 
 bool IsVisible(vec3 fragPos);
 float ShadowCalculation(vec4 fragPosLightSpace);
+vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);
+vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);
+vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);
 // 主函数
 void main()
 {
-    vec3 AmbientColor = texture(AlbedoMap, fs_in.TexCoords).rgb;
+    vec3 finalColor = vec3(0.0);
+    vec3 albedo = texture(AlbedoMap, fs_in.TexCoords).rgb;// 本来的颜色
+    vec3 normal = hasNormalMap ? texture(NormalMap, fs_in.TexCoords).rgb : fs_in.Normal; // 法线
+    vec3 emission = hasEmissionMap ? texture(EmissionMap, fs_in.TexCoords).rgb : Emission; // 自发光
+    float roughness = hasRoughnessMap ? texture(RoughnessMap, fs_in.TexCoords).r : 0.5;
+    float metallic = hasMetallicMap ? texture(MetallicMap, fs_in.TexCoords).r : 0.0;
+    float AO = hasAO ? texture(AOMap, fs_in.TexCoords).r : 1.0;
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+
+    vec3 ambientColor = CalculateAmbientColor(albedo, directionalLight.lightAmbient, AO);
+    vec3 diffuseColor = CalculateDiffuseColor(albedo, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
+    vec3 specularColor = CalculateSpecularColor(albedo, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
     float dirShadow = ShadowCalculation(FragPosLightSpace);
-    if(IsVisible(fs_in.FragPos)) FragColor = vec4(AmbientColor ,1.0);
+
+    finalColor += ambientColor + (1 - dirShadow) * (diffuseColor + specularColor) + emission;
+    if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor,1.0);
 }
 
-
-
+vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO){
+    //ambient color
+    vec3 ambientColor = ambientLight * albedo * AO;
+    return ambientColor;
+}
+vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal){
+    vec3 N = normalize(normal);
+    vec3 L = normalize(lightDir);
+    vec3 diffuseColor = lightDiffuse * albedo * max(N * L, 0);
+    return diffuseColor;
+}
 
 // 几何遮蔽函数：Schlick-GGX
 float GeometrySchlickGGX(float NdotV, float roughness)
@@ -145,10 +170,36 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 }
 
 // Fresnel 方程：Schlick近似
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+vec3 fresnelSchlick(float cosTheta, float metallic, vec3 albedo)
 {
-    
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+float GGXDistribution(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic){
+    vec3 V = normalize(viewDir);
+    vec3 L = normalize(lightDir);
+    vec3 H = normalize(V + L);
+    vec3 N = normalize(normal);
+    vec3 F = fresnelSchlick(abs(dot(H, V)), metallic, albedo);
+    float G = GeometrySmith(N, V, L, roughness);
+    float D = GGXDistribution(N, H, roughness);
+    float NdotL = max(dot(N, L), 0.0);
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 specularColor = lightSpecular * F * D * G / max(4.0 * NdotL * NdotV, 0.001);
+    return specularColor;
 }
 
 const int sampleRate = 5;
@@ -185,8 +236,6 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
 bool IsVisible(vec3 fragPos){
     vec3 projCoords = fragPos;
-    // 变换到 [0,1] 范围
-    projCoords = projCoords * 0.5 + 0.5;
     // 获取当前片段的深度值
     float closestDepth = texture(ViewDepthMap, projCoords.xy).r;
     // 获取当前片段在光空间的深度值
