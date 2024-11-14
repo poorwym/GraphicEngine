@@ -2,7 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
-#define Y_LOCKED false
+#define Y_LOCKED true
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
@@ -54,27 +54,36 @@ void Camera::SetTarget(const glm::vec3& target)
     this->Update(0.0f);
 }
 
-void Camera::ProcessKeyboard(char pressedKey, float deltaTime, float velocity)
+void Camera::ProcessKeyboard(std::string pressedKey, float deltaTime, float velocity)
 {
     glm::vec3 orientation = m_TargetPosition - m_CameraPosition;
     if(Y_LOCKED) orientation.y = 0.0f;
     glm::vec3 z_Axis = glm::normalize(orientation);
     glm::vec3 x_Axis = glm::normalize(glm::cross(z_Axis, m_UpDirection));
-    if (pressedKey == 'W') {
+    glm::vec3 y_Axis = glm::normalize(glm::cross(x_Axis, z_Axis));
+    if (pressedKey == "W") {
         m_CameraPosition += z_Axis * velocity * m_Rate;
         m_TargetPosition += z_Axis * velocity * m_Rate;
     }                                        
-    if (pressedKey == 'S') {                 
+    if (pressedKey == "S") {
         m_CameraPosition -= z_Axis * velocity * m_Rate;
         m_TargetPosition -= z_Axis * velocity * m_Rate;
     }                                         
-    if (pressedKey == 'D') {                  
+    if (pressedKey == "D") {
         m_CameraPosition += x_Axis * velocity * m_Rate;
         m_TargetPosition += x_Axis * velocity * m_Rate;
     }                                       
-    if (pressedKey == 'A') {                
+    if (pressedKey == "A") {
         m_CameraPosition -= x_Axis * velocity * m_Rate;
         m_TargetPosition -= x_Axis * velocity * m_Rate;
+    }
+    if (pressedKey == "UP") {
+        m_CameraPosition += y_Axis * velocity * m_Rate;
+        m_TargetPosition += y_Axis * velocity * m_Rate;
+    }
+    if (pressedKey == "DOWN") {
+        m_CameraPosition -= y_Axis * velocity * m_Rate;
+        m_TargetPosition -= y_Axis * velocity * m_Rate;
     }
     this->Update(deltaTime);
 }

@@ -5,9 +5,9 @@ DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, flo
 {
 	m_Name = name;
 	m_LightDir = lightDir;
-	m_LightAmbient = m_Intensity * lightAmbient;
-	m_LightDiffuse = m_Intensity * lightDiffuse;
-	m_LightSpecular = m_Intensity * lightSpecular;
+	m_AmbientColor = lightAmbient;
+	m_DiffuseColor = lightDiffuse;
+    m_SpecularColor = lightSpecular;
 }
 DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightDir)
 	: Light(name, color, intensity)
@@ -44,9 +44,9 @@ void DirectionalLight::Bind(Shader& shader, glm::mat4 globalTransform)
 
 void DirectionalLight::Update(float deltaTime)
 {
-	m_LightAmbient = m_Intensity * m_Color;
-	m_LightDiffuse = m_Intensity * m_Color;
-	m_LightSpecular = m_Intensity * m_Color;
+	m_LightAmbient = m_AmbientColor;
+	m_LightDiffuse = m_Intensity * m_DiffuseColor;
+	m_LightSpecular = m_Intensity * m_SpecularColor;
 }
 
 glm::mat4 DirectionalLight::ComputeLightSpaceMatrix(glm::vec3 sceneCenter)
@@ -71,11 +71,11 @@ glm::mat4 DirectionalLight::ComputeLightSpaceMatrix(glm::vec3 sceneCenter)
 }
 
 Light::Light(const std::string& name, glm::vec3 color, float intensity)
-	:m_Name(name), m_Color(color), m_Intensity(intensity)
+	:m_Name(name), m_Color(color), m_Intensity(intensity), m_AmbientColor(color), m_DiffuseColor(color), m_SpecularColor(color)
 {
-	m_LightAmbient = m_Intensity * color;
-	m_LightDiffuse = m_Intensity * color;
-	m_LightSpecular = m_Intensity * color;
+	m_LightAmbient = m_Intensity * m_AmbientColor;
+	m_LightDiffuse = m_Intensity * m_DiffuseColor;
+	m_LightSpecular = m_Intensity * m_SpecularColor;
 }
 
 void Light::SetLightColor(glm::vec3 color)

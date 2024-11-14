@@ -27,13 +27,17 @@ void CameraController::ProcessKeyboardInput(float deltaTime)
 
     // ¼ì²é°´¼ü×´Ì¬
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera->ProcessKeyboard('W', deltaTime, velocity);
+        camera->ProcessKeyboard("W", deltaTime, velocity);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera->ProcessKeyboard('S', deltaTime, velocity);
+        camera->ProcessKeyboard("S", deltaTime, velocity);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera->ProcessKeyboard('A', deltaTime, velocity);
+        camera->ProcessKeyboard("A", deltaTime, velocity);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera->ProcessKeyboard('D', deltaTime, velocity);
+        camera->ProcessKeyboard("D", deltaTime, velocity);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera->ProcessKeyboard("UP", deltaTime, velocity);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera->ProcessKeyboard("DOWN", deltaTime, velocity);
 }
 
 void CameraController::ProcessMouseInput(float xpos, float ypos)

@@ -29,22 +29,11 @@ static void PlanetRotate(SceneNode* node, float rate, float deltaTime, float& an
 	node->SetRotation(glm::vec3(0.0f, angle, 0.0f));
 }
 static void StaticUpdate(float deltaTime) {
-	//earth
-	SceneNode* node_earth = sceneNodeList["node2"];
-	static float angle1 = 0.0f;
-	PlanetRotate(node_earth, 30, deltaTime, angle1);
-	//moon
-	SceneNode* node_Moon = sceneNodeList["node3"];
-	static float angle2 = 0.0f;
-	PlanetRotate(node_Moon, 150, deltaTime, angle2);
-	//Venus
-	SceneNode* node_Venus = sceneNodeList["node4"];
-	static float angle3 = 0.0f;
-	PlanetRotate(node_Venus, 100, deltaTime, angle3);
+	return;
 }
 void Scene::Update(float deltaTime)
 {
-	//m_DirLight->Update(deltaTime);
+	m_DirLight->Update(deltaTime);
 	StaticUpdate(deltaTime);
 	for (auto& pair : m_SceneNodes)
 	{

@@ -23,7 +23,7 @@ public:
     void SetPosition(const glm::vec3& position);
     void SetRotation(const float& yaw, const float& pitch);
     void SetTarget(const glm::vec3& target);
-    void ProcessKeyboard(char pressedKey, float deltaTime, float velocity);// ¼üÅÌ¿ØÖÆ
+    void ProcessKeyboard(std::string pressedKey, float deltaTime, float velocity);// ¼üÅÌ¿ØÖÆ
     void ProcessMouseMovement(float xOffset, float yOffset);
     void ProcessMouseScroll(float zoomAngle);
     void Bind(Shader& shader);

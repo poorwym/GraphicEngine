@@ -118,28 +118,12 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/sun/", "sol.obj", 0.00001f);
-    sceneManager.AddEntity(meshComponent1, "Sun", "node1", nullptr);
-    //load earth
-    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/earth/", "sol.obj", 0.000005f);
-    sceneManager.AddEntity(meshComponent2, "Earth", "node2", sceneNodeList["node1"]);
-    //load moon
-    MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/moon/", "sol.obj", 0.000001f);
-    sceneManager.AddEntity(meshComponent3, "Moon", "node3", sceneNodeList["node2"]);
-    //load venus
-    MeshComponent* meshComponent4 = resourceManager.LoadOBJ("res/Obj/venus/", "sol.obj", 0.000003f);
-    sceneManager.AddEntity(meshComponent4, "Venus", "node4", sceneNodeList["node1"]);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/6e48z1kc7r40-bugatti/bugatti/", "bugatti.obj", 1.0f);
+    sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
+  
 }
 static void InitModel() {
-    SceneNode* node_earth = sceneNodeList["node2"];
-    node_earth->SetPosition(glm::vec3(3.0, 0.0, 0.0));
-
-    SceneNode* node_Moon = sceneNodeList["node3"];
-    node_Moon->SetPosition(glm::vec3(0.5, 0.0, 0.0));
-    node_Moon->SetRotation(glm::vec3(0.0, 0.0, 30.0f));
-
-    SceneNode* node_Venus = sceneNodeList["node4"];
-    node_Venus->SetPosition(glm::vec3(2.0, 0.0, 0.0));
+    return;
 }
 
 void testPBR(GLFWwindow* window) {
@@ -180,7 +164,7 @@ void testPBR(GLFWwindow* window) {
     camera.SetPosition(glm::vec3(1, 1, 3));
     cameraController = new CameraController(&camera, window);
 
-    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f), glm::vec3(0.2f), _WHITE, _WHITE);
     directionalLightController = DirectionalLightController(light);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     std::vector<std::string> faces

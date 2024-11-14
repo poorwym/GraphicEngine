@@ -10,6 +10,9 @@ protected:
     glm::vec3 m_LightAmbient;   // 环境光强度
     glm::vec3 m_LightDiffuse;   // 漫反射光强度
     glm::vec3 m_LightSpecular;  // 镜面光强度
+    glm::vec3 m_AmbientColor;
+    glm::vec3 m_DiffuseColor;
+    glm::vec3 m_SpecularColor;
     std::string m_Name;
 public:
     Light(const std::string& name,glm::vec3 color, float intensity);

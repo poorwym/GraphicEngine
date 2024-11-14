@@ -117,7 +117,9 @@ vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3
 void main()
 {
     vec3 finalColor = vec3(0.0);
-    vec3 albedo = texture(AlbedoMap, fs_in.TexCoords).rgb;// 本来的颜色
+    vec3 ambient = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Ambient;// 本来的颜色
+    vec3 diffuse = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Diffuse;// 漫反射颜色
+    vec3 specular = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Specular;// 镜面反射颜色
     vec3 normal = hasNormalMap ? texture(NormalMap, fs_in.TexCoords).rgb : fs_in.Normal; // 法线
     vec3 emission = hasEmissionMap ? texture(EmissionMap, fs_in.TexCoords).rgb : Emission; // 自发光
     float roughness = hasRoughnessMap ? texture(RoughnessMap, fs_in.TexCoords).r : 0.5;
@@ -125,24 +127,25 @@ void main()
     float AO = hasAO ? texture(AOMap, fs_in.TexCoords).r : 1.0;
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
 
-    vec3 ambientColor = CalculateAmbientColor(albedo, directionalLight.lightAmbient, AO);
-    vec3 diffuseColor = CalculateDiffuseColor(albedo, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
-    vec3 specularColor = CalculateSpecularColor(albedo, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
+    vec3 ambientColor = CalculateAmbientColor(ambient, directionalLight.lightAmbient, AO);
+    vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
+    vec3 specularColor = CalculateSpecularColor(specular, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
     float dirShadow = ShadowCalculation(FragPosLightSpace);
 
     finalColor += ambientColor + (1 - dirShadow) * (diffuseColor + specularColor) + emission;
+    finalColor = pow(finalColor, vec3(1.0/2.2));
     if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor,1.0);
 }
 
-vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO){
+vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
     //ambient color
-    vec3 ambientColor = ambientLight * albedo * AO;
+    vec3 ambientColor = lightAmbient * ambient * AO;
     return ambientColor;
 }
-vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal){
+vec3 CalculateDiffuseColor(vec3 diffuse, vec3 lightDiffuse, vec3 lightDir, vec3 normal){
     vec3 N = normalize(normal);
     vec3 L = normalize(lightDir);
-    vec3 diffuseColor = lightDiffuse * albedo * max(N * L, 0);
+    vec3 diffuseColor = lightDiffuse * diffuse * max(N * L, 0);
     return diffuseColor;
 }
 
@@ -188,12 +191,12 @@ float GGXDistribution(vec3 N, vec3 H, float roughness)
 
     return nom / denom;
 }
-vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic){
+vec3 CalculateSpecularColor(vec3 specular, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic){
     vec3 V = normalize(viewDir);
     vec3 L = normalize(lightDir);
     vec3 H = normalize(V + L);
     vec3 N = normalize(normal);
-    vec3 F = fresnelSchlick(abs(dot(H, V)), metallic, albedo);
+    vec3 F = fresnelSchlick(abs(dot(H, V)), metallic, specular);
     float G = GeometrySmith(N, V, L, roughness);
     float D = GGXDistribution(N, H, roughness);
     float NdotL = max(dot(N, L), 0.0);
