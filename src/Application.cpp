@@ -118,7 +118,7 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/6e48z1kc7r40-bugatti/bugatti/", "bugatti.obj", 1.0f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 3.0f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
   
 }
@@ -164,7 +164,7 @@ void testPBR(GLFWwindow* window) {
     camera.SetPosition(glm::vec3(1, 1, 3));
     cameraController = new CameraController(&camera, window);
 
-    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f), glm::vec3(0.2f), _WHITE, _WHITE);
+    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f), _WHITE, _WHITE, _WHITE);
     directionalLightController = DirectionalLightController(light);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     std::vector<std::string> faces
