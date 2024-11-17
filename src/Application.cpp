@@ -118,53 +118,56 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 3.0f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 6.0f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
-  
+    PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
+    sceneManager.AddPointLight(pointLight, "node2", nullptr);
 }
 static void InitModel() {
     return;
 }
 
 void testPBR(GLFWwindow* window) {
-
-    Scene* scene = new Scene();
-    SceneManager sceneManager(scene);
-    LoadModel(sceneManager);
-    InitModel();
-    Shader* PBRshader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-    //这段真的非常非常重要，忘记绑定了。
-    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
-    PBRshader->Bind();
-    PBRshader->setUniform1i("AlbedoMap", 0);
-    PBRshader->setUniform1i("NormalMap", 1);
-    PBRshader->setUniform1i("MetallicMap", 2);
-    PBRshader->setUniform1i("RoughnessMap", 3);
-    PBRshader->setUniform1i("AOMap", 4);
-    PBRshader->setUniform1i("EmissionMap", 5);
-    PBRshader->setUniform1i("HeightMap", 6);
-    PBRshader->setUniform1i("DissolveTextureMap", 8);
-    PBRshader->setUniform1i("ShadowMap", 7);
-    PBRshader->setUniform1i("SpecularExponentTextureMap", 9);
-    PBRshader->Unbind();
-
-
     // 定义视口宽高
     float width = WINDOW_WIDTH;
     float height = WINDOW_HEIGHT;
     float aspect_ratio = width / height;
 
+
     // 定义视野角度（以弧度为单位）、近平面和远平面
     float fov = 30.0f; // 30度视野角
-    float near_plane = 0.1f;
-    float far_plane = 100.0f;
+    float near_plane = NEAR_PLANE;
+    float far_plane = FAR_PLANE;
 
     Camera camera(fov, aspect_ratio, near_plane, far_plane);
-    camera.SetPosition(glm::vec3(1, 1, 3));
+    camera.SetPosition(glm::vec3(0, 2, 5));
     cameraController = new CameraController(&camera, window);
 
-    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f), _WHITE, _WHITE, _WHITE);
+    Scene* scene = new Scene();
+    SceneManager sceneManager(scene);
+    LoadModel(sceneManager);
+    InitModel();
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+    //这段真的非常非常重要，忘记绑定了。
+    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+    mainShader->Bind();
+    mainShader->setUniform1i("AlbedoMap", 0);
+    mainShader->setUniform1i("NormalMap", 1);
+    mainShader->setUniform1i("MetallicMap", 2);
+    mainShader->setUniform1i("RoughnessMap", 3);
+    mainShader->setUniform1i("AOMap", 4);
+    mainShader->setUniform1i("EmissionMap", 5);
+    mainShader->setUniform1i("HeightMap", 6);
+    mainShader->setUniform1i("DissolveTextureMap", 8);
+    mainShader->setUniform1i("ShadowMap", 7);
+    mainShader->setUniform1i("SpecularExponentTextureMap", 9);
+    mainShader->setUniform1f("farPlane", far_plane);
+    mainShader->Unbind();
+
+
+    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
     directionalLightController = DirectionalLightController(light);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     std::vector<std::string> faces
@@ -178,9 +181,7 @@ void testPBR(GLFWwindow* window) {
     };
     // 创建天空盒实例
     Skybox skybox(faces);
-    CubeMapFBO cubeMapFBO(1024, 1024);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    DepthMapFBO shadowMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -204,22 +205,13 @@ void testPBR(GLFWwindow* window) {
 
         cameraController->Update(deltaTime);
 
-        PBRshader->Bind();
-        PBRshader->setUniform1i("numPointLights", pointLightID.size());
-        PBRshader->Unbind();
+        mainShader->Bind();
+        mainShader->setUniform1i("numPointLights", pointLightID.size());
+        mainShader->Unbind();
         
         scene->SetDirectionalLight(light);
-        //render shadow
-        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
-        shadowMapFBO.Bind();
-        depthShader->Bind();
-        glm::mat4 lightSpaceMatrix = light->ComputeLightSpaceMatrix(glm::vec3(0.0f));
-        depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);
-        scene->RenderDepthMap(*depthShader);
-        depthShader->Unbind();
-        shadowMapFBO.Unbind();
-        //bind shadowMap
-        shadowMapFBO.BindTexture(7);
+        scene->RenderShadowMap(depthShader, cubeDepthShader);
+
         //render visibility
         ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         depthMapFBO.Bind();
@@ -231,15 +223,20 @@ void testPBR(GLFWwindow* window) {
         depthMapFBO.Unbind();
         //bind visibilityMap
         depthMapFBO.BindTexture(10);
+
         //render
-        PBRshader->Bind();
-        PBRshader->setUniform1i("ShadowMap", 7);
-        PBRshader->setUniform1i("ViewDepthMap", 10);
-        PBRshader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
-        scene->BindLight(*PBRshader, glm::mat4(1.0f));
-        scene->Render(*PBRshader, camera);
+        mainShader->Bind();
+        mainShader->setUniform1i("ShadowMap", 7);
+        mainShader->setUniform1i("ViewDepthMap", 10);
+        for(int i=0; i < 4; i++)
+        {
+            mainShader->setUniform1i("PointShadowMap["+std::to_string(i) + "]", 11 + i);
+        }
+        mainShader->setUniformMat4f("lightSpaceMatrix", light -> ComputeLightSpaceMatrix(glm::vec3(0.0f)));
+        scene->BindLight(*mainShader, glm::mat4(1.0f));
+        scene->Render(*mainShader, camera);
         scene->Update(deltaTime);
-        PBRshader->Unbind();
+        mainShader->Unbind();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

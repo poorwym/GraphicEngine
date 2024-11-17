@@ -20,6 +20,7 @@ public:
     void SetDirectionalLight(DirectionalLight* dirLight);
     void BindLight(Shader& shader, glm::mat4 globalTransform);
     void RenderDepthMap(Shader& shader);
+    void RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader);
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // É¾³ýÊµÌå
     void OnImGuiTree();

@@ -1,3 +1,2 @@
 #pragma once
-#define SHADOW_WIDTH WINDOW_WIDTH
-#define SHADOW_HEIGHT 1080
+

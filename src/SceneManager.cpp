@@ -75,4 +75,5 @@ void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, S
     pointLightID[light] = pointLightList.size() - 1;
     PointLightController* pointLightController = new PointLightController(light);
     lightControllerList[light->GetName()] = pointLightController;
+    sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
 }

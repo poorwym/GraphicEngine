@@ -77,7 +77,7 @@ uniform sampler2D ShadowMap;       // 阴影贴图              slot7
 uniform sampler2D DissolveTextureMap; //透明度贴图           slot8 
 uniform sampler2D SpecularExponentTextureMap; //镜面指数贴图  slot9
 uniform sampler2D ViewDepthMap; //视觉深度贴图 slot 10
-uniform samplerCube PointShadowMap[4]; //点光源阴影贴图 slot 11
+uniform samplerCube PointShadowMap; //点光源阴影贴图 slot 11
 
 // 光源结构体
 struct DirectionalLight
@@ -115,47 +115,17 @@ float ShadowCalculation(vec4 fragPosLightSpace);
 vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);
 vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);
 vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);
-float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i);
+float PointShadowCalculation(vec3 fragPos, vec3 lightPos);
 // 主函数
 void main()
-{
-    vec3 finalColor = vec3(0.0);
-    vec3 ambient = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Diffuse;// 本来的颜色
-    vec3 diffuse = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Diffuse;// 漫反射颜色
-    vec3 specular = vec3(0.04); // 对于非金属材质
-    vec3 normal = hasNormalMap ? texture(NormalMap, fs_in.TexCoords).rgb : fs_in.Normal; // 法线
-    vec3 emission = hasEmissionMap ? texture(EmissionMap, fs_in.TexCoords).rgb : Emission; // 自发光
-    float roughness = hasRoughnessMap ? texture(RoughnessMap, fs_in.TexCoords).r : 0.5;
-    float metallic = hasMetallicMap ? texture(MetallicMap, fs_in.TexCoords).r : 0.0;
-    float AO = hasAO ? texture(AOMap, fs_in.TexCoords).r : 1.0;
-
-    vec3 viewDir = normalize(viewPos - fs_in.FragPos);    if(metallic > 0.0) {
-        specular = diffuse; // 对于金属材质，使用Albedo颜色作为F0
-        diffuse = vec3(0.0); // 金属没有漫反射
-    }
-
-    vec3 ambientColor = CalculateAmbientColor(ambient, directionalLight.lightAmbient, AO);
-    vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
-    vec3 specularColor = CalculateSpecularColor(specular, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
-    float dirShadow = ShadowCalculation(FragPosLightSpace);
-
-    finalColor += ambientColor + (1 - dirShadow) * (diffuseColor + specularColor) + emission;
+{  
+    vec3 finalColor = vec3(1.0);
     for(int i=0; i < numPointLights; i++)
     {
-        vec3 lightDir = pointLights[i].lightPos - fs_in.FragPos;
-        vec3 pointAmbient = CalculateAmbientColor(ambient, pointLights[i].lightAmbient, AO);
-        vec3 pointDiffuse = CalculateDiffuseColor(diffuse, pointLights[i].lightDiffuse, lightDir, normal);
-        vec3 pointSpecular = CalculateSpecularColor(specular, pointLights[i].lightSpecular, lightDir, normal, viewDir, roughness, metallic);
-        float distance = distance(fs_in.FragPos, pointLights[i].lightPos);
-        float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + pointLights[i].quadratic * (distance * distance));
-        float pointShadow = PointShadowCalculation(fs_in.FragPos, pointLights[i].lightPos, i);
-        pointAmbient = pointAmbient * attenuation;
-        pointDiffuse = pointDiffuse * attenuation;
-        pointSpecular = pointSpecular * attenuation;
-        finalColor += pointAmbient + (1 - pointShadow) * (pointDiffuse + pointSpecular);
+        float pointShadow = PointShadowCalculation(fs_in.FragPos, pointLights[i].lightPos);
+        finalColor += 1 - pointShadow;
     }
-    //finalColor = pow(finalColor, vec3(2.2));
-    if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor,1.0);
+    if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor, 1.0);
 }
 
 vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
@@ -228,7 +198,7 @@ vec3 CalculateSpecularColor(vec3 specular, vec3 lightSpecular, vec3 lightDir, ve
 
 const int sampleRate = 5;
 const float bias = 0.0005;
-float ShadowCalculation(vec4 fragPosLightSpace) //PCF
+float ShadowCalculation(vec4 fragPosLightSpace)//使用PCF技术
 {
     // 透视除法
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -258,7 +228,7 @@ float ShadowCalculation(vec4 fragPosLightSpace) //PCF
     return shadow;
 }
 
-float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
+float PointShadowCalculation(vec3 fragPos, vec3 lightPos) { //PCF
     vec3 lightToFragment = fragPos - lightPos;
     float distance = length(lightToFragment);
 
@@ -280,19 +250,9 @@ float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
                 // 生成偏移方向
                 vec3 sampleOffset = vec3(float(x), float(y), float(z)) * offset;
                 vec3 sampleDirOffset = normalize(sampleDir + sampleOffset);
-                float closestDepth = 0.0;
+
                 // 采样立方体贴图深度值
-                if(i == 0){
-                    closestDepth = texture(PointShadowMap[0], sampleDirOffset).r * farPlane;
-                }else if(i == 1){
-                    closestDepth = texture(PointShadowMap[1], sampleDirOffset).r * farPlane;
-                }
-                else if(i == 2){
-                    closestDepth = texture(PointShadowMap[2], sampleDirOffset).r * farPlane;
-                }
-                else if(i == 3){
-                    closestDepth = texture(PointShadowMap[3], sampleDirOffset).r * farPlane;
-                }
+                float closestDepth = texture(PointShadowMap, sampleDirOffset).r * farPlane;
 
                 // 如果当前深度大于最近深度，则在阴影中
                 if (currentDepth - bias > closestDepth) {

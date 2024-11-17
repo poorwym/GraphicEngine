@@ -69,6 +69,40 @@ void Scene::RenderDepthMap(Shader& shader)
 	}
 }
 
+void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
+{
+	depthShader->Bind();
+	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
+	depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);
+	m_DirLight->m_ShadowMapFBO->Bind();
+	RenderDepthMap(*depthShader);
+	depthShader->Unbind();
+	m_DirLight->m_ShadowMapFBO->Unbind();
+	//bind shadowMap
+	m_DirLight->m_ShadowMapFBO->BindTexture(7);
+
+	int count = 0;
+	for(auto& pair:pointLightList)
+	{
+		PointLight* pointlight = pair.second;
+		std::vector<glm::mat4> shadowMatrices = pointlight->ComputePointLightShadowMatrices(NEAR_PLANE, FAR_PLANE);
+		pointlight->m_CubeShadowMapFBO->Bind();
+		cubeDepthShader->Bind();
+		cubeDepthShader->setUniform1f("farPlane", FAR_PLANE);
+		cubeDepthShader->setUniformVec3f("lightPos", pointlight->GetLightPos());
+		for (unsigned int i = 0; i < 6; ++i) {
+			cubeDepthShader->setUniformMat4f("ShadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
+			pointlight->m_CubeShadowMapFBO->BindFace(i);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			RenderDepthMap(*cubeDepthShader);
+		}
+		cubeDepthShader->Unbind();
+		pointlight->m_CubeShadowMapFBO->Unbind();
+		pointlight->m_CubeShadowMapFBO->BindTexture(11 + count);
+		count++;
+	}
+}
+
 void Scene::Render(Shader& shader, Camera& camera)
 {
 	for (auto& pair : m_SceneNodes) {

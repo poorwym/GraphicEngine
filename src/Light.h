@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Shader.h"
+#include "FrameBuffer.h"
 
 class Light {
 protected:
@@ -38,6 +39,7 @@ class DirectionalLight : public Light {
 private:
     glm::vec3 m_LightDir;       // 方向光方向
 public:
+    DepthMapFBO* m_ShadowMapFBO;
     DirectionalLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightDir, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular);
     DirectionalLight(const std::string& name,glm::vec3 color, float intensity, glm::vec3 lightDir);
     void SetLightDir(glm::vec3 lightDir);
@@ -56,6 +58,7 @@ private:
     float m_Linear;     //线性衰减
     float m_Quadratic;  //二次方衰减
 public:
+    CubeMapFBO* m_CubeShadowMapFBO;
     PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos);
     PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular, float constant, float linear, float quadratic);
     std::string GetType() const override { return "PointLight"; };
@@ -69,4 +72,5 @@ public:
     void SetQuadratic(float quadratic);
     void Bind(Shader& shader, glm::mat4 globalTransform) override;  // 将光照数据传递给着色器
     void Update(float deltaTime) override;
+    std::vector<glm::mat4> ComputePointLightShadowMatrices(float nearPlane, float farPlane);
 };

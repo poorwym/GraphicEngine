@@ -62,7 +62,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);//获取编译信息长度,&length表示要获取的信息的长度
         char* message = (char*)alloca(length * sizeof(char));//分配内存
         glGetShaderInfoLog(id, length, &length, message);//获取编译信息，把编译信息传给message
-        std::cout << "Fail to compile " << (type == GL_VERTEX_SHADER ? "vertex " : "fragment ") << "shader " << std::endl;
+        std::cout << "Fail to compile " << (type == GL_VERTEX_SHADER ? "vertex " : "fragment ") << "shader :" << m_FilePath << std::endl;
         std::cout << message << std::endl;
         glDeleteShader(id);
         return 0;

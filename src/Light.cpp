@@ -1,18 +1,20 @@
 #include "Light.h"
 #include "SceneManager.h"
+#include "Macro.h"
 DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightDir, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular)
-	: Light(name, color, intensity)
+	: Light(name, color, intensity), m_ShadowMapFBO(nullptr)
 {
-	m_Name = name;
+	m_ShadowMapFBO = new DepthMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
 	m_LightDir = lightDir;
 	m_AmbientColor = lightAmbient;
 	m_DiffuseColor = lightDiffuse;
     m_SpecularColor = lightSpecular;
 }
 DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightDir)
-	: Light(name, color, intensity)
+	: Light(name, color, intensity), m_ShadowMapFBO(nullptr)
 {
 	m_LightDir = lightDir;
+	m_ShadowMapFBO = new DepthMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
 }
 /*uniform vec3 lightDir;       // 方向光方向
 uniform vec3 lightAmbient;   // 环境光强度
@@ -44,9 +46,9 @@ void DirectionalLight::Bind(Shader& shader, glm::mat4 globalTransform)
 
 void DirectionalLight::Update(float deltaTime)
 {
-	m_LightAmbient = m_AmbientColor;
-	m_LightDiffuse = m_Intensity * m_DiffuseColor;
-	m_LightSpecular = m_Intensity * m_SpecularColor;
+	m_LightAmbient = glm::vec3(0.8f);
+	m_LightDiffuse = m_Intensity * m_Color;
+	m_LightSpecular = m_Intensity * m_Color;
 }
 
 glm::mat4 DirectionalLight::ComputeLightSpaceMatrix(glm::vec3 sceneCenter)
@@ -93,20 +95,22 @@ void Light::Update(float deltaTime)
 }
 
 PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos)
-	: Light(name, color, intensity)
+	: Light(name, color, intensity),m_CubeShadowMapFBO(nullptr)
 {
+	m_CubeShadowMapFBO = new CubeMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
 	m_LightPos = lightPos;
 	m_LightAmbient = m_Intensity * color;
 	m_LightDiffuse = m_Intensity * color;
 	m_LightSpecular = m_Intensity * color;
-	m_Constant = 1.0f;
+	m_Constant = 0.5f;
 	m_Linear = 1.0f;
 	m_Quadratic = 1.0f;
 }
 
 PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular, float constant, float linear, float quadratic)
-	: Light(name, color, intensity)
+	: Light(name, color, intensity), m_CubeShadowMapFBO(nullptr)
 {
+	m_CubeShadowMapFBO = new CubeMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
 	m_LightPos = lightPos;
 	m_LightAmbient = m_Intensity * lightAmbient;
 	m_LightDiffuse = m_Intensity * lightDiffuse;
@@ -151,7 +155,19 @@ void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 
 void PointLight::Update(float deltaTime)
 {
-	m_LightAmbient = m_Intensity * m_Color;
+	m_LightAmbient = glm::vec3(0.6f);
 	m_LightDiffuse = m_Intensity * m_Color;
 	m_LightSpecular = m_Intensity * m_Color;
+}
+
+std::vector<glm::mat4> PointLight::ComputePointLightShadowMatrices(float nearPlane, float farPlane) {
+	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
+	std::vector<glm::mat4> shadowTransforms;
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(m_LightPos, m_LightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+	return shadowTransforms;
 }
