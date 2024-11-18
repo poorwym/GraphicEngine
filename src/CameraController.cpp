@@ -115,3 +115,24 @@ void CameraController::ProcessMouseButtons(float deltaTime)
         }
     }
 }
+
+void CameraController::OnImGuiRender()
+{
+    ImGui::Begin("Camera Controller");
+    if (camera != nullptr)
+    {      
+        float foucusDepth = camera-> GetFocusDepth();
+        ImGui::SliderFloat("FocusDepth", &foucusDepth, 0.001f, 1.0f);
+        float focusRange = camera-> GetFocusRange();
+        ImGui::SliderFloat("FocusRange", &focusRange, 0.001f, 1.0f);
+        float maxBlur = camera-> GetMaxBlur();
+        ImGui::SliderFloat("MaxBlur", &maxBlur, 0.0f, 1.0f);
+        camera->SetFocus(foucusDepth, focusRange, maxBlur);
+    }
+    else
+    {
+        ImGui::Text("No camera selected.");
+    }
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::End();
+}

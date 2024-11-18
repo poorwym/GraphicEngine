@@ -9,7 +9,8 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
     m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f)),
     m_Fov(fov),m_AspectRatio(aspectRatio),
-    m_NearClip(nearClip), m_FarClip(farClip)
+    m_NearClip(nearClip), m_FarClip(farClip),
+    m_FocusDepth(0.2f), m_FocusRange(1.0f), m_MaxBlur(0.5f)
 {
     m_ProjectionMatrix = glm::perspective(
         glm::radians(m_Fov),      // 视角 (Field of View)
@@ -52,6 +53,13 @@ void Camera::SetTarget(const glm::vec3& target)
 {
     m_TargetPosition = target;
     this->Update(0.0f);
+}
+
+void Camera::SetFocus(float focusDepth, float focusRange, float maxBlur)
+{
+    m_FocusDepth = focusDepth;
+    m_FocusRange = focusRange;
+    m_MaxBlur = maxBlur;
 }
 
 void Camera::ProcessKeyboard(std::string pressedKey, float deltaTime, float velocity)
@@ -116,5 +124,4 @@ void Camera::Update(float deltaTime)
         m_TargetPosition,  // 摄像机正在看的目标
         m_UpDirection         // 摄像机的上方向
     );
-    return;
 }

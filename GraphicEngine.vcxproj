@@ -148,6 +148,7 @@
     <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\Quad.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\ResourceManager.cpp" />
     <ClCompile Include="src\Scene.cpp" />
@@ -219,6 +220,7 @@
     <ClInclude Include="src\VertexArray.h" />
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
+    <ClInclude Include="src\Quad.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Debug\glew32.dll" />
@@ -241,8 +243,10 @@
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
     <None Include="res\shaders\depth_shader.shader" />
+    <None Include="res\shaders\FOD.shader" />
     <None Include="res\shaders\light.shader" />
     <None Include="res\shaders\PBRshader.shader" />
+    <None Include="res\shaders\screen.shader" />
     <None Include="res\shaders\ShadowVisible.shader" />
     <None Include="res\shaders\skybox.shader" />
   </ItemGroup>

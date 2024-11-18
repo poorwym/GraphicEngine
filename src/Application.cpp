@@ -29,8 +29,8 @@
 #include "Light.h"
 #include "LightController.h"
 #include "SceneManager.h"
+#include "Quad.h"
 #include<map>
-#include"depthMap.h"
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -45,6 +45,8 @@ static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     GLCall(glClear(GL_DEPTH_BUFFER_BIT));
 }
+
+static void PostRender(ColorFBO& colorFBO, Camera& camera);
 // 鼠标移动回调函数
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -99,6 +101,8 @@ int main(void)
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glDepthFunc(GL_LESS));
 
+    glEnable(GL_FRAGMENT_DEPTH);
+
     /* Loop until the user closes the window */
     //ImGui initialization
     ImGui::CreateContext();
@@ -122,8 +126,12 @@ static void LoadModel(SceneManager& sceneManager) {
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
+    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 6.0f);
+    sceneManager.AddEntity(meshComponent2, "Pumpkin2", "node3", nullptr);
 }
 static void InitModel() {
+    SceneNode* node = sceneNodeList["node3"];
+    node->SetPosition(glm::vec3(3.0f, 0.0f, 0.0f));
     return;
 }
 
@@ -150,6 +158,7 @@ void testPBR(GLFWwindow* window) {
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+    ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     mainShader->Bind();
@@ -199,9 +208,9 @@ void testPBR(GLFWwindow* window) {
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-        skybox.Draw(camera);
-
+       
         scene->OnImGuiTree();
+        cameraController->OnImGuiRender();
 
         cameraController->Update(deltaTime);
 
@@ -225,6 +234,9 @@ void testPBR(GLFWwindow* window) {
         depthMapFBO.BindTexture(10);
 
         //render
+        colorFBO.Bind();
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        skybox.Draw(camera);
         mainShader->Bind();
         mainShader->setUniform1i("ShadowMap", 7);
         mainShader->setUniform1i("ViewDepthMap", 10);
@@ -235,8 +247,12 @@ void testPBR(GLFWwindow* window) {
         mainShader->setUniformMat4f("lightSpaceMatrix", light -> ComputeLightSpaceMatrix(glm::vec3(0.0f)));
         scene->BindLight(*mainShader, glm::mat4(1.0f));
         scene->Render(*mainShader, camera);
-        scene->Update(deltaTime);
         mainShader->Unbind();
+        colorFBO.Unbind();
+        //post render
+        PostRender(colorFBO, camera);
+        //update
+        scene->Update(deltaTime);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -246,4 +262,34 @@ void testPBR(GLFWwindow* window) {
         /* Poll for and process events */
         glfwPollEvents();
     }
+}
+
+static void PostRender(ColorFBO& colorFBO, Camera& camera) {
+    Quad screenQuad;
+    ColorFBO postProcessFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    postProcessFBO.Bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/screen.shader");
+    colorFBO.BindTexture(0);
+    colorFBO.BindDepthTexture(1);
+    screenShader->Bind();
+    screenShader->setUniform1i("screenTexture", 0);
+    screenShader->setUniform1i("depthTexture", 1);
+    screenQuad.Render(*screenShader);
+    screenShader->Unbind();
+    postProcessFBO.Unbind();
+
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/FOD.shader");
+    FODshader->Bind();
+    postProcessFBO.BindTexture(0);
+    postProcessFBO.BindDepthTexture(1);
+    FODshader->setUniform1i("screenTexture", 0);
+    FODshader->setUniform1i("depthTexture", 1);
+    FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
+    FODshader->setUniform1f("focusRange", camera.GetFocusRange());
+    FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
+    screenQuad.Render(*FODshader);
+    FODshader->Unbind();
+    
 }

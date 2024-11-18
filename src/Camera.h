@@ -16,6 +16,10 @@ private:
     float m_FarClip;
     float m_Fov;
     float m_Rate;
+    float m_FocusDepth;   // 焦点深度
+    float m_FocusRange;   // 焦点范围（过渡区域）
+    float m_MaxBlur;      // 最大模糊半径
+
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
     inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // 获取视图矩阵
@@ -23,6 +27,10 @@ public:
     void SetPosition(const glm::vec3& position);
     void SetRotation(const float& yaw, const float& pitch);
     void SetTarget(const glm::vec3& target);
+    inline float GetFocusDepth() const {return m_FocusDepth;}
+    inline float GetFocusRange() const {return m_FocusRange;}
+    inline float GetMaxBlur() const {   return m_MaxBlur;}
+    void SetFocus(float focusDepth, float focusRange, float maxBlur);
     void ProcessKeyboard(std::string pressedKey, float deltaTime, float velocity);// 键盘控制
     void ProcessMouseMovement(float xOffset, float yOffset);
     void ProcessMouseScroll(float zoomAngle);

@@ -154,3 +154,62 @@ void CubeMapFBO::BindTexture(unsigned int slot) const
     GLCall(glActiveTexture(GL_TEXTURE0 + slot)); // 使用指定的纹理槽
     GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, m_TextureID));
 }
+
+ColorFBO::ColorFBO(unsigned int width, unsigned int height)
+    : FrameBuffer(width, height), m_ColorTextureID(0), m_DepthTextureID(0)
+{
+    // 创建颜色纹理
+    GLCall(glGenTextures(1, &m_ColorTextureID));
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_ColorTextureID));
+    GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+    // 创建深度纹理
+    GLCall(glGenTextures(1, &m_DepthTextureID));
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_DepthTextureID));
+    GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_Width, m_Height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+    // 将深度纹理附加到帧缓冲的深度附件点
+    GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthTextureID, 0));
+
+    // 将颜色纹理附加到帧缓冲的颜色附件点
+    GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorTextureID, 0));
+    // 指定绘制缓冲区
+    GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    GLCall(glDrawBuffers(1, DrawBuffers));
+
+    // 检查帧缓冲完整性
+    CheckFramebufferComplete();
+
+    // 解绑帧缓冲
+    GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+}
+
+// ColorFBO 析构函数
+ColorFBO::~ColorFBO()
+{
+    GLCall(glDeleteFramebuffers(1, &m_RendererID));
+    GLCall(glDeleteTextures(1, &m_ColorTextureID));
+    GLCall(glDeleteTextures(1, &m_DepthTextureID));
+
+}
+
+// 绑定颜色纹理到指定纹理槽
+void ColorFBO::BindTexture(unsigned int slot) const
+{
+    GLCall(glActiveTexture(GL_TEXTURE0 + slot)); // 使用指定的纹理槽
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_ColorTextureID));
+}
+
+void ColorFBO::BindDepthTexture(unsigned int slot) const
+{
+    GLCall(glActiveTexture(GL_TEXTURE0 + slot)); // 使用指定的纹理槽
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_DepthTextureID));
+}
