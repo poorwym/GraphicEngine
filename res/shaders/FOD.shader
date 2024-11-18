@@ -39,12 +39,12 @@ void main()
     // 计算模糊半径
     float depthDiff = abs(fragDepth - focusDepth);
     depthDiff = min(depthDiff, 1.0);
-    depthDiff = pow(depthDiff, 5);
-    float blurRadius = clamp((depthDiff - focusRange) / focusRange, 0.0, 1.0) * maxBlur;
+    depthDiff = pow(depthDiff, 2);
+    float blurRadius = mix(0.0, 1.0, (depthDiff - focusRange) / focusRange) * maxBlur;
 
     // 应用景深效果
     vec3 color = ApplyDepthOfField(TexCoords, blurRadius);
-    FragColor = vec4(coloraa, 1.0);
+    FragColor = vec4(color, 1.0);
 }
 
 vec3 ApplyDepthOfField(vec2 texCoords, float blurRadius)

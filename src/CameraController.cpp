@@ -126,7 +126,7 @@ void CameraController::OnImGuiRender()
         float focusRange = camera-> GetFocusRange();
         ImGui::SliderFloat("FocusRange", &focusRange, 0.001f, 1.0f);
         float maxBlur = camera-> GetMaxBlur();
-        ImGui::SliderFloat("MaxBlur", &maxBlur, 0.0f, 1.0f);
+        ImGui::SliderFloat("MaxBlur", &maxBlur, 0.0f, 0.05f);
         camera->SetFocus(foucusDepth, focusRange, maxBlur);
     }
     else
