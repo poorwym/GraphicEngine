@@ -177,6 +177,7 @@ void RealTimeRender(GLFWwindow* window) {
     mainShader->setUniform1i("ShadowMap", 7);
     mainShader->setUniform1i("SpecularExponentTextureMap", 9);
     mainShader->setUniform1f("farPlane", far_plane);
+    mainShader->setUniform1i("AlphaMap", 15);
     mainShader->Unbind();
 
 
@@ -294,6 +295,7 @@ void PBR_Render(Camera& camera, Scene* scene) {
     mainShader->setUniform1i("ShadowMap", 7);
     mainShader->setUniform1i("SpecularExponentTextureMap", 9);
     mainShader->setUniform1f("farPlane", FAR_PLANE);
+    mainShader->setUniform1i("AlphaMap", 15);
     mainShader->Unbind();
 
     std::vector<std::string> faces
@@ -347,7 +349,7 @@ void PBR_Render(Camera& camera, Scene* scene) {
     colorFBO.Unbind();
     //post render
     ColorFBO finalPicture = PostRender(colorFBO, camera);
-    resourceManager.SaveFBOToPNG(finalPicture, "test.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+    resourceManager.SaveFBOToPNG(colorFBO, "test.png", WINDOW_WIDTH, WINDOW_HEIGHT);
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;
@@ -357,35 +359,20 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     colorFBO.BindDepthTexture(1);
     screenShader->Bind();
     screenShader->setUniform1i("screenTexture", 0);
-    screenShader->setUniform1i("depthTexture", 1);
+    //screenShader->setUniform1i("depthTexture", 1);
     screenQuad.Render(*screenShader);
     screenShader->Unbind();
 }
 
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
     static Quad screenQuad;
-    static ColorFBO postProcessFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    
-
-    postProcessFBO.Bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        Shader* screenShader = resourceManager.Load<Shader>("res/shaders/screen.shader");
-        colorFBO.BindTexture(0);
-        colorFBO.BindDepthTexture(1);
-        screenShader->Bind();
-            screenShader->setUniform1i("screenTexture", 0);
-            screenShader->setUniform1i("depthTexture", 1);
-            screenQuad.Render(*screenShader);
-        screenShader->Unbind();
-    postProcessFBO.Unbind();
-
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     Shader* FODshader = resourceManager.Load<Shader>("res/shaders/FOD.shader");
     finalFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        postProcessFBO.BindTexture(0);
-        postProcessFBO.BindDepthTexture(1);
+        colorFBO.BindTexture(0);
+        colorFBO.BindDepthTexture(1);
         FODshader->Bind();
             FODshader->setUniform1i("screenTexture", 0);
             FODshader->setUniform1i("depthTexture", 1);

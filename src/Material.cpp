@@ -129,6 +129,10 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 		m_SpecularExponentTextureMap = new Texture(filePath+m.specular_highlight_texname.c_str());
 		std::cout << filePath + m.specular_highlight_texname.c_str() << std::endl;
 	}
+	if (m.alpha_texname.size()) { //15
+		m_AlphaMap = new Texture(filePath+m.alpha_texname.c_str());
+        std::cout << filePath + m.alpha_texname.c_str() << std::endl;
+	}
 }
 PBRMaterial::~PBRMaterial()
 {
@@ -141,6 +145,8 @@ PBRMaterial::~PBRMaterial()
 	delete m_EmissionMap;
 	delete m_MetallicMap;
 	delete m_RoughnessMap;
+	delete m_AlphaMap;
+	delete m_BumpMap;
 }
 PBRMaterial::PBRMaterial(Texture* albedo, Texture* normal, Texture* roughness, Texture* metallic, Texture* ao, Texture* emission, Texture* height)
 	:m_AO(ao), m_EmissionMap(emission), m_HeightMap(height), m_AlbedoMap(albedo), m_MetallicMap(metallic), m_RoughnessMap(roughness), m_NormalMap(normal)
@@ -185,6 +191,8 @@ void PBRMaterial::Bind(Shader& shader) const
 
 	if(m_SpecularExponentTextureMap)	{m_SpecularExponentTextureMap->Bind(9); shader.setUniform1i("hasSpecularExponentTextureMap", 1);}
 	else 				shader.setUniform1i("hasSpecularExponentTextureMap", 0);
+	if(m_AlphaMap)						{ m_AlphaMap->Bind(15); shader.setUniform1i("hasAlphaMap", 1);}
+	else 				shader.setUniform1i("hasAlphaMap", 0);
 }
 
 void PBRMaterial::Unbind(Shader& shader) const
@@ -197,6 +205,7 @@ void PBRMaterial::Unbind(Shader& shader) const
 	if (m_AO)			m_AO->Unbind();
 	if (m_EmissionMap)	m_EmissionMap->Unbind();
 	if (m_HeightMap)		m_HeightMap->Unbind();
+	if (m_AlphaMap) m_AlphaMap->Unbind();
 }
 
 void PBRMaterial::SetAO(Texture* map)

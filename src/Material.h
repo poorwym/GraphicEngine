@@ -49,6 +49,8 @@ private:
     Texture* m_HeightMap;
     Texture* m_SpecularExponentTextureMap;
     Texture* m_DissolveTextureMap;
+    Texture* m_BumpMap;
+    Texture* m_AlphaMap;
 public:
     PBRMaterial();
     PBRMaterial(const std::string& filePath, const tinyobj::material_t& m);

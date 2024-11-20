@@ -28,12 +28,7 @@ uniform sampler2D depthTexture;
 bool IsVisible(vec3 fragPos);
 void main()
 {
-    if(IsVisible(FragPos)) {
-        FragColor = texture(screenTexture, TexCoords);
-        gl_FragDepth = texture(depthTexture, TexCoords).r; // 显式写入深度值
-    } else {
-        discard; // 丢弃片段
-    }
+    FragColor = texture(screenTexture, TexCoords);
 }
 
 bool IsVisible(vec3 fragPos){

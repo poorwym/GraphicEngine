@@ -4,14 +4,10 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoords;
 
 out vec2 TexCoords;
-out vec3 FragPos;
-uniform mat4 u_Model;
-
 void main()
 {
     gl_Position = vec4(aPos, 1.0);
     TexCoords = aTexCoords;
-    FragPos = vec3(u_Model * vec4(aPos, 1.0));
 }
 
 #shader fragment
@@ -19,7 +15,6 @@ void main()
 out vec4 FragColor;
 
 in vec2 TexCoords;
-in vec3 FragPos;
 
 uniform sampler2D screenTexture;
 uniform sampler2D depthTexture;
@@ -46,7 +41,6 @@ void main()
     // 应用景深效果
     vec3 color = ApplyDepthOfField(TexCoords, blurRadius);
     FragColor = vec4(color, 1.0);
-    gl_FragDepth = texture(depthTexture, TexCoords).r; // 显式写入深度值
 }
 
 vec3 ApplyDepthOfField(vec2 texCoords, float blurRadius)

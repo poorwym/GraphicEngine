@@ -64,6 +64,7 @@ uniform bool hasMetallicMap;
 uniform bool hasRoughnessMap;
 uniform bool hasDissolveTextureMap;
 uniform bool hasSpecularExponentTextureMap;
+uniform bool hasAlphaMap;
 
 // 纹理采样器
 uniform sampler2D AlbedoMap;       // 漫反射贴图         slot 0
@@ -77,7 +78,8 @@ uniform sampler2D ShadowMap;       // 阴影贴图              slot7
 uniform sampler2D DissolveTextureMap; //透明度贴图           slot8 
 uniform sampler2D SpecularExponentTextureMap; //镜面指数贴图  slot9
 uniform sampler2D ViewDepthMap; //视觉深度贴图 slot 10
-uniform samplerCube PointShadowMap[4]; //点光源阴影贴图 slot 11
+uniform samplerCube PointShadowMap[4]; //点光源阴影贴图 slot 11-14
+uniform sampler2D AlphaMap; //透明度贴图 slot 15
 
 // 光源结构体
 struct DirectionalLight
@@ -128,6 +130,7 @@ void main()
     float roughness = hasRoughnessMap ? texture(RoughnessMap, fs_in.TexCoords).r : 0.5;
     float metallic = hasMetallicMap ? texture(MetallicMap, fs_in.TexCoords).r : 0.0;
     float AO = hasAO ? texture(AOMap, fs_in.TexCoords).r : 1.0;
+    float alpha = hasAlphaMap ? texture(AlphaMap, fs_in.TexCoords).r : 1.0;
 
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);    if(metallic > 0.0) {
         specular = diffuse; // 对于金属材质，使用Albedo颜色作为F0
@@ -154,8 +157,12 @@ void main()
         pointSpecular = pointSpecular * attenuation;
         finalColor += pointAmbient + (1 - pointShadow) * (pointDiffuse + pointSpecular);
     }
-    //finalColor = pow(finalColor, vec3(2.2));
-    if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor,1.0);
+    if( alpha == 0){
+        discard;
+    }
+    if(IsVisible(fs_in.FragPos)) {
+        FragColor = vec4(finalColor,1.0);
+    }
 }
 
 vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
