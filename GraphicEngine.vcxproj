@@ -77,6 +77,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,6 +96,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -216,11 +218,13 @@
     <ClInclude Include="src\vendor\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="src\vendor\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\vendor\opencv2\opencv.hpp" />
     <ClInclude Include="src\vendor\TinyOBJLoader\tiny_obj_loader.h" />
     <ClInclude Include="src\VertexArray.h" />
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
     <ClInclude Include="src\Quad.h" />
+    <ClInclude Include="\\Mac\Home\Downloads\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Debug\glew32.dll" />

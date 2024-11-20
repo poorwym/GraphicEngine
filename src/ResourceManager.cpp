@@ -2,10 +2,21 @@
 #include <iostream>
 #include <vector>
 #include "Component.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image/stb_image_write.h"
+#include <GL/glew.h>
+#include <filesystem>
 #ifndef TINYOBJLOADER_IMPLEMENTATION
     #define TINYOBJLOADER_IMPLEMENTATION
 #endif 
 #include "TinyOBJLoader/tiny_obj_loader.h"
+
+static void EnsureDirectoryExists(const std::string& directory) {
+    std::filesystem::path dirPath(directory);
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+    }
+}
 
 MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate = 1)
 {
@@ -114,6 +125,41 @@ PBRMaterial* ResourceManager::LoadPBRMaterial(const std::string& filePath)
     Texture* emision = new Texture(filePath+"emision.png");//自发光贴图
     if (emision) material->SetEmisionMap(emision);
     return material;
+}
+
+void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height)
+{
+    std::string directory = "output/images/";
+    std::string fullPath = directory + filename;
+    // 确保目标目录存在
+    EnsureDirectoryExists(directory);
+
+    // 绑定帧缓冲
+    colorFBO.Bind();
+
+    // 创建一个数组来存储像素数据
+    std::vector<unsigned char> pixels(width * height * 4); // 假设是 RGBA 格式
+
+    // 读取帧缓冲的颜色附件
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    // 解除绑定
+    colorFBO.Unbind();
+
+    // OpenGL 的像素原点在左下角，需要将图像翻转
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x], pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+
+    // 使用 stb_image_write 保存 PNG
+    if (stbi_write_png(fullPath.c_str(), width, height, 4, pixels.data(), width * 4)) {
+        std::cout << "Successfully saved FBO to " << fullPath << std::endl;
+    }
+    else {
+        std::cerr << "Failed to save FBO to " << fullPath << std::endl;
+    }
 }
 
 template<>

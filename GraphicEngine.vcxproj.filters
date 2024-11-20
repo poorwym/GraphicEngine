@@ -269,6 +269,12 @@
     <ClInclude Include="src\Quad.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\vendor\opencv2\opencv.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="\\Mac\Home\Downloads\stb_image_write.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />

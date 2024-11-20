@@ -133,6 +133,8 @@ void CameraController::OnImGuiRender()
     {
         ImGui::Text("No camera selected.");
     }
+    ImGui::Text("Camera Position: (%.3f, %.3f, %.3f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
+    ImGui::Text("Camera Target: (%.3f, %.3f, %.3f)", camera->GetTarget().x, camera->GetTarget().y, camera->GetTarget().z);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
 }

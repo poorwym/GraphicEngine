@@ -1,48 +1,79 @@
- #shader vertex
-
- #version 330 core
+#shader vertex
+#version 330 core
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
 layout(location = 2) in vec2 a_TexCoords;
+layout(location = 3) in vec3 a_Tangent;
+layout(location = 4) in vec3 a_Bitangent;
 
 uniform mat4 u_MVP;
+uniform mat4 u_Model;
 
-out vec3 FragPos;//传递给片段着色器世界位置
-out vec3 Normal;//传递给片段着色器法线向量
-out vec2 TexCoords;//传递给片段着色器纹理坐标
+out VS_OUT {
+    vec3 FragPos;
+    vec2 TexCoords;
+    vec3 Tangent;
+    vec3 Bitangent;
+    vec3 Normal;
+} vs_out;
+out vec4 FragPosLightSpace;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0);
-    FragPos = vec3(gl_Position);
-    Normal = a_Normal;
-    TexCoords = a_TexCoords;
+    vs_out.FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
+    vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
+    FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    vs_out.TexCoords = a_TexCoords;
+    vs_out.Tangent = a_Tangent;
+    vs_out.Bitangent = a_Bitangent;
 }
 
 #shader fragment
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoords;//片段着色器接受的纹理坐标
-in vec3 FragPos;//片段着色器接受的世界位置
-in vec3 Normal;//片段着色器接受的法线向量
+in VS_OUT {//顶点着色器输出
+    vec3 FragPos;//片元位置，世界空间
+    vec2 TexCoords;//纹理坐标
+    vec3 Tangent;//切线
+    vec3 Bitangent;//副切线
+    vec3 Normal;//片元法线，世界空间
+} fs_in;
 
-uniform sampler2D diffuseMap;   // 漫反射纹理
-uniform sampler2D normalMap;    // 法线贴图
-uniform sampler2D specularMap;  // 镜面反射贴图
+uniform vec3 Diffuse;
 
-uniform vec3 albedo;
-uniform float metallic;
-uniform float roughness;
+uniform bool hasAlbedoMap;
 
+
+// 纹理采样器
+uniform sampler2D AlbedoMap;       // 漫反射贴图         slot 0
+uniform sampler2D ViewDepthMap; //视觉深度贴图 slot 10
+
+
+uniform vec3 viewPos;        // 观察者位置
+in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
+
+// 常量
+const float PI = 3.14159265359;
+
+
+bool IsVisible(vec3 fragPos);
+
+// 主函数
 void main()
 {
-    vec3 diffuseColor = texture(diffuseMap, TexCoords).rgb;  // 采样漫反射颜色
-    vec3 normal = normalize(texture(normalMap, TexCoords).rgb * 2.0 - 1.0); //这里原因略微有些抽象
-    vec3 specularColor = texture(specularMap, TexCoords).rgb; // 采样镜面反射颜色
+    vec3 ambient = hasAlbedoMap ? texture(AlbedoMap, fs_in.TexCoords).rgb : Diffuse;// 本来的颜色
+    if(IsVisible(fs_in.FragPos)) FragColor = vec4(vec3(ambient),1.0);
+}
 
-    // 其他光照计算基于这些属性...
-    
-    FragColor = vec4(diffuseColor, 1.0);  // 最终颜色
+bool IsVisible(vec3 fragPos){
+    vec3 projCoords = fragPos;
+    // 获取当前片段的深度值
+    float closestDepth = texture(ViewDepthMap, projCoords.xy).r;
+    // 获取当前片段在光空间的深度值
+    float currentDepth = projCoords.z;
+    return closestDepth == currentDepth;
 }

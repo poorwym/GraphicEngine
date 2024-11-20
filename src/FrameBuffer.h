@@ -65,5 +65,4 @@ public:
 private:
     unsigned int m_ColorTextureID;
     unsigned int m_DepthTextureID;
-    bool m_HasDepth;
 };

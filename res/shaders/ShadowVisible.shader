@@ -120,12 +120,8 @@ float PointShadowCalculation(vec3 fragPos, vec3 lightPos);
 void main()
 {  
     vec3 finalColor = vec3(1.0);
-    for(int i=0; i < numPointLights; i++)
-    {
-        float pointShadow = PointShadowCalculation(fs_in.FragPos, pointLights[i].lightPos);
-        finalColor += 1 - pointShadow;
-    }
-    if(IsVisible(fs_in.FragPos)) FragColor = vec4(finalColor, 1.0);
+    float shadow = ShadowCalculation(lightSpaceMatrix);
+    if(IsVisible(fs_in.FragPos)) FragColor = vec4(vec3(shadow), 1.0);
 }
 
 vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){

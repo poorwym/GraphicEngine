@@ -37,4 +37,5 @@ public:
     void Bind(Shader& shader);
     void Update(float deltaTime);         // 根据输入更新摄像机
     inline glm::vec3 GetPosition() const { return m_CameraPosition; }
+    inline glm::vec3 GetTarget() const { return m_TargetPosition; }
 };

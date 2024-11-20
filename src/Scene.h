@@ -24,4 +24,5 @@ public:
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // É¾³ýÊµÌå
     void OnImGuiTree();
+    inline DirectionalLight* GetDirectionalLight() const {return m_DirLight;}
 };

@@ -14,6 +14,8 @@ public:
 
     template<typename T>
     void Unload(T* resource);                     // Ð¶ÔØ×ÊÔ´
+
+    void SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height);
 };
 
 template<typename T>

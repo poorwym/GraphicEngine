@@ -30,7 +30,7 @@ void FrameBuffer::CheckFramebufferComplete() const
 {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        std::cerr << "Error: Framebuffer is not complete!" << std::endl;
+        std::cout << "Error: Framebuffer is not complete!" << std::endl;
     }
 }
 

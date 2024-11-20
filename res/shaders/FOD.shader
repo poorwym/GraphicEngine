@@ -40,11 +40,13 @@ void main()
     float depthDiff = abs(fragDepth - focusDepth);
     depthDiff = min(depthDiff, 1.0);
     depthDiff = pow(depthDiff, 2);
-    float blurRadius = mix(0.0, 1.0, (depthDiff - focusRange) / focusRange) * maxBlur;
+    float t = max(0, depthDiff - focusRange);
+    float blurRadius = t * maxBlur;
 
     // 应用景深效果
     vec3 color = ApplyDepthOfField(TexCoords, blurRadius);
     FragColor = vec4(color, 1.0);
+    gl_FragDepth = texture(depthTexture, TexCoords).r; // 显式写入深度值
 }
 
 vec3 ApplyDepthOfField(vec2 texCoords, float blurRadius)

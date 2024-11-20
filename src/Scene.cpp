@@ -55,6 +55,7 @@ void Scene::SetDirectionalLight(DirectionalLight* dirLight)
 void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
 	m_DirLight->Bind(shader, globalTransform);
+	shader.setUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
 		node->BindLight(shader, globalTransform);

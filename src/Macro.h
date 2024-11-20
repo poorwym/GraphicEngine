@@ -13,5 +13,5 @@
 #define SHADOW_WIDTH 1080
 #define SHADOW_HEIGHT 1080
 
-#define FAR_PLANE 20
+#define FAR_PLANE 150
 #define NEAR_PLANE 0.1
