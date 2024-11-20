@@ -166,7 +166,7 @@ vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
 vec3 CalculateDiffuseColor(vec3 diffuse, vec3 lightDiffuse, vec3 lightDir, vec3 normal){
     vec3 N = normalize(normal);
     vec3 L = normalize(lightDir);
-    vec3 diffuseColor = lightDiffuse * diffuse * max(N * L, 0);
+    vec3 diffuseColor = lightDiffuse * diffuse * max(dot(L, N), 0.0);
     return diffuseColor;
 }
 

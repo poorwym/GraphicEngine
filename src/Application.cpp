@@ -234,7 +234,7 @@ void testPBR(GLFWwindow* window) {
         depthMapFBO.BindTexture(10);
 
         //render
-        colorFBO.Bind();
+        //colorFBO.Bind();
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         skybox.Draw(camera);
         mainShader->Bind();
@@ -248,9 +248,9 @@ void testPBR(GLFWwindow* window) {
         scene->BindLight(*mainShader, glm::mat4(1.0f));
         scene->Render(*mainShader, camera);
         mainShader->Unbind();
-        colorFBO.Unbind();
+        //colorFBO.Unbind();
         //post render
-        PostRender(colorFBO, camera);
+        //PostRender(colorFBO, camera);
         //update
         scene->Update(deltaTime);
 
