@@ -25,6 +25,22 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     );
 }
 
+Camera::Camera(float left, float right, float bottom, float top, float nearClip, float farClip)
+    :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
+    m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
+    m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f)),
+    m_Fov(0), m_AspectRatio(0),
+    m_NearClip(nearClip), m_FarClip(farClip),
+    m_FocusDepth(0.2f), m_FocusRange(1.0f), m_MaxBlur(0.02f)
+{
+    m_ProjectionMatrix = glm::frustum(left, right, bottom, top, nearClip, farClip);
+    m_ViewMatrix = glm::lookAt(
+        m_CameraPosition,  // 摄像机的位置
+        m_TargetPosition,  // 摄像机正在看的目标
+        m_UpDirection         // 摄像机的上方向
+    );
+}
+
 void Camera::SetPosition(const glm::vec3& position)
 {
     m_CameraPosition = position;
@@ -112,13 +128,6 @@ void Camera::ProcessMouseScroll(float zoomAngle)
 
 void Camera::Update(float deltaTime)
 {
-    m_Rate = m_Fov / 45.0f;
-    m_ProjectionMatrix = glm::perspective(
-        glm::radians(m_Fov),      // 视角 (Field of View)
-        m_AspectRatio,            // 宽高比
-        m_NearClip,              // 近平面
-        m_FarClip                // 远平面
-    );
     m_ViewMatrix = glm::lookAt(
         m_CameraPosition,  // 摄像机的位置
         m_TargetPosition,  // 摄像机正在看的目标

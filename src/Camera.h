@@ -22,6 +22,7 @@ private:
 
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
+    Camera(float left, float right, float bottom, float top, float nearClip, float farClip);
     inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // 获取视图矩阵
     inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }// 获取投影矩阵
     void SetPosition(const glm::vec3& position);
@@ -37,4 +38,5 @@ public:
     void Bind(Shader& shader);
     void Update(float deltaTime);         // 根据输入更新摄像机
     inline glm::vec3 GetPosition() const { return m_CameraPosition; }
+    inline glm::vec3 GetTarget() const { return m_TargetPosition; }
 };

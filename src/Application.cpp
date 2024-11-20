@@ -32,135 +32,258 @@
 #include "Quad.h"
 #include<map>
 DirectionalLightController directionalLightController;
+ResourceManager resourceManager;
+DirectionalLight* light = nullptr;
+Shader* mainShader = nullptr;
+Shader* depthShader = nullptr;
+Shader* cubeDepthShader = nullptr;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
-float lastFrame = 0.0f; // 上一帧的时间
+float lastTime = 0.0f; // 上一帧的时间
 
-// 相机控制器和资源管理器
-CameraController* cameraController = nullptr;
-ResourceManager resourceManager;
 
-void testPBR(GLFWwindow* window);
+
+void testPBR(Scene* scene, Camera& camera, CameraController* cameraController, DepthMapFBO& depthFBO);
+static void InitModel();
+static void LoadModel(SceneManager& sceneManager);
 static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     GLCall(glClear(GL_DEPTH_BUFFER_BIT));
 }
 
-static void PostRender(ColorFBO& colorFBO, Camera& camera);
-// 鼠标移动回调函数
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    if (cameraController)
-        cameraController->ProcessMouseInput(static_cast<float>(xpos), static_cast<float>(ypos));
+    CameraController* controller = static_cast<CameraController*>(glfwGetWindowUserPointer(window));
+    if (controller)
+        controller->ProcessMouseInput(static_cast<float>(xpos), static_cast<float>(ypos));
 }
 
-// 鼠标滚轮回调函数
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (cameraController)
-        cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
+    CameraController* controller = static_cast<CameraController*>(glfwGetWindowUserPointer(window));
+    if (controller)
+        controller->ProcessMouseScroll(static_cast<float>(yoffset));
 }
+
 
 int main(void)
 {
-    GLFWwindow* window;
-
     /* Initialize the library */
     if (!glfwInit())
         return -1;
-    
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
 
+    glewExperimental = GL_TRUE; // 启用实验性功能以确保现代 OpenGL 功能可用
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
+    // 创建第一个窗口并设为当前上下文
+    GLFWwindow* window1 = glfwCreateWindow(800, 600, "Window 1", NULL, NULL);
+    if (!window1) {
+        std::cout << "Failed to create window1\n";
+        return -1;
+    }
+    glfwMakeContextCurrent(window1);
+
+    if (glewInit() != GLEW_OK) {
+        std::cout << "GLEW initialization failed for window1\n";
         return -1;
     }
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-    glewExperimental = GL_TRUE; // 启用实验性功能以确保现代 OpenGL 功能可用
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    // 创建其他窗口，启用上下文共享
+    GLFWwindow* window2 = glfwCreateWindow(800, 600, "Window 2", NULL, window1);
+    if (!window2) {
+        std::cout << "Failed to create window2\n";
+        return -1;
+    }
+    GLFWwindow* window3 = glfwCreateWindow(800, 600, "Window 3", NULL, window1);
+    if (!window3) {
+        std::cout << "Failed to create window3\n";
+        return -1;
+    }
+    GLFWwindow* window4 = glfwCreateWindow(800, 600, "Window 4", NULL, window1);
+    if (!window4) {
+        std::cout << "Failed to create window4\n";
+        return -1;
+    }
 
+    // 初始化 OpenGL 设置和资源
+    // 注意：只需要在第一个窗口的上下文中初始化一次
     GLCall(glfwSwapInterval(1));
 
-    if (glewInit() != GLEW_OK) {
-        std::cout << "error";
-    }
-    std::cout << glGetString(GL_VERSION) << std::endl;
-
     GLCall(glEnable(GL_BLEND));
-    GLCall(glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glDepthFunc(GL_LESS));
 
     glEnable(GL_FRAGMENT_DEPTH);
 
+    
+    mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
+    cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+
+    Scene* scene1 = new Scene();
+    light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    SceneManager sceneManager1(scene1);
+    LoadModel(sceneManager1);
+    InitModel();
+
+
+
+    float nearClip = 0.1f; // 近裁剪面距离
+    float FOVx = 30.0f; // 每个相机的水平视野角度
+    float FOVx_rad = glm::radians(FOVx / 2.0f);
+    float width = nearClip * tan(FOVx_rad);
+    float aspectRatio = 4.0f / 3.0f; 
+    float height = width / aspectRatio;
+    // 为每个窗口创建相机和控制器
+    Camera camera1(-width, 0.0f, 0.0f, height, nearClip, 100.0f);
+    CameraController* cameraController1 = new CameraController(&camera1, window1);
+    glfwSetWindowUserPointer(window1, cameraController1);
+    glfwSetCursorPosCallback(window1, mouse_callback);
+    glfwSetScrollCallback(window1, scroll_callback);
+
+    glfwMakeContextCurrent(window2);
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+
+    glEnable(GL_FRAGMENT_DEPTH);
+    Scene* scene2 = new Scene();
+    light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    SceneManager sceneManager2(scene2);
+    LoadModel(sceneManager2);
+    InitModel();
+    if (glewInit() != GLEW_OK) {
+        std::cout << "GLEW initialization failed for window2\n";
+        return -1;
+    }
+    Camera camera2(0.0f, width, 0.0f, height, nearClip, 100.0f);
+    CameraController* cameraController2 = new CameraController(&camera2, window2);
+    glfwSetWindowUserPointer(window2, cameraController2);
+    glfwSetCursorPosCallback(window2, mouse_callback);
+    glfwSetScrollCallback(window2, scroll_callback);
+
+    glfwMakeContextCurrent(window3);
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+
+    glEnable(GL_FRAGMENT_DEPTH);
+    Scene* scene3 = new Scene();
+    light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    SceneManager sceneManager3(scene3);
+    LoadModel(sceneManager3);
+    InitModel();
+    if (glewInit() != GLEW_OK) {
+        std::cout << "GLEW initialization failed for window3\n";
+        return -1;
+    }
+    Camera camera3(-width, 0.0f, -height, 0.0f, nearClip, 100.0f);
+    CameraController* cameraController3 = new CameraController(&camera3, window3);
+    glfwSetWindowUserPointer(window3, cameraController3);
+    glfwSetCursorPosCallback(window3, mouse_callback);
+    glfwSetScrollCallback(window3, scroll_callback);
+
+    glfwMakeContextCurrent(window4);
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+
+    glEnable(GL_FRAGMENT_DEPTH);
+    Scene* scene4 = new Scene();
+    light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
+    SceneManager sceneManager4(scene4);
+    LoadModel(sceneManager4);
+    InitModel();
+    if (glewInit() != GLEW_OK) {
+        std::cout << "GLEW initialization failed for window4\n";
+        return -1;
+    }
+    Camera camera4(0.0f, width, -height, 0.0f, nearClip, 100.0f);
+    CameraController* cameraController4 = new CameraController(&camera4, window4);
+    glfwSetWindowUserPointer(window4, cameraController4);
+    glfwSetCursorPosCallback(window4, mouse_callback);
+    glfwSetScrollCallback(window4, scroll_callback);
+    
+    // 在第一个上下文中初始化 OpenGL 设置
+    glfwMakeContextCurrent(window1);
+    camera1.SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
+    camera2.SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
+    camera3.SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
+    camera4.SetPosition(glm::vec3(0.0f, 3.0f, 5.0f));
     /* Loop until the user closes the window */
-    //ImGui initialization
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); // 获取 io 对象
+    while (!glfwWindowShouldClose(window1) || !glfwWindowShouldClose(window2) ||
+        !glfwWindowShouldClose(window3) || !glfwWindowShouldClose(window4)) {
 
-    // 添加默认字体
-    io.Fonts->AddFontDefault();
+        // 窗口 1 渲染
+        glfwMakeContextCurrent(window1);
+        DepthMapFBO depthMapFBO1(WINDOW_WIDTH, WINDOW_HEIGHT);
+        testPBR(scene1, camera1, cameraController1, depthMapFBO1);
+        glfwSwapBuffers(window1);
 
-    // 设置 ImGui 样式
-    ImGui::StyleColorsDark();
+        // 窗口 2 渲染
+        glfwMakeContextCurrent(window2);
+        DepthMapFBO depthMapFBO2(WINDOW_WIDTH, WINDOW_HEIGHT);
+        testPBR(scene2, camera2, cameraController2, depthMapFBO2);
+        glfwSwapBuffers(window2);
 
-    // 初始化平台/渲染绑定
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
-    ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
-    testPBR(window);
+        // 窗口 3 渲染
+        glfwMakeContextCurrent(window3);
+        DepthMapFBO depthMapFBO3(WINDOW_WIDTH, WINDOW_HEIGHT);
+        testPBR(scene3, camera3, cameraController3, depthMapFBO3);
+        glfwSwapBuffers(window3);
+
+        // 窗口 4 渲染
+        glfwMakeContextCurrent(window4);
+        DepthMapFBO depthMapFBO4(WINDOW_WIDTH, WINDOW_HEIGHT);
+        testPBR(scene4, camera4, cameraController4, depthMapFBO4);
+        glfwSwapBuffers(window4);
+
+        // 同步相机位置（如果需要）
+        glm::vec3 position = camera1.GetPosition();
+        glm::vec3 target = camera1.GetTarget();
+        camera2.SetPosition(position);
+        camera2.SetTarget(target);
+        camera3.SetPosition(position);
+        camera3.SetTarget(target);
+        camera4.SetPosition(position);
+        camera4.SetTarget(target);
+        camera1.Update(deltaTime);
+        camera2.Update(deltaTime);
+        camera3.Update(deltaTime);
+        camera4.Update(deltaTime);
+        // 处理事件
+        glfwPollEvents();
+    }
+
+    // 清理资源
+    delete cameraController1;
+    delete cameraController2;
+    delete cameraController3;
+    delete cameraController4;
+    glfwTerminate();
+    return 0;
 }
 static void LoadModel(SceneManager& sceneManager) {
     //load sun
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 6.0f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
-    PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
-    sceneManager.AddPointLight(pointLight, "node2", nullptr);
-    MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 6.0f);
-    sceneManager.AddEntity(meshComponent2, "Pumpkin2", "node3", nullptr);
 }
 static void InitModel() {
-    SceneNode* node = sceneNodeList["node3"];
-    node->SetPosition(glm::vec3(3.0f, 0.0f, 0.0f));
-    return;
+
 }
 
-void testPBR(GLFWwindow* window) {
-    // 定义视口宽高
-    float width = WINDOW_WIDTH;
-    float height = WINDOW_HEIGHT;
-    float aspect_ratio = width / height;
-
-
-    // 定义视野角度（以弧度为单位）、近平面和远平面
-    float fov = 30.0f; // 30度视野角
-    float near_plane = NEAR_PLANE;
-    float far_plane = FAR_PLANE;
-
-    Camera camera(fov, aspect_ratio, near_plane, far_plane);
-    camera.SetPosition(glm::vec3(0, 2, 5));
-    cameraController = new CameraController(&camera, window);
-
-    Scene* scene = new Scene();
-    SceneManager sceneManager(scene);
-    LoadModel(sceneManager);
-    InitModel();
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
-    ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    //这段真的非常非常重要，忘记绑定了。
-    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+void testPBR(Scene* scene, Camera& camera, CameraController* cameraController, DepthMapFBO& depthMapFBO) {
     mainShader->Bind();
     mainShader->setUniform1i("AlbedoMap", 0);
     mainShader->setUniform1i("NormalMap", 1);
@@ -172,124 +295,52 @@ void testPBR(GLFWwindow* window) {
     mainShader->setUniform1i("DissolveTextureMap", 8);
     mainShader->setUniform1i("ShadowMap", 7);
     mainShader->setUniform1i("SpecularExponentTextureMap", 9);
-    mainShader->setUniform1f("farPlane", far_plane);
+    mainShader->setUniform1f("farPlane", 100.0f);
+    mainShader->Unbind();
+    float curentTime = glfwGetTime();
+    // 计算 deltaTime
+    float deltaTime = curentTime - lastTime;
+    // 更新 lastTime 为当前帧的时间
+    lastTime = curentTime;
+
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+    cameraController->Update(deltaTime);
+
+    mainShader->Bind();
+    mainShader->setUniform1i("numPointLights", pointLightID.size());
     mainShader->Unbind();
 
+    scene->SetDirectionalLight(light);
+    scene->RenderShadowMap(depthShader, cubeDepthShader);
 
-    DirectionalLight* light = new DirectionalLight("Directional Light", _WHITE, 1.0f, glm::vec3(1.0f));
-    directionalLightController = DirectionalLightController(light);
-    //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
-    std::vector<std::string> faces
+    //render visibility
+    ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    depthMapFBO.Bind();
+    depthShader->Bind();
+    glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
+    depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
+    scene->RenderDepthMap(*depthShader);
+    depthShader->Unbind();
+    depthMapFBO.Unbind();
+    //bind visibilityMap
+    depthMapFBO.BindTexture(10);
+
+    //render
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    mainShader->Bind();
+    mainShader->setUniform1i("ShadowMap", 7);
+    mainShader->setUniform1i("ViewDepthMap", 10);
+    for (int i = 0; i < 4; i++)
     {
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg"
-    };
-    // 创建天空盒实例
-    Skybox skybox(faces);
-    DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-         // 获取当前帧的时间
-        float currentFrame = glfwGetTime();
-        // 计算 deltaTime
-        deltaTime = currentFrame - lastFrame;
-        // 更新 lastFrame 为当前帧的时间
-        lastFrame = currentFrame;
-
-        //ImGui 初始化
-        ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
-        ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
-        ImGui::NewFrame(); // ImGui 自身的新帧调用
-
-        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-       
-        scene->OnImGuiTree();
-        cameraController->OnImGuiRender();
-
-        cameraController->Update(deltaTime);
-
-        mainShader->Bind();
-        mainShader->setUniform1i("numPointLights", pointLightID.size());
-        mainShader->Unbind();
-        
-        scene->SetDirectionalLight(light);
-        scene->RenderShadowMap(depthShader, cubeDepthShader);
-
-        //render visibility
-        ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
-        depthMapFBO.Bind();
-        depthShader->Bind();
-        glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
-        depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
-        scene->RenderDepthMap(*depthShader);
-        depthShader->Unbind();
-        depthMapFBO.Unbind();
-        //bind visibilityMap
-        depthMapFBO.BindTexture(10);
-
-        //render
-        //colorFBO.Bind();
-        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        skybox.Draw(camera);
-        mainShader->Bind();
-        mainShader->setUniform1i("ShadowMap", 7);
-        mainShader->setUniform1i("ViewDepthMap", 10);
-        for(int i=0; i < 4; i++)
-        {
-            mainShader->setUniform1i("PointShadowMap["+std::to_string(i) + "]", 11 + i);
-        }
-        mainShader->setUniformMat4f("lightSpaceMatrix", light -> ComputeLightSpaceMatrix(glm::vec3(0.0f)));
-        scene->BindLight(*mainShader, glm::mat4(1.0f));
-        scene->Render(*mainShader, camera);
-        mainShader->Unbind();
-        //colorFBO.Unbind();
-        //post render
-        //PostRender(colorFBO, camera);
-        //update
-        scene->Update(deltaTime);
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
+        mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 11 + i);
     }
-}
+    mainShader->setUniformMat4f("lightSpaceMatrix", light->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
+    scene->BindLight(*mainShader, glm::mat4(1.0f));
+    scene->Render(*mainShader, camera);
+    mainShader->Unbind();
 
-static void PostRender(ColorFBO& colorFBO, Camera& camera) {
-    Quad screenQuad;
-    ColorFBO postProcessFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    postProcessFBO.Bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/screen.shader");
-    colorFBO.BindTexture(0);
-    colorFBO.BindDepthTexture(1);
-    screenShader->Bind();
-    screenShader->setUniform1i("screenTexture", 0);
-    screenShader->setUniform1i("depthTexture", 1);
-    screenQuad.Render(*screenShader);
-    screenShader->Unbind();
-    postProcessFBO.Unbind();
-
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/FOD.shader");
-    FODshader->Bind();
-    postProcessFBO.BindTexture(0);
-    postProcessFBO.BindDepthTexture(1);
-    FODshader->setUniform1i("screenTexture", 0);
-    FODshader->setUniform1i("depthTexture", 1);
-    FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
-    FODshader->setUniform1f("focusRange", camera.GetFocusRange());
-    FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
-    screenQuad.Render(*FODshader);
-    FODshader->Unbind();
-    
+    scene->Update(deltaTime);
 }
