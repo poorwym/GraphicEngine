@@ -11,6 +11,10 @@ private:
     std::map<std::string, SceneNode *> m_SceneNodes;
     DirectionalLight* m_DirLight;
     unsigned int m_RendererID;
+    VertexArray* m_VAO;
+    VertexBuffer* m_VBO;
+    IndexBuffer* m_IBO;
+    void UpdateVAO();
 public:
     Scene();
     void load(const std::string& filePath);   // 加载场景
@@ -21,6 +25,7 @@ public:
     void BindLight(Shader& shader, glm::mat4 globalTransform);
     void RenderDepthMap(Shader& shader);
     void RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader);
+    void BatchRender(Shader& shader, Camera& camera);
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // 删除实体
     void OnImGuiTree();

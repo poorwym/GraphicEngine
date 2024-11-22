@@ -15,6 +15,7 @@ struct VertexBufferElement {//基本上对应glVertexAttribPointer的各个参数
         case GL_FLOAT:          return 4;
         case GL_UNSIGNED_INT:   return 4;
         case GL_UNSIGNED_BYTE:  return 1;
+        case GL_INT:            return 4;
         }
         ASSERT(false);
         return 0;
@@ -53,6 +54,12 @@ public:
     {
         m_Elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE });
         m_Stride += VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE) * count;
+    }
+    template<>
+    void Push<int>(unsigned int count)
+    {
+        m_Elements.push_back({ GL_INT, count, GL_FALSE });
+        m_Stride += VertexBufferElement::GetSizeOfType(GL_INT) * count;
     }
 
     inline const std::vector<VertexBufferElement> GetElements() const { return m_Elements; }

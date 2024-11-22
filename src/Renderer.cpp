@@ -63,6 +63,16 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* 
     ib.Unbind();
 }
 
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,  Shader& shader) const
+{
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+    va.Unbind();
+    ib.Unbind();
+}
+
 void Renderer::Clear() const
 {
     glClear(GL_COLOR_BUFFER_BIT);

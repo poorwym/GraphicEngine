@@ -1,0 +1,1955 @@
+下面是我的图形引擎，遇到如下报错：
+Warning: uniform farPlane doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform ShadowMap doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform numPointLights doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform PointShadowMap[0] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform PointShadowMap[1] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform PointShadowMap[2] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform PointShadowMap[3] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform directionalLight.lightDir doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform directionalLight.lightAmbient doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform directionalLight.lightDiffuse doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform directionalLight.lightSpecular doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform lightSpaceMatrix doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].lightPos doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].lightAmbient doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].lightDiffuse doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].lightSpecular doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].constant doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].linear doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform pointLights[0].quadratic doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[0] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[1] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[2] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[3] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[4] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[5] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform textures[6] doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform viewPos doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform u_View doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform u_MVP doesn't exist! Shader: res/shaders/Batch.shader
+Warning: uniform u_Model doesn't exist! Shader: res/shaders/Batch.shader
+同时天空盒能够正常渲染，但是导入到OBJ无法正常渲染，我会给出我认为的重要的代码，同时你觉得问题还有可能出在哪里也可以问我要需要的代码：
+Batch.shader:
+#shader vertex
+#version 330 core
+
+layout(location = 0) in vec3 a_Position;
+layout(location = 1) in vec3 a_Normal;
+layout(location = 2) in vec2 a_TexCoords;
+layout(location = 3) in vec3 a_Tangent;
+layout(location = 4) in vec3 a_Bitangent;
+layout(location = 5) in int a_Slots[7];
+
+uniform mat4 u_MVP;
+uniform mat4 u_Model;
+
+out VS_OUT {
+    vec3 FragPos;
+    vec2 TexCoords;
+    vec3 Tangent;
+    vec3 Bitangent;
+    vec3 Normal;
+    flat int Slots[7];
+} vs_out;
+out vec4 FragPosLightSpace;
+uniform mat4 lightSpaceMatrix;
+
+void main()
+{
+    gl_Position = u_MVP * vec4(a_Position, 1.0);
+    vs_out.FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
+    vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
+    FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    vs_out.TexCoords = a_TexCoords;
+    vs_out.Tangent = a_Tangent;
+    vs_out.Bitangent = a_Bitangent;
+    vs_out.Slots = a_Slots;
+}
+
+#shader fragment
+#version 330 core
+out vec4 FragColor;
+
+in VS_OUT {//顶点着色器输出
+    vec3 FragPos;//片元位置，世界空间
+    vec2 TexCoords;//纹理坐标
+    vec3 Tangent;//切线
+    vec3 Bitangent;//副切线
+    vec3 Normal;//片元法线，世界空间
+    flat int Slots[7];
+} fs_in;
+
+uniform sampler2D textures[32];
+uniform sampler2D ShadowMap; //slot 31
+uniform float farPlane;
+uniform vec3 Diffuse;
+uniform vec3 Emission;
+
+// 光源结构体
+struct DirectionalLight
+{
+    vec3 lightDir;       // 方向光方向
+    vec3 lightAmbient;   // 环境光强度
+    vec3 lightDiffuse;   // 漫反射光强度
+    vec3 lightSpecular;  // 镜面光强度
+};
+uniform DirectionalLight directionalLight;
+
+#define MAX_POINT_LIGHTS 4
+struct PointLight
+{
+    vec3 lightPos;
+    vec3 lightAmbient;   // 环境光强度
+    vec3 lightDiffuse;   // 漫反射光强度
+    vec3 lightSpecular;  // 镜面光强度
+    float constant;      // 常数衰减
+    float linear;        // 线性衰减
+    float quadratic;     // 二次方衰减
+};
+uniform PointLight pointLights[MAX_POINT_LIGHTS];
+uniform int numPointLights;
+uniform samplerCube PointShadowMap[4];// slot 27-30
+
+uniform vec3 viewPos;        // 观察者位置
+in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
+
+// 常量
+const float PI = 3.14159265359;
+
+
+bool IsVisible(vec3 fragPos);
+float ShadowCalculation(vec4 fragPosLightSpace);
+vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);
+vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);
+vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);
+float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i);
+vec3 GetTextureColor(int slot, vec2 texCoords) // 3通道
+{
+    // 手动展开 32 个纹理插槽
+    if (slot == 0) return texture(textures[0], texCoords).rgb;
+    if (slot == 1) return texture(textures[1], texCoords).rgb;
+    if (slot == 2) return texture(textures[2], texCoords).rgb;
+    if (slot == 3) return texture(textures[3], texCoords).rgb;
+    if (slot == 4) return texture(textures[4], texCoords).rgb;
+    if (slot == 5) return texture(textures[5], texCoords).rgb;
+    if (slot == 6) return texture(textures[6], texCoords).rgb;
+    if (slot == 7) return texture(textures[7], texCoords).rgb;
+    if (slot == 8) return texture(textures[8], texCoords).rgb;
+    if (slot == 9) return texture(textures[9], texCoords).rgb;
+    if (slot == 10) return texture(textures[10], texCoords).rgb;
+    if (slot == 11) return texture(textures[11], texCoords).rgb;
+    if (slot == 12) return texture(textures[12], texCoords).rgb;
+    if (slot == 13) return texture(textures[13], texCoords).rgb;
+    if (slot == 14) return texture(textures[14], texCoords).rgb;
+    if (slot == 15) return texture(textures[15], texCoords).rgb;
+    if (slot == 16) return texture(textures[16], texCoords).rgb;
+    if (slot == 17) return texture(textures[17], texCoords).rgb;
+    if (slot == 18) return texture(textures[18], texCoords).rgb;
+    if (slot == 19) return texture(textures[19], texCoords).rgb;
+    if (slot == 20) return texture(textures[20], texCoords).rgb;
+    if (slot == 21) return texture(textures[21], texCoords).rgb;
+    if (slot == 22) return texture(textures[22], texCoords).rgb;
+    if (slot == 23) return texture(textures[23], texCoords).rgb;
+    if (slot == 24) return texture(textures[24], texCoords).rgb;
+    if (slot == 25) return texture(textures[25], texCoords).rgb;
+    if (slot == 26) return texture(textures[26], texCoords).rgb;
+    if (slot == 27) return texture(textures[27], texCoords).rgb;
+    if (slot == 28) return texture(textures[28], texCoords).rgb;
+    if (slot == 29) return texture(textures[29], texCoords).rgb;
+    if (slot == 30) return texture(textures[30], texCoords).rgb;
+    if (slot == 31) return texture(textures[31], texCoords).rgb;
+
+    // 默认值，若无有效插槽
+    return vec3(1.0, 1.0, 1.0); // 默认返回白色
+}
+float GetTextureValue(int slot, vec2 texCoords) //单通道
+{
+    // 手动展开 32 个纹理插槽
+    if (slot == 0) return texture(textures[0], texCoords).r;
+    if (slot == 1) return texture(textures[1], texCoords).r;
+    if (slot == 2) return texture(textures[2], texCoords).r;
+    if (slot == 3) return texture(textures[3], texCoords).r;
+    if (slot == 4) return texture(textures[4], texCoords).r;
+    if (slot == 5) return texture(textures[5], texCoords).r;
+    if (slot == 6) return texture(textures[6], texCoords).r;
+    if (slot == 7) return texture(textures[7], texCoords).r;
+    if (slot == 8) return texture(textures[8], texCoords).r;
+    if (slot == 9) return texture(textures[9], texCoords).r;
+    if (slot == 10) return texture(textures[10], texCoords).r;
+    if (slot == 11) return texture(textures[11], texCoords).r;
+    if (slot == 12) return texture(textures[12], texCoords).r;
+    if (slot == 13) return texture(textures[13], texCoords).r;
+    if (slot == 14) return texture(textures[14], texCoords).r;
+    if (slot == 15) return texture(textures[15], texCoords).r;
+    if (slot == 16) return texture(textures[16], texCoords).r;
+    if (slot == 17) return texture(textures[17], texCoords).r;
+    if (slot == 18) return texture(textures[18], texCoords).r;
+    if (slot == 19) return texture(textures[19], texCoords).r;
+    if (slot == 20) return texture(textures[20], texCoords).r;
+    if (slot == 21) return texture(textures[21], texCoords).r;
+    if (slot == 22) return texture(textures[22], texCoords).r;
+    if (slot == 23) return texture(textures[23], texCoords).r;
+    if (slot == 24) return texture(textures[24], texCoords).r;
+    if (slot == 25) return texture(textures[25], texCoords).r;
+    if (slot == 26) return texture(textures[26], texCoords).r;
+    if (slot == 27) return texture(textures[27], texCoords).r;
+    if (slot == 28) return texture(textures[28], texCoords).r;
+    if (slot == 29) return texture(textures[29], texCoords).r;
+    if (slot == 30) return texture(textures[30], texCoords).r;
+    if (slot == 31) return texture(textures[31], texCoords).r;
+
+    // 默认值，若无有效插槽
+    return 0.0; // 默认返回 0
+}
+// 主函数
+void main()
+{
+    vec3 finalColor = vec3(0.0);
+    vec3 ambient = fs_in.Slots[0] != -1 ? GetTextureColor(fs_in.Slots[0], fs_in.TexCoords) : Diffuse;// 本来的颜色 0
+    vec3 diffuse = ambient;
+    vec3 specular = ambient;
+    vec3 normal = fs_in.Slots[1] != -1 ? GetTextureColor(fs_in.Slots[1], fs_in.TexCoords) : fs_in.Normal; // 法线 1
+    float metallic = fs_in.Slots[2] != -1 ? GetTextureValue(fs_in.Slots[2], fs_in.TexCoords) : 0.0; // 金属度 2
+    float roughness = fs_in.Slots[3] != -1 ? GetTextureValue(fs_in.Slots[3], fs_in.TexCoords) : 0.5; // 粗糙度 3
+    float AO = fs_in.Slots[4] != -1 ? GetTextureValue(fs_in.Slots[4], fs_in.TexCoords) : 1.0; // 环境光遮蔽 4
+    vec3 emission = fs_in.Slots[5] != -1 ? GetTextureColor(fs_in.Slots[5], fs_in.TexCoords) : Emission; // 自发光 5
+    float alpha = fs_in.Slots[6] != -1 ? GetTextureValue(fs_in.Slots[6], fs_in.TexCoords) : 1.0;
+
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);    if(metallic > 0.0) {
+        specular = diffuse; // 对于金属材质，使用Albedo颜色作为F0
+        diffuse = vec3(0.0); // 金属没有漫反射
+    }
+
+    vec3 ambientColor = CalculateAmbientColor(ambient, directionalLight.lightAmbient, AO);
+    vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
+    vec3 specularColor = CalculateSpecularColor(specular, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
+    float dirShadow = ShadowCalculation(FragPosLightSpace);
+
+    finalColor += ambientColor + (1 - dirShadow) * (diffuseColor + specularColor) + emission;
+    for(int i=0; i < numPointLights; i++)
+    {
+        vec3 lightDir = pointLights[i].lightPos - fs_in.FragPos;
+        vec3 pointAmbient = CalculateAmbientColor(ambient, pointLights[i].lightAmbient, AO);
+        vec3 pointDiffuse = CalculateDiffuseColor(diffuse, pointLights[i].lightDiffuse, lightDir, normal);
+        vec3 pointSpecular = CalculateSpecularColor(specular, pointLights[i].lightSpecular, lightDir, normal, viewDir, roughness, metallic);
+        float distance = distance(fs_in.FragPos, pointLights[i].lightPos);
+        float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + pointLights[i].quadratic * (distance * distance));
+        float pointShadow = PointShadowCalculation(fs_in.FragPos, pointLights[i].lightPos, i);
+        pointAmbient = pointAmbient * attenuation;
+        pointDiffuse = pointDiffuse * attenuation;
+        pointSpecular = pointSpecular * attenuation;
+        finalColor += pointAmbient + (1 - pointShadow) * (pointDiffuse + pointSpecular);
+    }
+    if( alpha == 0){
+        discard;
+    }
+    FragColor = vec4(finalColor, alpha);
+}
+
+vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
+    //ambient color
+    vec3 ambientColor = lightAmbient * ambient * AO;
+    return ambientColor;
+}
+vec3 CalculateDiffuseColor(vec3 diffuse, vec3 lightDiffuse, vec3 lightDir, vec3 normal){
+    vec3 N = normalize(normal);
+    vec3 L = normalize(lightDir);
+    vec3 diffuseColor = lightDiffuse * diffuse * max(dot(lightDir, normal), 0);
+    return diffuseColor;
+}
+
+// 几何遮蔽函数：Schlick-GGX
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+// 几何遮蔽函数：Smith
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+// Fresnel 方程：Schlick近似
+vec3 fresnelSchlick(float cosTheta, float metallic, vec3 albedo)
+{
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+float GGXDistribution(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+vec3 CalculateSpecularColor(vec3 specular, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic){
+    vec3 V = normalize(viewDir);
+    vec3 L = normalize(lightDir);
+    vec3 H = normalize(V + L);
+    vec3 N = normalize(normal);
+    vec3 F = fresnelSchlick(abs(dot(H, V)), metallic, specular);
+    float G = GeometrySmith(N, V, L, roughness);
+    float D = GGXDistribution(N, H, roughness);
+    float NdotL = max(dot(N, L), 0.0);
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 specularColor = lightSpecular * F * D * G / max(4.0 * NdotL * NdotV, 0.001);
+    return specularColor;
+}
+
+const int sampleRate = 5;
+const float bias = 0.0005;
+float ShadowCalculation(vec4 fragPosLightSpace) //PCF
+{
+    // 透视除法
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // 变换到 [0,1] 范围
+    projCoords = projCoords * 0.5 + 0.5;
+    // 获取当前片段的深度值
+    float closestDepth = texture(ShadowMap, projCoords.xy).r;
+    // 获取当前片段在光空间的深度值
+    float currentDepth = projCoords.z;
+    // 检查是否在阴影中
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(ShadowMap, 0);
+    // 使用 3x3 样本
+    for(int x = -sampleRate; x <= sampleRate; ++x)
+    {
+        for(int y = -sampleRate; y <= sampleRate; ++y)
+        {
+            float pcfDepth = texture(ShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= sampleRate*sampleRate*4;
+    
+    // 如果超出了光照正交投影范围，则不在阴影中
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+    return shadow;
+}
+
+float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
+    vec3 lightToFragment = fragPos - lightPos;
+    float distance = length(lightToFragment);
+
+    // 采样点的方向（立方体贴图需要归一化方向向量）
+    vec3 sampleDir = normalize(lightToFragment);
+    float currentDepth = distance; // 当前片段的深度值（与光源的距离）
+
+    // 初始化阴影值
+    float shadow = 0.0;
+
+    // PCF 采样参数
+    float bias = 0.005; // 深度偏移，避免阴影失真
+    int samples = 4;   // 采样次数，值越高阴影越柔和，性能开销也越大
+    float offset = 0.05; // 偏移范围（柔和程度）
+
+    for (int x = -samples / 2; x <= samples / 2; ++x) {
+        for (int y = -samples / 2; y <= samples / 2; ++y) {
+            for (int z = -samples / 2; z <= samples / 2; ++z) {
+                // 生成偏移方向
+                vec3 sampleOffset = vec3(float(x), float(y), float(z)) * offset;
+                vec3 sampleDirOffset = normalize(sampleDir + sampleOffset);
+                float closestDepth = 0.0;
+                // 采样立方体贴图深度值
+                if(i == 0){
+                    closestDepth = texture(PointShadowMap[0], sampleDirOffset).r * farPlane;
+                }else if(i == 1){
+                    closestDepth = texture(PointShadowMap[1], sampleDirOffset).r * farPlane;
+                }
+                else if(i == 2){
+                    closestDepth = texture(PointShadowMap[2], sampleDirOffset).r * farPlane;
+                }
+                else if(i == 3){
+                    closestDepth = texture(PointShadowMap[3], sampleDirOffset).r * farPlane;
+                }
+
+                // 如果当前深度大于最近深度，则在阴影中
+                if (currentDepth - bias > closestDepth) {
+                    shadow += 1.0;
+                }
+            }
+        }
+    }
+
+    // 归一化阴影值（根据总采样数计算平均值）
+    float totalSamples = pow(samples, 3);
+    shadow /= totalSamples;
+
+    // 返回最终阴影值（0 表示完全明亮，1 表示完全在阴影中）
+    return shadow;
+}
+Application.cpp:
+//version v1.1
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include "Renderer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "SkyBox.h"
+
+#include "test/TestClearColor.h"
+#include "test/TestTexture2D.h"
+#include "Camera.h"
+#include "Scene.h"
+#include "ResourceManager.h"
+#include "EntityController.h"
+#include "CameraController.h"
+#include "color.h"
+#include "Light.h"
+#include "LightController.h"
+#include "SceneManager.h"
+#include "Quad.h"
+#include<map>
+DirectionalLightController directionalLightController;
+
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = 0.0f; // 上一帧的时间
+
+// 相机控制器和资源管理器
+CameraController* cameraController = nullptr;
+ResourceManager resourceManager;
+SceneManager sceneManager(nullptr);
+
+void PBR_Render(Camera& camera, Scene* scene);
+void RealTimeRender(GLFWwindow* window);
+static void RenderFBOtoScreen(ColorFBO& colorFBO);
+static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
+static void ViewPortInit(int width, int height) {
+    GLCall(glViewport(0, 0, width, height));
+    GLCall(glClear(GL_DEPTH_BUFFER_BIT));
+}
+
+// 鼠标移动回调函数
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (cameraController)
+        cameraController->ProcessMouseInput(static_cast<float>(xpos), static_cast<float>(ypos));
+}
+
+// 鼠标滚轮回调函数
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if (cameraController)
+        cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+int main(void)
+{
+    GLFWwindow* window;
+
+    /* Initialize the library */
+    if (!glfwInit())
+        return -1;
+    
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
+
+
+    /* Create a windowed mode window and its OpenGL context */
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return -1;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+    glewExperimental = GL_TRUE; // 启用实验性功能以确保现代 OpenGL 功能可用
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    GLCall(glfwSwapInterval(1));
+
+    if (glewInit() != GLEW_OK) {
+        std::cout << "error";
+    }
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA));
+
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+
+    glEnable(GL_FRAGMENT_DEPTH);
+
+    /* Loop until the user closes the window */
+    //ImGui initialization
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); // 获取 io 对象
+
+    // 添加默认字体
+    io.Fonts->AddFontDefault();
+
+    // 设置 ImGui 样式
+    ImGui::StyleColorsDark();
+
+    // 初始化平台/渲染绑定
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
+    ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
+    RealTimeRender(window);
+}
+static void LoadModel(SceneManager& sceneManager) {
+    //load sun
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 3.0f);
+    sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
+    PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
+    sceneManager.AddPointLight(pointLight, "node2", nullptr);
+}
+static void InitModel() {
+
+}
+
+static void InitCamera(Camera& camera) {
+    camera.SetPosition(glm::vec3(9.670f, 2.000f, 7.819f));
+    camera.SetTarget(glm::vec3(5.884, 0.175, 4.545));
+    camera.SetFocus(0.2f, 0.1f, 0.05);
+}
+void RealTimeRender(GLFWwindow* window) {
+    // 定义视口宽高
+    float width = WINDOW_WIDTH;
+    float height = WINDOW_HEIGHT;
+    float aspect_ratio = width / height;
+
+
+    // 定义视野角度（以弧度为单位）、近平面和远平面
+    float fov = 30.0f; // 30度视野角
+    float near_plane = NEAR_PLANE;
+    float far_plane = FAR_PLANE;
+
+    Camera camera(fov, aspect_ratio, near_plane, far_plane);
+    InitCamera(camera);
+    cameraController = new CameraController(&camera, window);
+
+    Scene* scene = new Scene();
+    sceneManager = SceneManager(scene);
+    LoadModel(sceneManager);
+    InitModel();
+
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/Batch.shader");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+    ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+    //这段真的非常非常重要，忘记绑定了。
+    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+    mainShader->Bind();
+    mainShader->setUniform1f("farPlane", far_plane);
+    mainShader->setUniform1i("ShadowMap", 31);
+    mainShader->Unbind();
+
+
+    DirectionalLight* light = new DirectionalLight("Directional Light", _GREY, 2.0f, glm::vec3(1.0f));
+    scene->SetDirectionalLight(light);
+    directionalLightController = DirectionalLightController(light);
+    //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+    std::vector<std::string> faces
+    {
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg"
+    };
+    // 创建天空盒实例
+    Skybox skybox(faces);
+    DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+    while (!glfwWindowShouldClose(window))
+    {
+        /* Render here */
+         // 获取当前帧的时间
+        float currentFrame = glfwGetTime();
+        // 计算 deltaTime
+        deltaTime = currentFrame - lastFrame;
+        // 更新 lastFrame 为当前帧的时间
+        lastFrame = currentFrame;
+
+        //ImGui 初始化
+        ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
+        ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
+        ImGui::NewFrame(); // ImGui 自身的新帧调用
+
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+        scene->OnImGuiTree();
+        cameraController->OnImGuiRender();
+        cameraController->Update(deltaTime);
+        mainShader->Bind();
+        mainShader->setUniform1i("numPointLights", pointLightID.size());
+        mainShader->Unbind();
+
+        scene->RenderShadowMap(depthShader, cubeDepthShader);
+
+        //render
+        colorFBO.Bind();
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        skybox.Draw(camera);
+        mainShader->Bind();
+        mainShader->setUniform1i("ShadowMap", 31);
+        for (int i = 0; i < 4; i++)
+        {
+            mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
+        }
+        scene->BindLight(*mainShader, glm::mat4(1.0f));
+        scene->BatchRender(*mainShader, camera);
+        mainShader->Unbind();
+        colorFBO.Unbind();
+        //post render
+        ColorFBO t = PostRender(colorFBO, camera);
+        RenderFBOtoScreen(t);
+        //update
+        scene->Update(deltaTime);
+        
+
+        ImGui::Begin("PBRrender");
+        if (ImGui::Button("Render")) {
+            PBR_Render(camera, scene);
+        }
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
+}
+
+
+
+void PBR_Render(Camera& camera, Scene* scene) {
+
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+    ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+    //这段真的非常非常重要，忘记绑定了。
+    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+    mainShader->Bind();
+    mainShader->setUniform1i("AlbedoMap", 0);
+    mainShader->setUniform1i("NormalMap", 1);
+    mainShader->setUniform1i("MetallicMap", 2);
+    mainShader->setUniform1i("RoughnessMap", 3);
+    mainShader->setUniform1i("AOMap", 4);
+    mainShader->setUniform1i("EmissionMap", 5);
+    mainShader->setUniform1i("HeightMap", 6);
+    mainShader->setUniform1i("DissolveTextureMap", 8);
+    mainShader->setUniform1i("ShadowMap", 7);
+    mainShader->setUniform1i("SpecularExponentTextureMap", 9);
+    mainShader->setUniform1f("farPlane", FAR_PLANE);
+    mainShader->setUniform1i("AlphaMap", 15);
+    mainShader->Unbind();
+
+    std::vector<std::string> faces
+    {
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg",
+        "res/skybox/star.jpg"
+    };
+    // 创建天空盒实例
+    Skybox skybox(faces);
+    DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+    mainShader->Bind();
+    mainShader->setUniform1i("numPointLights", pointLightID.size());
+    mainShader->Unbind();
+
+    scene->RenderShadowMap(depthShader, cubeDepthShader);
+
+    //render visibility
+    ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
+    depthMapFBO.Bind();
+    depthShader->Bind();
+    glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
+    depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
+    scene->RenderDepthMap(*depthShader);
+    depthShader->Unbind();
+    depthMapFBO.Unbind();
+    //bind visibilityMap
+    depthMapFBO.BindTexture(10);
+
+    //render
+    colorFBO.Bind();
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    skybox.Draw(camera);
+    mainShader->Bind();
+    mainShader->setUniform1i("ShadowMap", 7);
+    mainShader->setUniform1i("ViewDepthMap", 10);
+    for(int i=0; i < 4; i++)
+    {
+        mainShader->setUniform1i("PointShadowMap["+std::to_string(i) + "]", 11 + i);
+    }
+    scene->BindLight(*mainShader, glm::mat4(1.0f));
+    scene->Render(*mainShader, camera);
+    mainShader->Unbind();
+    colorFBO.Unbind();
+    //post render
+    ColorFBO finalPicture = PostRender(colorFBO, camera);
+    resourceManager.SaveFBOToPNG(colorFBO, "test.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+}
+static void RenderFBOtoScreen(ColorFBO& colorFBO) {
+    Quad screenQuad;
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/screen.shader");
+    colorFBO.BindTexture(0);
+    colorFBO.BindDepthTexture(1);
+    screenShader->Bind();
+    screenShader->setUniform1i("screenTexture", 0);
+    //screenShader->setUniform1i("depthTexture", 1);
+    screenQuad.Render(*screenShader);
+    screenShader->Unbind();
+}
+
+static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
+    static Quad screenQuad;
+    ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/FOD.shader");
+    finalFBO.Bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        colorFBO.BindTexture(0);
+        colorFBO.BindDepthTexture(1);
+        FODshader->Bind();
+            FODshader->setUniform1i("screenTexture", 0);
+            FODshader->setUniform1i("depthTexture", 1);
+            FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
+            FODshader->setUniform1f("focusRange", camera.GetFocusRange());
+            FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
+            screenQuad.Render(*FODshader);
+        FODshader->Unbind();
+    finalFBO.Unbind();
+
+    return finalFBO;
+}
+
+Scene.cpp:
+#include "Scene.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "LightController.h"
+#include "color.h"
+#include "SceneManager.h"
+extern DirectionalLightController directionalLightController;
+static void BatchBindTextures(Shader& shader) {
+	shader.Bind();
+	for (auto& texture : textureList) {
+		unsigned int slot = textureSlots[texture->GetTextureID()];
+		std::string uniformName = "textures["+std::to_string(slot) + "]";
+		shader.setUniform1i(uniformName.c_str(), slot);
+		texture->Bind(slot);
+	}
+	shader.Unbind();
+}
+
+void Scene::UpdateVAO() {
+	std::vector<Vertex> batchVertices;
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		std::vector<Vertex> nodeVertices = node->GetVertices(glm::mat4(1.0f));
+		batchVertices.insert(batchVertices.end(), nodeVertices.begin(), nodeVertices.end());
+	}
+	std::vector<unsigned int> batchIndices;
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		std::vector<unsigned int> nodeIndices = node->GetIndices();
+		batchIndices.insert(batchIndices.end(), nodeIndices.begin(), nodeIndices.end());
+	}
+
+	VertexBufferLayout layout;
+	layout.Push<float>(3); // Position: 3个浮点数
+	layout.Push<float>(3); // Normal: 3个浮点数
+	layout.Push<float>(2); // TexCoords: 2个浮点数
+	layout.Push<float>(3); // 切线
+	layout.Push<float>(3); // 双切线
+	layout.Push<int>(7); //textureSlot
+
+	m_VAO = new VertexArray();
+	m_VBO = new VertexBuffer(batchVertices.data(), batchVertices.size() * sizeof(Vertex));
+	m_VAO->AddBuffer(*m_VBO, layout);
+
+	m_IBO = new IndexBuffer(batchIndices.data(), batchIndices.size());
+}
+Scene::Scene()
+	:m_DirLight(nullptr)
+{
+}
+
+void Scene::load(const std::string& filePath)
+{
+
+}
+
+void Scene::save(const std::string& filePath)
+{
+
+}
+static void PlanetRotate(SceneNode* node, float rate, float deltaTime, float& angle) {
+	angle += rate * deltaTime;
+	if (angle > 180) {
+		angle -= 360;
+	}
+	node->SetRotation(glm::vec3(0.0f, angle, 0.0f));
+}
+static void StaticUpdate(float deltaTime) {
+	return;
+}
+void Scene::Update(float deltaTime)
+{
+	m_DirLight->Update(deltaTime);
+	StaticUpdate(deltaTime);
+	for (auto& pair : m_SceneNodes)
+	{
+		SceneNode* node = pair.second;
+		node->Update(deltaTime);
+	}
+}
+
+void Scene::AddNode(SceneNode* node)
+{
+	m_SceneNodes[node->GetName()] = node;
+}
+
+void Scene::SetDirectionalLight(DirectionalLight* dirLight)
+{
+	m_DirLight = dirLight;
+}
+
+void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
+{
+	m_DirLight->Bind(shader, globalTransform);
+	shader.setUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		node->BindLight(shader, globalTransform);
+	}
+}
+
+void Scene::RenderDepthMap(Shader& shader)
+{
+	Renderer renderer;
+	renderer.Draw(*m_VAO, *m_IBO, shader);
+}
+
+void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
+{
+	UpdateVAO();
+	depthShader->Bind();
+	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
+	depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);
+	m_DirLight->m_ShadowMapFBO->Bind();
+	RenderDepthMap(*depthShader);
+	depthShader->Unbind();
+	m_DirLight->m_ShadowMapFBO->Unbind();
+	//bind shadowMap
+	m_DirLight->m_ShadowMapFBO->BindTexture(31);
+
+	int count = 0;
+	for(auto& pair: pointLightList)
+	{
+		PointLight* pointlight = pair.second;
+		std::vector<glm::mat4> shadowMatrices = pointlight->ComputePointLightShadowMatrices(NEAR_PLANE, FAR_PLANE);
+		pointlight->m_CubeShadowMapFBO->Bind();
+		cubeDepthShader->Bind();
+		cubeDepthShader->setUniform1f("farPlane", FAR_PLANE);
+		cubeDepthShader->setUniformVec3f("lightPos", pointlight->GetLightPos());
+		for (unsigned int i = 0; i < 6; ++i) {
+			cubeDepthShader->setUniformMat4f("ShadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
+			pointlight->m_CubeShadowMapFBO->BindFace(i);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			RenderDepthMap(*cubeDepthShader);
+		}
+		cubeDepthShader->Unbind();
+		pointlight->m_CubeShadowMapFBO->Unbind();
+		pointlight->m_CubeShadowMapFBO->BindTexture(27 + count);
+		count++;
+	}
+}
+
+void Scene::BatchRender(Shader& shader, Camera& camera)
+{
+	BatchBindTextures(shader);
+	Renderer render;
+	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
+	render.Draw(*m_VAO, *m_IBO, &camera, shader, glm::mat4(1.0f), &lightSpaceMatrix);
+}
+
+void Scene::Render(Shader& shader, Camera& camera)
+{
+	for (auto& pair : m_SceneNodes) {
+		SceneNode* node = pair.second;
+		node->Render(shader, camera, glm::mat4(1.0f));
+	}
+}
+
+void Scene::RemoveNode(SceneNode* node)
+{
+	m_SceneNodes[node->GetName()] = nullptr;
+}
+
+void Scene::OnImGuiTree()
+{
+	if (ImGui::TreeNode("Scene"))
+	{
+		if (ImGui::Button("DirectionalLight"))
+		{
+			ImGui::OpenPopup("DirectionalLightController");
+		}
+		if (ImGui::BeginPopup("DirectionalLightController"))
+		{
+			directionalLightController.OnImGuiRender();
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		for (auto& pair : m_SceneNodes) {
+			pair.second->OnImGuiTree();
+		}
+		ImGui::TreePop();
+	}
+}
+Renderer.cpp:
+
+#include "Renderer.h"
+#include <iostream>
+
+#define ASSERT(x) if(!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+void GLClearError() {//确保之前没有错误，否则会死循环
+    while (glGetError() != GL_NO_ERROR) {
+        ;
+    }
+}
+
+bool GLLogCall(const char* function, const char* file, int line) {//打印错误信息
+    while (GLenum error = glGetError()) {
+        std::cout << "GL Error: " << error << std::endl;
+        std::cout << "in Function: " << function << std::endl;
+        std::cout << "in File: " << file << std::endl;
+        std::cout << "in Line: " << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model, const glm::mat4* lightSpaceMatrix) const
+{
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
+    shader.Bind();
+
+    // 如果有相机，设置相机相关的 Uniform
+    if (camera)
+    {
+        glm::mat4 proj = camera->GetProjectionMatrix();
+        glm::mat4 view = camera->GetViewMatrix();
+        glm::mat4 mvp = proj * view * model;
+
+        shader.setUniformVec3f("viewPos", camera->GetPosition());
+        shader.setUniformMat4f("u_View", view);
+        shader.setUniformMat4f("u_MVP", mvp);
+    }
+    else
+    {
+        // 如果没有相机，只设置模型矩阵
+        shader.setUniformMat4f("u_MVP", model);
+    }
+
+    // 始终设置模型矩阵
+    shader.setUniformMat4f("u_Model", model);
+
+    // 如果有光空间矩阵，设置它
+    if (lightSpaceMatrix)
+    {
+        shader.setUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
+    }
+
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+
+    va.Unbind();
+    ib.Unbind();
+}
+
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,  Shader& shader) const
+{
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+    va.Unbind();
+    ib.Unbind();
+}
+
+void Renderer::Clear() const
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+Texture.cpp:
+
+#include "Renderer.h"
+#include <iostream>
+
+#define ASSERT(x) if(!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+void GLClearError() {//确保之前没有错误，否则会死循环
+    while (glGetError() != GL_NO_ERROR) {
+        ;
+    }
+}
+
+bool GLLogCall(const char* function, const char* file, int line) {//打印错误信息
+    while (GLenum error = glGetError()) {
+        std::cout << "GL Error: " << error << std::endl;
+        std::cout << "in Function: " << function << std::endl;
+        std::cout << "in File: " << file << std::endl;
+        std::cout << "in Line: " << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model, const glm::mat4* lightSpaceMatrix) const
+{
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
+    shader.Bind();
+
+    // 如果有相机，设置相机相关的 Uniform
+    if (camera)
+    {
+        glm::mat4 proj = camera->GetProjectionMatrix();
+        glm::mat4 view = camera->GetViewMatrix();
+        glm::mat4 mvp = proj * view * model;
+
+        shader.setUniformVec3f("viewPos", camera->GetPosition());
+        shader.setUniformMat4f("u_View", view);
+        shader.setUniformMat4f("u_MVP", mvp);
+    }
+    else
+    {
+        // 如果没有相机，只设置模型矩阵
+        shader.setUniformMat4f("u_MVP", model);
+    }
+
+    // 始终设置模型矩阵
+    shader.setUniformMat4f("u_Model", model);
+
+    // 如果有光空间矩阵，设置它
+    if (lightSpaceMatrix)
+    {
+        shader.setUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
+    }
+
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+
+    va.Unbind();
+    ib.Unbind();
+}
+
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,  Shader& shader) const
+{
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+    va.Unbind();
+    ib.Unbind();
+}
+
+void Renderer::Clear() const
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+SceneManager.cpp:
+#include "SceneManager.h"
+
+std::map<std::string, Entity*> entityList;
+std::map<std::string, SceneNode*> sceneNodeList;
+std::map<std::string, LightController*> lightControllerList;
+std::map<std::string, EntityController*> entityControllerList;
+std::map<std::string, SceneNodeController*> sceneNodeControllerList;
+std::map<std::string, PointLight*> pointLightList;
+std::map<PointLight*, unsigned int> pointLightID;
+std::vector<Texture*> textureList;
+std::map<unsigned int, unsigned int> textureSlots;
+
+SceneManager::SceneManager(Scene* scene)
+{
+    m_Scene = scene;
+}
+
+SceneManager::~SceneManager()
+{
+    // 删除所有 EntityController
+    for (auto& pair : entityControllerList) {
+        delete pair.second;
+    }
+    entityControllerList.clear();
+
+    // 删除所有 SceneNodeController
+    for (auto& pair : sceneNodeControllerList) {
+        delete pair.second;
+    }
+    sceneNodeControllerList.clear();
+
+    // 删除所有 LightController
+    for (auto& pair : lightControllerList) {
+        delete pair.second;
+    }
+    lightControllerList.clear();
+
+    // 删除所有 PointLight
+    for (auto& pair : pointLightList) {
+        delete pair.second;
+    }
+    pointLightList.clear();
+
+    // 删除所有 SceneNodes
+    for (auto& pair : sceneNodeList) {
+        delete pair.second;
+    }
+    sceneNodeList.clear();
+
+    // 删除 all Entities
+    for (auto& pair : entityList) {
+        delete pair.second;
+    }
+    entityList.clear();
+}
+
+
+void SceneManager::AddEntity(MeshComponent* meshComponent, const char* entityName, const char* sceneNodeName, SceneNode* parent)
+{
+    Entity* entity = new Entity(entityName);
+    entity->AddComponent(meshComponent);
+    SceneNode* node = new SceneNode(sceneNodeName, entity, nullptr);
+    parent ? parent->AddChild(node) : m_Scene->AddNode(node);
+    // 使用 std::string 作为键
+    entityList[std::string(entityName)] = entity;
+    sceneNodeList[std::string(sceneNodeName)] = node;
+    entityControllerList[std::string(entityName)] = new EntityController(entity);
+    sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+}
+
+void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent)
+{
+    SceneNode* node = new SceneNode(sceneNodeName, light, nullptr);
+    parent ? parent->AddChild(node) : m_Scene->AddNode(node);
+    pointLightList[light->GetName()] = light;
+    pointLightID[light] = pointLightList.size() - 1;
+    PointLightController* pointLightController = new PointLightController(light);
+    lightControllerList[light->GetName()] = pointLightController;
+    sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+}
+
+void SceneManager::AddTexture(Texture* texture)
+{
+    textureList.push_back(texture);
+    if(textureSlots.find(texture->GetTextureID()) == textureSlots.end())  textureSlots[texture->GetTextureID()] = textureSlots.size();
+}
+VertexBufferLayout.cpp:
+#pragma once
+
+#include<vector>
+#include<GL/glew.h>
+#include "Macro.h"
+
+struct VertexBufferElement {//基本上对应glVertexAttribPointer的各个参数
+    unsigned int type;
+    unsigned int count;
+    
+    unsigned char normalized;
+
+    static unsigned int GetSizeOfType(unsigned int type) {
+        switch (type) {
+        case GL_FLOAT:          return 4;
+        case GL_UNSIGNED_INT:   return 4;
+        case GL_UNSIGNED_BYTE:  return 1;
+        case GL_INT:            return 4;
+        }
+        ASSERT(false);
+        return 0;
+    }
+};
+
+class VertexBufferLayout
+{
+private:
+    std::vector<VertexBufferElement> m_Elements;
+    unsigned int m_Stride;
+public:
+    VertexBufferLayout() :m_Stride(0) {};
+
+    template<typename T>
+    void Push(unsigned int count) {
+        static_assert(false);//编译时报错
+    }
+
+    template<>
+    void Push<float>(unsigned int count)
+    {
+        m_Elements.push_back({GL_FLOAT, count, GL_FALSE});
+        m_Stride += VertexBufferElement::GetSizeOfType(GL_FLOAT) * count;
+    }
+
+    template<>
+    void Push<unsigned int>(unsigned int count)
+    {
+        m_Elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
+        m_Stride += VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT) * count;
+    }
+
+    template<>
+    void Push<unsigned char>(unsigned int count)
+    {
+        m_Elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE });
+        m_Stride += VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE) * count;
+    }
+    template<>
+    void Push<int>(unsigned int count)
+    {
+        m_Elements.push_back({ GL_INT, count, GL_FALSE });
+        m_Stride += VertexBufferElement::GetSizeOfType(GL_INT) * count;
+    }
+
+    inline const std::vector<VertexBufferElement> GetElements() const { return m_Elements; }
+    inline unsigned int GetStride() const { return m_Stride; }
+};
+Material.cpp:
+#include "Material.h"
+#include <iostream>
+#include <string>
+#include"SceneManager.h"
+
+extern SceneManager sceneManager;
+
+static std::string safe_substr(const std::string& str, size_t start) {
+	if (start < str.size()) {
+		std::cerr << str.substr(start) << std::endl;
+		return str.substr(start);
+	}
+	else {
+		std::cerr << "Warning: Attempted to substr at position " << start << " but string size is " << str.size() << ". Returning empty string." << std::endl;
+		return "";
+	}
+}
+
+Material::Material(Texture* diffuse, Texture* normal, Texture* specular)
+	: m_DiffuseMap(nullptr), m_NormalMap(nullptr), m_SpecularMap(nullptr),
+	m_Albedo(glm::vec3(1.0f)), m_Metallic(0.5f), m_Roughness(1.0f)
+{
+	m_DiffuseMap = diffuse;
+	m_NormalMap = normal;
+	m_SpecularMap = specular;
+
+}
+
+void Material::Bind(Shader& shader) const
+{
+	shader.Bind();
+	shader.setUniformVec3f("albedo", m_Albedo);
+	shader.setUniform1f("roughness", m_Roughness);
+	shader.setUniform1f("metallic", m_Metallic);
+	if (m_DiffuseMap) {
+		m_DiffuseMap->Bind(0);
+	}
+	if (m_NormalMap) {
+		m_NormalMap->Bind(1);
+	}
+	if (m_SpecularMap) {
+		m_SpecularMap->Bind(2);
+	}
+}
+
+void Material::Unbind(Shader& shader) const
+{
+	if (m_DiffuseMap) {
+		m_DiffuseMap->Unbind();
+	}
+	if (m_NormalMap) {
+		m_NormalMap->Unbind();
+	}
+	if (m_SpecularMap) {
+		m_SpecularMap->Unbind();
+	}
+}
+
+void Material::SetAlbedo(Shader& shader, const glm::vec3& color)
+{
+	m_Albedo = color;
+	shader.setUniformVec3f("u_Material.Albedo", m_Albedo);
+}
+void Material::SetMetallic(Shader& shader, float value)
+{
+	m_Metallic = value;
+	shader.setUniform1f("u_Material.Metallic", m_Metallic);
+}
+void Material::SetRoughness(Shader& shader, float value)
+{
+	m_Roughness = value;
+	 shader.setUniform1f("u_Material.Roughness", m_Roughness);
+}
+
+PBRMaterial::PBRMaterial()
+	:m_AO(nullptr),m_EmissionMap(nullptr), m_HeightMap(nullptr),m_AlbedoMap(nullptr),m_MetallicMap(nullptr), m_RoughnessMap(nullptr),m_NormalMap(nullptr)
+{
+}
+static glm::vec3 ConvertToVec3(const float* v)
+{
+	return glm::vec3(v[0], v[1], v[2]);
+}
+
+PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t& m)
+	: m_AO(nullptr), m_EmissionMap(nullptr), m_HeightMap(nullptr),
+	m_AlbedoMap(nullptr), m_MetallicMap(nullptr), m_RoughnessMap(nullptr),
+	m_NormalMap(nullptr), m_DissolveTextureMap(nullptr), m_SpecularExponentTextureMap(nullptr),m_Ambient(glm::vec3(0.0f)),
+	m_Emission(glm::vec3(0.0f)), m_Diffuse(glm::vec3(0.8f)),
+	m_Specular(glm::vec3(0.1f)), m_Transmittance(glm::vec3(0.0f)),
+	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2)
+{
+	std::cout << "Load Texture " << filePath << std::endl;
+	if(m.emission) m_Emission = glm::vec3(m.emission[0], m.emission[1], m.emission[2]);
+	if (m.diffuse) m_Diffuse = glm::vec3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
+	if (m.specular) m_Specular = glm::vec3(m.specular[0], m.specular[1], m.specular[2]);
+	if(m.illum) m_Illum = m.illum;
+	m_Shininess = m.illum == 5 ? m.shininess : 16.0f;
+	if(m.ior) m_Ior = m.ior;
+	if(m.ambient) m_Ambient = glm::vec3(m.ambient[0], m.ambient[1], m.ambient[2]);
+	if(m.transmittance) m_Transmittance = glm::vec3(m.transmittance[0], m.transmittance[1], m.transmittance[2]);
+	if(m.dissolve) m_d = m.dissolve;
+
+	if (m.diffuse_texname.size() > 0){//1
+		m_AlbedoMap = new Texture(filePath+m.diffuse_texname.c_str());
+		sceneManager.AddTexture(m_AlbedoMap);
+		std::cout << filePath + m.diffuse_texname.c_str() << std::endl;
+	}
+	if (m.bump_texname.size() > 0){//2
+		m_NormalMap = new Texture(filePath+m.bump_texname.c_str());
+        sceneManager.AddTexture(m_NormalMap);
+		std::cout << filePath + m.bump_texname.c_str() << std::endl;
+	}
+	if (m.emissive_texname.size()) {//3
+		m_EmissionMap = new Texture(filePath+m.emissive_texname.c_str());
+        sceneManager.AddTexture(m_EmissionMap);
+		std::cout << filePath + m.emissive_texname.c_str() << std::endl;
+	}
+	if (m.roughness_texname.size()) {//5
+		m_RoughnessMap = new Texture(filePath+m.roughness_texname.c_str());
+        sceneManager.AddTexture(m_RoughnessMap);
+		std::cout << filePath + m.roughness_texname.c_str() << std::endl;
+	}
+	if (m.metallic_texname.size()) {//6
+		m_MetallicMap = new Texture(filePath+m.metallic_texname.c_str());
+        sceneManager.AddTexture(m_MetallicMap);
+		std::cout << filePath + m.metallic_texname.c_str() << std::endl;
+	}
+	if (m.normal_texname.size()) {//7
+		m_NormalMap = new Texture(filePath+m.normal_texname.c_str());
+		sceneManager.AddTexture(m_NormalMap);
+		std::cout << filePath + m.normal_texname.c_str() << std::endl;
+	}
+	if (m.specular_highlight_texname.size()) {//8
+		m_SpecularExponentTextureMap = new Texture(filePath+m.specular_highlight_texname.c_str());
+		std::cout << filePath + m.specular_highlight_texname.c_str() << std::endl;
+	}
+	if (m.alpha_texname.size()) { //15
+		m_AlphaMap = new Texture(filePath+m.alpha_texname.c_str());
+		sceneManager.AddTexture(m_AlphaMap);
+        std::cout << filePath + m.alpha_texname.c_str() << std::endl;
+	}
+}
+PBRMaterial::~PBRMaterial()
+{
+	delete m_AlbedoMap;
+	delete m_NormalMap;
+	delete m_SpecularExponentTextureMap;
+	delete m_DissolveTextureMap;
+	delete m_HeightMap;
+	delete m_AO;
+	delete m_EmissionMap;
+	delete m_MetallicMap;
+	delete m_RoughnessMap;
+	delete m_AlphaMap;
+	delete m_BumpMap;
+}
+PBRMaterial::PBRMaterial(Texture* albedo, Texture* normal, Texture* roughness, Texture* metallic, Texture* ao, Texture* emission, Texture* height)
+	:m_AO(ao), m_EmissionMap(emission), m_HeightMap(height), m_AlbedoMap(albedo), m_MetallicMap(metallic), m_RoughnessMap(roughness), m_NormalMap(normal)
+{
+}
+
+void PBRMaterial::Bind(Shader& shader) const
+{
+	shader.Bind();
+	shader.setUniformVec3f("Ambient", m_Ambient);
+	shader.setUniformVec3f("Diffuse", m_Diffuse);
+	shader.setUniformVec3f("Specular", m_Specular);
+	shader.setUniformVec3f("Transmittance", m_Transmittance);
+	shader.setUniformVec3f("Emission", m_Emission);
+	shader.setUniform1f("Shininess", m_Shininess);
+	shader.setUniform1f("Ior", m_Ior);
+	shader.setUniform1f("d", m_d);
+	shader.setUniform1i("Illm", m_Illum);
+	if (m_AlbedoMap) { m_AlbedoMap->Bind(0);		shader.setUniform1i("hasAlbedoMap", 1); }
+	else 				shader.setUniform1i("hasAlbedoMap", 0);
+
+	if(m_NormalMap)		{ m_NormalMap->Bind(1);		shader.setUniform1i("hasNormalMap", 1);}
+	else 				shader.setUniform1i("hasNormalMap", 0);
+
+	if(m_MetallicMap)   { m_MetallicMap->Bind(2);	shader.setUniform1i("hasMetallicMap", 1);}
+	else 				shader.setUniform1i("hasMetallicMap", 0);
+
+	if(m_RoughnessMap)	{ m_RoughnessMap->Bind(3); 	shader.setUniform1i("hasRoughnessMap", 1);}
+	else 				shader.setUniform1i("hasRoughnessMap", 0);
+
+	if(m_AO)			{ m_AO->Bind(4);			shader.setUniform1i("hasAO", 1);}
+	else 				shader.setUniform1i("hasAO", 0);
+
+	if(m_EmissionMap)	{ m_EmissionMap->Bind(5);	shader.setUniform1i("hasEmissionMap", 1);}
+	else 				shader.setUniform1i("hasEmissionMap", 0);
+
+	if(m_HeightMap)		{ m_HeightMap->Bind(6);		shader.setUniform1i("hasHeightMap", 1);}
+	else 				shader.setUniform1i("hasHeightMap", 0);
+
+	if(m_DissolveTextureMap)	{m_DissolveTextureMap->Bind(8); shader.setUniform1i("hasDissolveTextureMap", 1);}
+	else 				shader.setUniform1i("hasDissolveTextureMap", 0);
+
+	if(m_SpecularExponentTextureMap)	{m_SpecularExponentTextureMap->Bind(9); shader.setUniform1i("hasSpecularExponentTextureMap", 1);}
+	else 				shader.setUniform1i("hasSpecularExponentTextureMap", 0);
+	if(m_AlphaMap)						{ m_AlphaMap->Bind(15); shader.setUniform1i("hasAlphaMap", 1);}
+	else 				shader.setUniform1i("hasAlphaMap", 0);
+}
+
+void PBRMaterial::Unbind(Shader& shader) const
+{
+	shader.Bind();
+	if (m_AlbedoMap)		m_AlbedoMap->Unbind();
+	if (m_NormalMap)		m_NormalMap->Unbind();
+	if (m_MetallicMap)   m_MetallicMap->Unbind();
+	if (m_RoughnessMap)	m_RoughnessMap->Unbind();
+	if (m_AO)			m_AO->Unbind();
+	if (m_EmissionMap)	m_EmissionMap->Unbind();
+	if (m_HeightMap)		m_HeightMap->Unbind();
+	if (m_AlphaMap) m_AlphaMap->Unbind();
+}
+
+void PBRMaterial::SetAO(Texture* map)
+{
+	m_AO = map;
+}
+
+void PBRMaterial::SetRoughnessMap(Texture* map)
+{
+	m_RoughnessMap = map;
+}
+
+void PBRMaterial::SetMetallicMap(Texture* map)
+{
+	m_MetallicMap = map;
+}
+
+void PBRMaterial::SetAlbedoMap(Texture* map)
+{
+	m_AlbedoMap = map;
+}
+
+void PBRMaterial::SetNormalMap(Texture* map)
+{
+	m_NormalMap = map;
+}
+
+void PBRMaterial::SetEmisionMap(Texture* map)
+{
+	m_EmissionMap = map;
+}
+
+void PBRMaterial::SetHeightMap(Texture* map)
+{
+	m_HeightMap = map;
+}
+
+int PBRMaterial::GetAlbedoMapSlot() const
+{
+	return m_AlbedoMap ? textureSlots[m_AlbedoMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetNormalMapSlot() const
+{
+	return m_NormalMap ? textureSlots[m_NormalMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetMetallicMapSlot() const
+{
+	return m_MetallicMap ? textureSlots[m_MetallicMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetRoughnessMapSlot() const
+{
+	return m_RoughnessMap ? textureSlots[m_RoughnessMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetAOMapSlot() const
+{
+	return m_AO ? textureSlots[m_AO->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetEmissionMapSlot() const
+{
+	return m_EmissionMap ? textureSlots[m_EmissionMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetAlphaMapSlot() const
+{
+	return m_AlphaMap ? textureSlots[m_AlphaMap->GetTextureID()] : -1;
+}
+
+
+Mesh.h:
+#pragma once
+#include <vector>
+#include <glm/glm.hpp>
+#include <memory>
+#include "Texture.h"
+#include "Material.h"
+#include "FrameBuffer.h"
+#include<Camera.h>
+
+// 顶点结构体，包含位置信息、法线、UV 等
+struct Vertex {
+    glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 TexCoords;
+    glm::vec3 Tangent;
+    glm::vec3 Bitangent;
+    int TextureSlots[7];/*  0 albedo
+                            1 normal
+                            2 metallic
+                            3 roughness
+                            4 AO
+                            5 emission
+                            6 alpha 
+                            */
+};
+
+class Mesh {
+public:
+    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
+    Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial, float scaleRate);
+    ~Mesh();
+
+    void Bind() const;                         // 绑定 VAO，准备绘制
+    void Unbind() const;                       // 解除 VAO 绑定
+    void RenderDepthMap(Shader& shader, glm::mat4 globalTranform);
+    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
+
+    inline const std::vector<Vertex>& GetVertices() const { return m_Vertices; };
+    inline const std::vector<unsigned int>& GetIndices() const { return m_Indices; };
+    inline const IndexBuffer* GetIndexBuffer() const { return m_IndexBuffer; };
+
+
+private:
+    VertexArray* m_VAO;
+    IndexBuffer* m_IndexBuffer;
+    VertexBuffer* m_VertexBuffer;
+    Material* m_Material;
+    PBRMaterial*  m_PBRMaterial;
+
+    std::vector<Vertex> m_Vertices;              // 顶点数据
+    std::vector<unsigned int> m_Indices;         // 索引数据
+    glm::mat4 m_LightSpaceMatrix;
+};
+
+Mesh.cpp:
+#include "Mesh.h"
+#include "Texture.h"
+#include "depthMap.h"
+static void scale(std::vector<Vertex>& vertices, float scaleRate) {
+    for (Vertex& vertex : vertices) {
+        vertex.Position.x *= scaleRate;
+        vertex.Position.y *= scaleRate;
+        vertex.Position.z *= scaleRate;
+    }
+}
+static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
+    for (Vertex& vertex : vertices) {
+        vertex.TextureSlots[0] = material -> GetAlbedoMapSlot(); //0
+        vertex.TextureSlots[1] = material -> GetNormalMapSlot(); //1
+        vertex.TextureSlots[2] = material -> GetMetallicMapSlot(); //2
+        vertex.TextureSlots[3] = material -> GetRoughnessMapSlot(); //3
+        
+        vertex.TextureSlots[4] = material -> GetAOMapSlot(); //4
+        vertex.TextureSlots[5] = material->GetEmissionMapSlot(); //5
+        vertex.TextureSlots[6] = material -> GetAlphaMapSlot(); //6
+    }
+}
+static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices[indices[i]];
+        Vertex& v1 = vertices[indices[i + 1]];
+        Vertex& v2 = vertices[indices[i + 2]];
+
+        glm::vec3 edge1 = v1.Position - v0.Position;
+        glm::vec3 edge2 = v2.Position - v0.Position;
+
+        glm::vec3 normal = glm::cross(edge1, edge2);
+        normal = glm::normalize(normal);
+
+        v0.Normal += normal;
+    }
+    for (Vertex& vertex : vertices) {
+        vertex.Normal = glm::normalize(vertex.Normal);
+    }
+}
+
+
+static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices[indices[i]];
+        Vertex& v1 = vertices[indices[i + 1]];
+        Vertex& v2 = vertices[indices[i + 2]];
+
+        // 计算边和UV差值
+        glm::vec3 edge1 = v1.Position - v0.Position;
+        glm::vec3 edge2 = v2.Position - v0.Position;
+        glm::vec2 deltaUV1 = v1.TexCoords - v0.TexCoords;
+        glm::vec2 deltaUV2 = v2.TexCoords - v0.TexCoords;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent, bitangent;
+
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent = glm::normalize(tangent);
+
+        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent = glm::normalize(bitangent);
+
+        // 累加切线和双切线
+        v0.Tangent += tangent;
+        v1.Tangent += tangent;
+        v2.Tangent += tangent;
+
+        v0.Bitangent += bitangent;
+        v1.Bitangent += bitangent;
+        v2.Bitangent += bitangent;
+    }
+
+    // 归一化切线和双切线
+    for (auto& vertex : vertices) {
+        vertex.Tangent = glm::normalize(vertex.Tangent);
+        vertex.Bitangent = glm::normalize(vertex.Bitangent);
+    }
+}
+
+Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material)
+    :m_Material(material),m_PBRMaterial(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
+{
+    //discard
+}
+
+Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial, float scaleRate)
+    :m_PBRMaterial(PBRmaterial),m_Material(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
+{
+    scale(vertices, scaleRate);
+    CalcNormal(vertices, indices);
+    CalcTangent(vertices, indices);//计算切线
+    BindTexture(vertices, m_PBRMaterial);
+    m_Vertices = vertices;
+    m_Indices = indices;
+    m_VAO = new VertexArray();
+    m_VertexBuffer = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
+    VertexBufferLayout layout;
+    layout.Push<float>(3); // Position: 3个浮点数
+    layout.Push<float>(3); // Normal: 3个浮点数
+    layout.Push<float>(2); // TexCoords: 2个浮点数
+    layout.Push<float>(3); // 切线
+    layout.Push<float>(3); // 双切线
+    layout.Push<int>(7);
+
+    m_IndexBuffer = new IndexBuffer(m_Indices.data(), m_Indices.size());
+
+    m_VAO->AddBuffer(*m_VertexBuffer, layout);
+}
+
+Mesh::~Mesh()
+{
+    delete m_VAO;
+    delete m_VertexBuffer;
+    delete m_IndexBuffer;
+    delete m_Material;
+    delete m_PBRMaterial;
+}
+
+void Mesh::Bind() const
+{
+    m_VAO->Bind();
+    m_IndexBuffer->Bind();
+}
+
+void Mesh::Unbind() const
+{
+    m_VAO->Unbind();
+    m_IndexBuffer->Unbind();
+}
+
+void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform)
+{
+    if (m_PBRMaterial) m_PBRMaterial->Bind(shader);
+    if (m_Material) m_Material->Bind(shader);
+
+    Renderer renderer;
+    renderer.Draw(*m_VAO, *m_IndexBuffer, nullptr, shader, globalTranform);
+
+    if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
+    if (m_Material) m_Material->Unbind(shader);
+}
+
+void Mesh::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
+{
+    shader.Bind();
+    if(m_PBRMaterial) m_PBRMaterial->Bind(shader);
+    if(m_Material) m_Material -> Bind(shader);
+
+    Renderer renderer;
+    renderer.Draw(*m_VAO, *m_IndexBuffer, &camera, shader, globalTranform);
+
+    if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
+    if (m_Material) m_Material->Unbind(shader);
+}
+ResourseManager.cpp:
+#include "ResourceManager.h"
+#include <iostream>
+#include <vector>
+#include "Component.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image/stb_image_write.h"
+#include <GL/glew.h>
+#include <filesystem>
+#ifndef TINYOBJLOADER_IMPLEMENTATION
+    #define TINYOBJLOADER_IMPLEMENTATION
+#endif 
+#include "TinyOBJLoader/tiny_obj_loader.h"
+
+static void EnsureDirectoryExists(const std::string& directory) {
+    std::filesystem::path dirPath(directory);
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+    }
+}
+
+MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate = 1)
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, (filePath + fileName).c_str(), filePath.c_str(), true)) {
+        std::cerr << "TinyOBJLoader Error: " << err << std::endl;
+        return nullptr;
+    }
+    std::cout << "shapes = " << shapes.size() << std::endl;
+    std::cout << "materials= " << materials.size() << std::endl;
+
+    // 加载所有材质
+    std::vector<PBRMaterial*> loadedMaterials;
+    for (const auto& mat : materials) {
+        PBRMaterial* pbrMat = new PBRMaterial(filePath, mat);
+        loadedMaterials.push_back(pbrMat);
+    }
+
+    std::map<int, std::vector<Vertex>> materialVerticesMap;
+    std::map<int, std::vector<unsigned int>> materialIndicesMap;
+
+    // 遍历每个形状
+    for (const auto& shape : shapes) {
+        size_t indexOffset = 0;
+        // 遍历每个面
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+            size_t fv = shape.mesh.num_face_vertices[f];
+
+            int materialID = shape.mesh.material_ids[f];
+            if (materialID < 0 || materialID >= materials.size()) {
+                materialID = 0; // 使用默认材质
+            }
+
+            // 确保映射中存在该材质的条目
+            if (materialVerticesMap.find(materialID) == materialVerticesMap.end()) {
+                materialVerticesMap[materialID] = std::vector<Vertex>();
+                materialIndicesMap[materialID] = std::vector<unsigned int>();
+            }
+
+            // 遍历面中的每个顶点
+            for (size_t v = 0; v < fv; v++) {
+                tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
+                Vertex vertex = {};
+                vertex.Position = {
+                    attrib.vertices[3 * idx.vertex_index + 0],
+                    attrib.vertices[3 * idx.vertex_index + 1],
+                    attrib.vertices[3 * idx.vertex_index + 2]
+                };
+                if (idx.normal_index >= 0) {
+                    vertex.Normal = {
+                        attrib.normals[3 * idx.normal_index + 0],
+                        attrib.normals[3 * idx.normal_index + 1],
+                        attrib.normals[3 * idx.normal_index + 2]
+                    };
+                }
+                if (idx.texcoord_index >= 0) {
+                    vertex.TexCoords = {
+                        attrib.texcoords[2 * idx.texcoord_index + 0],
+                        attrib.texcoords[2 * idx.texcoord_index + 1]
+                    };
+                }
+
+                // 添加顶点并更新索引
+                materialVerticesMap[materialID].push_back(vertex);
+                materialIndicesMap[materialID].push_back(materialVerticesMap[materialID].size() - 1);
+            }
+            indexOffset += fv;
+        }
+    }
+
+    // 创建 MeshComponent 并添加合并后的 Mesh
+    MeshComponent* meshComponent = new MeshComponent();
+    for (const auto& pair : materialVerticesMap) {
+        int materialID = pair.first;
+        std::vector<Vertex>& vertices = materialVerticesMap[materialID];
+        std::vector<unsigned int>& indices = materialIndicesMap[materialID];
+
+        Mesh* mesh = new Mesh(vertices, indices, loadedMaterials[materialID], scaleRate);
+        meshComponent->AddMesh(mesh);
+    }
+
+    return meshComponent;
+}
+
+
+PBRMaterial* ResourceManager::LoadPBRMaterial(const std::string& filePath)
+{
+    PBRMaterial* material = new PBRMaterial();
+    Texture* albedo = new Texture(filePath+"col.png");// 漫反射贴图
+    if (albedo) material->SetAlbedoMap(albedo);
+    Texture* normal = new Texture(filePath+"nrm.png");// 法线贴图
+    if (normal) material->SetNormalMap(normal);
+    Texture* metallic = new Texture(filePath+"met.png");//金属度贴图
+    if (metallic) material->SetMetallicMap(metallic);
+    Texture* roughness = new Texture(filePath+"roughness.png");//粗糙度贴图
+    if(roughness) material->SetRoughnessMap(roughness);
+    Texture* ao = new Texture(filePath+"ao.png");//环境光遮蔽贴图
+    if (ao) material->SetAO(ao);
+    Texture* height = new Texture(filePath+"height.png");//高度贴图
+    if (height) material->SetHeightMap(height);
+    Texture* emision = new Texture(filePath+"emision.png");//自发光贴图
+    if (emision) material->SetEmisionMap(emision);
+    return material;
+}
+
+void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height)
+{
+    std::string directory = "output/images/";
+    std::string fullPath = directory + filename;
+    // 确保目标目录存在
+    EnsureDirectoryExists(directory);
+
+    // 绑定帧缓冲
+    colorFBO.Bind();
+
+    // 创建一个数组来存储像素数据
+    std::vector<unsigned char> pixels(width * height * 4); // 假设是 RGBA 格式
+
+    // 读取帧缓冲的颜色附件
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    // 解除绑定
+    colorFBO.Unbind();
+
+    // OpenGL 的像素原点在左下角，需要将图像翻转
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x], pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+
+    // 使用 stb_image_write 保存 PNG
+    if (stbi_write_png(fullPath.c_str(), width, height, 4, pixels.data(), width * 4)) {
+        std::cout << "Successfully saved FBO to " << fullPath << std::endl;
+    }
+    else {
+        std::cerr << "Failed to save FBO to " << fullPath << std::endl;
+    }
+}
+
+template<>
+Shader* ResourceManager::Load<Shader>(const std::string& filePath)
+{
+    Shader* shader = new Shader(filePath);
+    return shader;
+}
+
+template<>
+Texture* ResourceManager::Load<Texture>(const std::string& filePath)
+{
+    Texture* texture = new Texture(filePath);
+    return texture;
+}
+

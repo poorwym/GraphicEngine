@@ -12,6 +12,7 @@ public:
 	~SceneManager();
 	void AddEntity(MeshComponent* meshComponent, const char* entityName, const char* sceneNodeName, SceneNode* parent);
 	void AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent);
+	void AddTexture(Texture* texture);
 };
 
 extern std::map<std::string, Entity*> entityList;
@@ -21,3 +22,5 @@ extern std::map<std::string, EntityController*> entityControllerList;
 extern std::map<std::string, SceneNodeController*> sceneNodeControllerList;
 extern std::map<std::string, PointLight*> pointLightList;
 extern std::map<PointLight*, unsigned int> pointLightID;
+extern std::vector<Texture*> textureList;
+extern std::map<unsigned int, int> textureSlots;

@@ -101,3 +101,28 @@ void Entity::Update(float deltaTime)
 		pair.second->Update(deltaTime);
 	}
 }
+
+std::vector<Vertex> Entity::GetVertices(glm::mat4 globalTransform)
+{
+	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
+	std::vector<Vertex> vertices;
+	for (auto& pair : m_Components) {
+		if (pair.second->GetType() == "MeshComponent") {
+			std::vector<Vertex> meshVertices = ((MeshComponent*)pair.second)->GetVertices(m_GlobalTransform); // 临时保存结果
+			vertices.insert(vertices.end(), meshVertices.begin(), meshVertices.end());
+		}
+	}
+	return vertices;
+}
+
+std::vector<unsigned int> Entity::GetIndices()
+{
+	std::vector<unsigned int> indices;
+	for (auto& pair : m_Components) {
+        if (pair.second->GetType() == "MeshComponent") {
+			std::vector<unsigned int> meshIndices = ((MeshComponent*)pair.second)->GetIndices();
+            indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
+		}
+	}
+	return indices;
+}

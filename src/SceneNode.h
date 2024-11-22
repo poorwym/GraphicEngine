@@ -9,6 +9,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Light.h"
 
+
 class SceneNode {
 private:
     std::string m_Name;
@@ -37,4 +38,7 @@ public:
     void SetRotation(glm::vec3 rotation);
     void Update(float deltaTime);
     void OnImGuiTree();
+
+    std::vector<Vertex> GetVertices(glm::mat4 globalTranform);
+    std::vector<unsigned int> GetIndices();
 };

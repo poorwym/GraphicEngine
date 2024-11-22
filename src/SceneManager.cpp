@@ -1,13 +1,14 @@
 #include "SceneManager.h"
 
-// 修改键类型为 std::string
 std::map<std::string, Entity*> entityList;
 std::map<std::string, SceneNode*> sceneNodeList;
 std::map<std::string, LightController*> lightControllerList;
 std::map<std::string, EntityController*> entityControllerList;
 std::map<std::string, SceneNodeController*> sceneNodeControllerList;
-std::map<std::string, PointLight *> pointLightList;
-std::map<PointLight *,unsigned int> pointLightID;
+std::map<std::string, PointLight*> pointLightList;
+std::map<PointLight*, unsigned int> pointLightID;
+std::vector<Texture*> textureList;
+std::map<unsigned int, int> textureSlots;
 
 SceneManager::SceneManager(Scene* scene)
 {
@@ -76,4 +77,10 @@ void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, S
     PointLightController* pointLightController = new PointLightController(light);
     lightControllerList[light->GetName()] = pointLightController;
     sceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+}
+
+void SceneManager::AddTexture(Texture* texture)
+{
+    textureList.push_back(texture);
+    if(textureSlots.find(texture->GetTextureID()) == textureSlots.end())  textureSlots[texture->GetTextureID()] = textureSlots.size();
 }

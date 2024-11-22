@@ -14,6 +14,14 @@ struct Vertex {
     glm::vec2 TexCoords;
     glm::vec3 Tangent;
     glm::vec3 Bitangent;
+    float TextureSlots[7];/*  0 albedo
+                            1 normal
+                            2 metallic
+                            3 roughness
+                            4 AO
+                            5 emission
+                            6 alpha 
+                            */
 };
 
 class Mesh {

@@ -39,6 +39,7 @@ float lastFrame = 0.0f; // 上一帧的时间
 // 相机控制器和资源管理器
 CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
+SceneManager sceneManager(nullptr);
 
 void PBR_Render(Camera& camera, Scene* scene);
 void RealTimeRender(GLFWwindow* window);
@@ -155,29 +156,19 @@ void RealTimeRender(GLFWwindow* window) {
     cameraController = new CameraController(&camera, window);
 
     Scene* scene = new Scene();
-    SceneManager sceneManager(scene);
+    sceneManager = SceneManager(scene);
     LoadModel(sceneManager);
     InitModel();
 
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/Batch.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     mainShader->Bind();
-    mainShader->setUniform1i("AlbedoMap", 0);
-    mainShader->setUniform1i("NormalMap", 1);
-    mainShader->setUniform1i("MetallicMap", 2);
-    mainShader->setUniform1i("RoughnessMap", 3);
-    mainShader->setUniform1i("AOMap", 4);
-    mainShader->setUniform1i("EmissionMap", 5);
-    mainShader->setUniform1i("HeightMap", 6);
-    mainShader->setUniform1i("DissolveTextureMap", 8);
-    mainShader->setUniform1i("ShadowMap", 7);
-    mainShader->setUniform1i("SpecularExponentTextureMap", 9);
     mainShader->setUniform1f("farPlane", far_plane);
-    mainShader->setUniform1i("AlphaMap", 15);
+    mainShader->setUniform1i("ShadowMap", 31);
     mainShader->Unbind();
 
 
@@ -224,31 +215,18 @@ void RealTimeRender(GLFWwindow* window) {
 
         scene->RenderShadowMap(depthShader, cubeDepthShader);
 
-        //render visibility
-        ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
-        depthMapFBO.Bind();
-        depthShader->Bind();
-        glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
-        depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
-        scene->RenderDepthMap(*depthShader);
-        depthShader->Unbind();
-        depthMapFBO.Unbind();
-        //bind visibilityMap
-        depthMapFBO.BindTexture(10);
-
         //render
         colorFBO.Bind();
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         skybox.Draw(camera);
         mainShader->Bind();
-        mainShader->setUniform1i("ShadowMap", 7);
-        mainShader->setUniform1i("ViewDepthMap", 10);
+        mainShader->setUniform1i("ShadowMap", 31);
         for (int i = 0; i < 4; i++)
         {
-            mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 11 + i);
+            mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
         }
         scene->BindLight(*mainShader, glm::mat4(1.0f));
-        scene->Render(*mainShader, camera);
+        scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
         colorFBO.Unbind();
         //post render

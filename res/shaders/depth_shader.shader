@@ -3,11 +3,10 @@
 layout (location = 0) in vec3 a_Position;
 
 uniform mat4 SpaceMatrix;
-uniform mat4 u_Model;
 
 void main()
 {
-    gl_Position = SpaceMatrix * u_Model * vec4(a_Position, 1.0);
+    gl_Position = SpaceMatrix *  vec4(a_Position, 1.0);
 }
 
 #shader fragment

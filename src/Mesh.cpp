@@ -8,6 +8,36 @@ static void scale(std::vector<Vertex>& vertices, float scaleRate) {
         vertex.Position.z *= scaleRate;
     }
 }
+static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
+    for (Vertex& vertex : vertices) {
+        vertex.TextureSlots[0] = static_cast<float>(material -> GetAlbedoMapSlot()); //0
+        vertex.TextureSlots[1] = static_cast<float>(material -> GetNormalMapSlot()); //1
+        vertex.TextureSlots[2] = static_cast<float>(material -> GetMetallicMapSlot()); //2
+        vertex.TextureSlots[3] = static_cast<float>(material -> GetRoughnessMapSlot()); //3
+        vertex.TextureSlots[4] = static_cast<float>(material -> GetAOMapSlot()); //4
+        vertex.TextureSlots[5] = static_cast<float>(material->GetEmissionMapSlot()); //5
+        vertex.TextureSlots[6] = static_cast<float>(material -> GetAlphaMapSlot()); //6
+    }
+}
+static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices[indices[i]];
+        Vertex& v1 = vertices[indices[i + 1]];
+        Vertex& v2 = vertices[indices[i + 2]];
+
+        glm::vec3 edge1 = v1.Position - v0.Position;
+        glm::vec3 edge2 = v2.Position - v0.Position;
+
+        glm::vec3 normal = glm::cross(edge1, edge2);
+        normal = glm::normalize(normal);
+
+        v0.Normal += normal;
+    }
+    for (Vertex& vertex : vertices) {
+        vertex.Normal = glm::normalize(vertex.Normal);
+    }
+}
+
 
 static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
     for (size_t i = 0; i < indices.size(); i += 3) {
@@ -55,21 +85,7 @@ static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigne
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material)
     :m_Material(material),m_PBRMaterial(nullptr), m_LightSpaceMatrix(glm::mat4(1.0f))
 {
-    CalcTangent(vertices, indices);//计算切线
-    m_Vertices = vertices;
-    m_Indices = indices;
-    m_VAO = new VertexArray();
-    m_VertexBuffer = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
-    VertexBufferLayout layout;
-    layout.Push<float>(3); // 位置
-    layout.Push<float>(3); // 法线
-    layout.Push<float>(2); // 纹理坐标
-    layout.Push<float>(3); // 切线
-    layout.Push<float>(3); // 双切线
-
-    m_IndexBuffer = new IndexBuffer(m_Indices.data(), m_Indices.size());
-
-    m_VAO->AddBuffer(*m_VertexBuffer, layout);
+    //discard
 }
 
 Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, PBRMaterial* PBRmaterial, float scaleRate)
@@ -77,6 +93,7 @@ Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indic
 {
     scale(vertices, scaleRate);
     CalcTangent(vertices, indices);//计算切线
+    BindTexture(vertices, m_PBRMaterial);
     m_Vertices = vertices;
     m_Indices = indices;
     m_VAO = new VertexArray();
@@ -87,6 +104,7 @@ Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indic
     layout.Push<float>(2); // TexCoords: 2个浮点数
     layout.Push<float>(3); // 切线
     layout.Push<float>(3); // 双切线
+    layout.Push<float>(7);
 
     m_IndexBuffer = new IndexBuffer(m_Indices.data(), m_Indices.size());
 

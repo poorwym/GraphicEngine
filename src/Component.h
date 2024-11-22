@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
-
+extern struct Vertex;
 
 class Component {
 protected:
@@ -31,5 +31,8 @@ public:
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) override;
     inline void SetType() override { m_Type = "MeshComponent";  } 
     void Update(float deltaTime) override;
+
+    std::vector<Vertex> GetVertices(glm::mat4 globalTransform);
+    std::vector<unsigned int> GetIndices();
 };
 

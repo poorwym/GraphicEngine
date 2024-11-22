@@ -1,6 +1,9 @@
 #include "Material.h"
 #include <iostream>
 #include <string>
+#include"SceneManager.h"
+
+extern SceneManager sceneManager;
 
 static std::string safe_substr(const std::string& str, size_t start) {
 	if (start < str.size()) {
@@ -99,30 +102,32 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 
 	if (m.diffuse_texname.size() > 0){//1
 		m_AlbedoMap = new Texture(filePath+m.diffuse_texname.c_str());
+		sceneManager.AddTexture(m_AlbedoMap);
 		std::cout << filePath + m.diffuse_texname.c_str() << std::endl;
 	}
 	if (m.bump_texname.size() > 0){//2
 		m_NormalMap = new Texture(filePath+m.bump_texname.c_str());
+        sceneManager.AddTexture(m_NormalMap);
 		std::cout << filePath + m.bump_texname.c_str() << std::endl;
 	}
 	if (m.emissive_texname.size()) {//3
 		m_EmissionMap = new Texture(filePath+m.emissive_texname.c_str());
+        sceneManager.AddTexture(m_EmissionMap);
 		std::cout << filePath + m.emissive_texname.c_str() << std::endl;
-	}
-	if (m.alpha_texname.size()) {//4
-		m_HeightMap = new Texture(filePath+m.alpha_texname.c_str());
-		std::cout << filePath + m.alpha_texname.c_str() << std::endl;
 	}
 	if (m.roughness_texname.size()) {//5
 		m_RoughnessMap = new Texture(filePath+m.roughness_texname.c_str());
+        sceneManager.AddTexture(m_RoughnessMap);
 		std::cout << filePath + m.roughness_texname.c_str() << std::endl;
 	}
 	if (m.metallic_texname.size()) {//6
 		m_MetallicMap = new Texture(filePath+m.metallic_texname.c_str());
+        sceneManager.AddTexture(m_MetallicMap);
 		std::cout << filePath + m.metallic_texname.c_str() << std::endl;
 	}
 	if (m.normal_texname.size()) {//7
 		m_NormalMap = new Texture(filePath+m.normal_texname.c_str());
+		sceneManager.AddTexture(m_NormalMap);
 		std::cout << filePath + m.normal_texname.c_str() << std::endl;
 	}
 	if (m.specular_highlight_texname.size()) {//8
@@ -131,6 +136,7 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	}
 	if (m.alpha_texname.size()) { //15
 		m_AlphaMap = new Texture(filePath+m.alpha_texname.c_str());
+		sceneManager.AddTexture(m_AlphaMap);
         std::cout << filePath + m.alpha_texname.c_str() << std::endl;
 	}
 }
@@ -242,3 +248,40 @@ void PBRMaterial::SetHeightMap(Texture* map)
 {
 	m_HeightMap = map;
 }
+
+int PBRMaterial::GetAlbedoMapSlot() const
+{
+	return m_AlbedoMap ? textureSlots[m_AlbedoMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetNormalMapSlot() const
+{
+	return m_NormalMap ? textureSlots[m_NormalMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetMetallicMapSlot() const
+{
+	return m_MetallicMap ? textureSlots[m_MetallicMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetRoughnessMapSlot() const
+{
+	return m_RoughnessMap ? textureSlots[m_RoughnessMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetAOMapSlot() const
+{
+	return m_AO ? textureSlots[m_AO->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetEmissionMapSlot() const
+{
+	return m_EmissionMap ? textureSlots[m_EmissionMap->GetTextureID()] : -1;
+}
+
+int PBRMaterial::GetAlphaMapSlot() const
+{
+	return m_AlphaMap ? textureSlots[m_AlphaMap->GetTextureID()] : -1;
+}
+
+

@@ -2,9 +2,7 @@
 #include "Entity.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
 #include "SceneManager.h"
-
 void SceneNode::AddChild(SceneNode* child)
 {
     m_Children[child->GetName()] = child;
@@ -136,6 +134,35 @@ void SceneNode::OnImGuiTree()
         }
         ImGui::TreePop();
     }
+}
+
+std::vector<Vertex> SceneNode::GetVertices(glm::mat4 globalTranform)
+{
+    std::vector<Vertex> vertices;
+    glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
+    if (m_Entity) {
+        std::vector<Vertex> entityVertices = m_Entity->GetVertices(m_GlobalTransform);
+        vertices.insert(vertices.end(), entityVertices.begin(), entityVertices.end());
+    }
+    for (auto& pair : m_Children) {
+        std::vector<Vertex> childVertices = pair.second->GetVertices(m_GlobalTransform);
+        vertices.insert(vertices.end(), childVertices.begin(), childVertices.end());
+    }
+    return vertices;
+}
+
+std::vector<unsigned int> SceneNode::GetIndices()
+{
+    std::vector<unsigned int> indices;
+    if (m_Entity) {
+        std::vector<unsigned int> entityIndices = m_Entity->GetIndices();
+        indices.insert(indices.end(), entityIndices.begin(), entityIndices.end());
+    }
+    for (auto& pair : m_Children) {
+        std::vector<unsigned int> childIndices = pair.second->GetIndices();
+        indices.insert(indices.end(), childIndices.begin(), childIndices.end());
+    }
+    return indices;
 }
 
 glm::mat4 SceneNode::GetGlobalTransform() const

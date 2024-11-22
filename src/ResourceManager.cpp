@@ -87,7 +87,6 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
                 materialVerticesMap[materialID].push_back(vertex);
                 materialIndicesMap[materialID].push_back(materialVerticesMap[materialID].size() - 1);
             }
-
             indexOffset += fv;
         }
     }

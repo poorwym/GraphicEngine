@@ -41,3 +41,29 @@ void MeshComponent::Render(Shader& shader, Camera& camera, glm::mat4 globalTrans
 void MeshComponent::Update(float deltaTime)
 {
 }
+
+std::vector<Vertex> MeshComponent::GetVertices(glm::mat4 globalTransform)
+{
+	std::vector<Vertex> vertices;
+	for (auto& mesh : m_Meshes)
+	{
+		for (auto& vertex : mesh->GetVertices())
+		{
+			Vertex v;
+			v.Position = glm::vec3(globalTransform * glm::vec4(vertex.Position, 1.0f));
+			vertices.push_back(v);
+		}
+	}
+    return vertices;
+}
+
+std::vector<unsigned int> MeshComponent::GetIndices()
+{
+	std::vector<unsigned int> indices;
+    for (auto& mesh : m_Meshes)
+    {
+		std::vector<unsigned int> meshIndices = mesh->GetIndices();
+        indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
+    }
+    return indices;
+}

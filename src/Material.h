@@ -67,4 +67,12 @@ public:
     void SetNormalMap(Texture* map);
     void SetEmisionMap(Texture* map);
     void SetHeightMap(Texture* map);
+
+    int GetAlbedoMapSlot() const;
+    int GetNormalMapSlot()  const;
+    int GetMetallicMapSlot()   const;
+    int GetRoughnessMapSlot()  const;
+    int GetAOMapSlot()    const;
+    int GetEmissionMapSlot()   const;
+    int GetAlphaMapSlot()      const;
 };

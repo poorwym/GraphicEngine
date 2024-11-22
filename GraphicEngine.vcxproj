@@ -246,6 +246,7 @@
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
+    <None Include="res\shaders\Batch.shader" />
     <None Include="res\shaders\depth_shader.shader" />
     <None Include="res\shaders\FOD.shader" />
     <None Include="res\shaders\light.shader" />
