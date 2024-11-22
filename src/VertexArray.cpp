@@ -1,4 +1,5 @@
 #include "VertexArray.h"
+#include <iostream>
 
 #include "Renderer.h"
 VertexArray::VertexArray()
@@ -23,12 +24,16 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), (const void*)offset));//见熊掌记笔记
 		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
 	}
-
+	vb.Unbind();
+	Unbind();
 }
 
 void VertexArray::Bind() const
 {
 	GLCall(glBindVertexArray(m_RendererID));// 绑定顶点数组对象，即对顶点数据解释的方法
+	if (glIsVertexArray(m_RendererID) == GL_FALSE) {
+		std::cout << "Error: VAO is not bound or invalid!" << std::endl;
+	}
 }
 
 void VertexArray::Unbind() const

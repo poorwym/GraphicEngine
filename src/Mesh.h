@@ -12,8 +12,6 @@ struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
     glm::vec2 TexCoords;
-    glm::vec3 Tangent;
-    glm::vec3 Bitangent;
     float TextureSlots[7];/*  0 albedo
                             1 normal
                             2 metallic

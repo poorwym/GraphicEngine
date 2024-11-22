@@ -47,7 +47,7 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
 static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
-    GLCall(glClear(GL_DEPTH_BUFFER_BIT));
+    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 // 鼠标移动回调函数
@@ -72,8 +72,8 @@ int main(void)
     if (!glfwInit())
         return -1;
     
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//设置OpenGL版本主版本号 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
 
 
@@ -104,7 +104,6 @@ int main(void)
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glDepthFunc(GL_LESS));
 
-    glEnable(GL_FRAGMENT_DEPTH);
 
     /* Loop until the user closes the window */
     //ImGui initialization
@@ -125,7 +124,7 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN_Halloween_Pumpkin_2024_OBJ/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 3.0f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
@@ -137,7 +136,7 @@ static void InitModel() {
 static void InitCamera(Camera& camera) {
     camera.SetPosition(glm::vec3(9.670f, 2.000f, 7.819f));
     camera.SetTarget(glm::vec3(5.884, 0.175, 4.545));
-    camera.SetFocus(0.2f, 0.1f, 0.05);
+    camera.SetFocus(0.2f, 1.0f, 0.05);
 }
 void RealTimeRender(GLFWwindow* window) {
     // 定义视口宽高
@@ -172,7 +171,7 @@ void RealTimeRender(GLFWwindow* window) {
     mainShader->Unbind();
 
 
-    DirectionalLight* light = new DirectionalLight("Directional Light", _GREY, 2.0f, glm::vec3(1.0f));
+    DirectionalLight* light = new DirectionalLight("Directional Light", _DARKGREY, 3.0f, glm::vec3(1.0f));
     scene->SetDirectionalLight(light);
     directionalLightController = DirectionalLightController(light);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -213,11 +212,13 @@ void RealTimeRender(GLFWwindow* window) {
         mainShader->setUniform1i("numPointLights", pointLightID.size());
         mainShader->Unbind();
 
+        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
         scene->RenderShadowMap(depthShader, cubeDepthShader);
 
         //render
+        ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         colorFBO.Bind();
-        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         skybox.Draw(camera);
         mainShader->Bind();
         mainShader->setUniform1i("ShadowMap", 31);
@@ -296,6 +297,7 @@ void PBR_Render(Camera& camera, Scene* scene) {
     mainShader->setUniform1i("numPointLights", pointLightID.size());
     mainShader->Unbind();
 
+    ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
     scene->RenderShadowMap(depthShader, cubeDepthShader);
 
     //render visibility

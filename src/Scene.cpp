@@ -10,7 +10,7 @@ static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
 	for (auto& texture : textureList) {
 		unsigned int slot = textureSlots[texture->GetTextureID()];
-		std::string uniformName = "textures["+std::to_string(slot) + "]";
+		std::string uniformName = "texture"+std::to_string(slot);
 		shader.setUniform1i(uniformName.c_str(), slot);
 		texture->Bind(slot);
 	}
@@ -18,31 +18,56 @@ static void BatchBindTextures(Shader& shader) {
 }
 
 void Scene::UpdateVAO() {
-	std::vector<Vertex> batchVertices;
+	std::vector<std::vector<Vertex>*> batchVertices;
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
-		std::vector<Vertex> nodeVertices = node->GetVertices(glm::mat4(1.0f));
+		std::vector<std::vector<Vertex>*> nodeVertices = node->GetVertices(glm::mat4(1.0f));
 		batchVertices.insert(batchVertices.end(), nodeVertices.begin(), nodeVertices.end());
 	}
-	std::vector<unsigned int> batchIndices;
+	std::vector<std::vector<unsigned int>*> batchIndices;
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
-		std::vector<unsigned int> nodeIndices = node->GetIndices();
+		std::vector<std::vector<unsigned int>*> nodeIndices = node->GetIndices();
 		batchIndices.insert(batchIndices.end(), nodeIndices.begin(), nodeIndices.end());
 	}
-
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
+	int offset = 0;
+	for (int i = 0; i < batchIndices.size(); i++) {
+		std::vector<Vertex> t_vertices = *(batchVertices[i]);
+		std::vector<unsigned int> t_indices = *(batchIndices[i]);
+		vertices.insert(vertices.end(), t_vertices.begin(), t_vertices.end());
+		for (auto& index : t_indices) {
+            index += offset;
+			indices.push_back(index);
+		}
+        offset += t_vertices.size();
+		delete batchVertices[i];
+        delete batchIndices[i];
+	}
 	VertexBufferLayout layout;
 	layout.Push<float>(3); // Position: 3个浮点数
 	layout.Push<float>(3); // Normal: 3个浮点数
 	layout.Push<float>(2); // TexCoords: 2个浮点数
-	layout.Push<float>(3); // 切线
-	layout.Push<float>(3); // 双切线
-	layout.Push<float>(7); //textureSlot
+	layout.Push<float>(1); //textureSlot
+	layout.Push<float>(1);
+	layout.Push<float>(1);
+	layout.Push<float>(1);
+	layout.Push<float>(1);
+	layout.Push<float>(1);
+	layout.Push<float>(1);
+	m_Vertices.clear();
+	m_Indices.clear();
+	m_Vertices = vertices;
+    m_Indices = indices;
 
 	m_VAO = new VertexArray();
-	m_VBO = new VertexBuffer(batchVertices.data(), batchVertices.size() * sizeof(Vertex));
+	m_VBO = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
 	m_VAO->AddBuffer(*m_VBO, layout);
-	m_IBO = new IndexBuffer(batchIndices.data(), batchIndices.size());
+	m_IBO = new IndexBuffer(m_Indices.data(), m_Indices.size());
+
+	m_VAO->Unbind();
+	m_IBO->Unbind();
 }
 Scene::Scene()
 	:m_DirLight(nullptr)
@@ -58,13 +83,7 @@ void Scene::save(const std::string& filePath)
 {
 
 }
-static void PlanetRotate(SceneNode* node, float rate, float deltaTime, float& angle) {
-	angle += rate * deltaTime;
-	if (angle > 180) {
-		angle -= 360;
-	}
-	node->SetRotation(glm::vec3(0.0f, angle, 0.0f));
-}
+
 static void StaticUpdate(float deltaTime) {
 	return;
 }
@@ -102,7 +121,7 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 void Scene::RenderDepthMap(Shader& shader)
 {
 	Renderer renderer;
-	renderer.Draw(*m_VAO, *m_IBO, shader);
+	renderer.Draw(*m_VAO, *m_IBO, nullptr, shader, glm::mat4(1.0f));
 }
 
 void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)

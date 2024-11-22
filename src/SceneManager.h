@@ -4,6 +4,9 @@
 #include "EntityController.h"
 #include "SceneNodeController.h"
 #include <string>
+#include "TextureArray.h"
+
+
 class SceneManager {
 private:
 	Scene* m_Scene;

@@ -42,28 +42,30 @@ void MeshComponent::Update(float deltaTime)
 {
 }
 
-std::vector<Vertex> MeshComponent::GetVertices(glm::mat4 globalTransform)
+std::vector<std::vector<Vertex>*> MeshComponent::GetVertices(glm::mat4 globalTransform)
 {
-	std::vector<Vertex> vertices;
+	std::vector<std::vector<Vertex>*> vertices;
 	for (auto& mesh : m_Meshes)
 	{
+		std::vector <Vertex> *meshVertices = new std::vector <Vertex>;
 		for (auto& vertex : mesh->GetVertices())
 		{
-			Vertex v;
+			Vertex v = vertex;
 			v.Position = glm::vec3(globalTransform * glm::vec4(vertex.Position, 1.0f));
-			vertices.push_back(v);
+			meshVertices->push_back(v);
 		}
+        vertices.push_back(meshVertices);
 	}
     return vertices;
 }
 
-std::vector<unsigned int> MeshComponent::GetIndices()
+std::vector<std::vector<unsigned int>*> MeshComponent::GetIndices()
 {
-	std::vector<unsigned int> indices;
+	std::vector<std::vector<unsigned int>*> indices;
     for (auto& mesh : m_Meshes)
     {
-		std::vector<unsigned int> meshIndices = mesh->GetIndices();
-        indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
+		std::vector<unsigned int> *meshIndices = new std::vector<unsigned int>(mesh->GetIndices());
+		indices.push_back(meshIndices);
     }
     return indices;
 }

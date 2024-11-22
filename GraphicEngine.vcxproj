@@ -163,6 +163,7 @@
     <ClCompile Include="src\test\TestClearColor.cpp" />
     <ClCompile Include="src\test\TestTexture2D.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\TextureArray.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_draw.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="src\test\TestClearColor.h" />
     <ClInclude Include="src\test\TestTexture2D.h" />
     <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\TextureArray.h" />
     <ClInclude Include="src\vendor\imgui\imconfig.h" />
     <ClInclude Include="src\vendor\imgui\imgui.h" />
     <ClInclude Include="src\vendor\imgui\imgui_impl_glfw.h" />
@@ -247,6 +249,7 @@
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\Basic.shader" />
     <None Include="res\shaders\Batch.shader" />
+    <None Include="res\shaders\cubeMapDepth.shader" />
     <None Include="res\shaders\depth_shader.shader" />
     <None Include="res\shaders\FOD.shader" />
     <None Include="res\shaders\light.shader" />

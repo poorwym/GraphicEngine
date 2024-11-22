@@ -39,6 +39,6 @@ public:
     void Update(float deltaTime);
     void OnImGuiTree();
 
-    std::vector<Vertex> GetVertices(glm::mat4 globalTranform);
-    std::vector<unsigned int> GetIndices();
+    std::vector<std::vector<Vertex>*> GetVertices(glm::mat4 globalTranform);
+    std::vector<std::vector<unsigned int>*> GetIndices();
 };

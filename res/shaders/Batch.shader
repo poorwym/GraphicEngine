@@ -1,12 +1,16 @@
 #shader vertex
-#version 330 core
+#version 400 core
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
 layout(location = 2) in vec2 a_TexCoords;
-layout(location = 3) in vec3 a_Tangent;
-layout(location = 4) in vec3 a_Bitangent;
-layout(location = 5) in float a_Slots[7];
+layout (location = 3) in float a_Slot0;
+layout (location = 4) in float a_Slot1;
+layout (location = 5) in float a_Slot2;
+layout (location = 6) in float a_Slot3;
+layout (location = 7) in float a_Slot4;
+layout (location = 8) in float a_Slot5;
+layout (location = 9) in float a_Slot6;
 
 uniform mat4 u_MVP;
 uniform mat4 u_Model;
@@ -14,8 +18,6 @@ uniform mat4 u_Model;
 out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-    vec3 Tangent;
-    vec3 Bitangent;
     vec3 Normal;
     flat int Slots[7];
 } vs_out;
@@ -29,27 +31,40 @@ void main()
     vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
     FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
     vs_out.TexCoords = a_TexCoords;
-    vs_out.Tangent = a_Tangent;
-    vs_out.Bitangent = a_Bitangent;
-    for(int i= 0; i < 7; i++){
-        vs_out.Slots[i] = int(a_Slots[i]);
-    }
+    vs_out.Slots[0] = int(a_Slot0);
+    vs_out.Slots[1] = int(a_Slot1);
+    vs_out.Slots[2] = int(a_Slot2);
+    vs_out.Slots[3] = int(a_Slot3);
+    vs_out.Slots[4] = int(a_Slot4);
+    vs_out.Slots[5] = int(a_Slot5);
+    vs_out.Slots[6] = int(a_Slot6);
 }
 
 #shader fragment
-#version 330 core
+#version 400 core
 out vec4 FragColor;
 
 in VS_OUT {//顶点着色器输出
     vec3 FragPos;//片元位置，世界空间
     vec2 TexCoords;//纹理坐标
-    vec3 Tangent;//切线
-    vec3 Bitangent;//副切线
     vec3 Normal;//片元法线，世界空间
     flat int Slots[7];
 } fs_in;
 
-uniform sampler2D textures[32];
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+uniform sampler2D texture5;
+uniform sampler2D texture6;
+uniform sampler2D texture7;
+uniform sampler2D texture8;
+uniform sampler2D texture9;
+uniform sampler2D texture10;
+uniform sampler2D texture11;
+uniform sampler2D texture12;
+
 uniform sampler2D ShadowMap; //slot 31
 uniform float farPlane;
 uniform vec3 Diffuse;
@@ -65,7 +80,7 @@ struct DirectionalLight
 };
 uniform DirectionalLight directionalLight;
 
-#define MAX_POINT_LIGHTS 4
+#define MAX_POINT_LIGHTS 3
 struct PointLight
 {
     vec3 lightPos;
@@ -78,7 +93,7 @@ struct PointLight
 };
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform int numPointLights;
-uniform samplerCube PointShadowMap[4];// slot 27-30
+uniform samplerCube PointShadowMap[3];// slot 27-30
 
 uniform vec3 viewPos;        // 观察者位置
 in vec4 FragPosLightSpace;  // 片段着色器接受的光源空间位置
@@ -93,84 +108,40 @@ vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);
 vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);
 vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);
 float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i);
-vec3 GetTextureColor(int slot, vec2 texCoords) // 3通道
-{
-    // 手动展开 32 个纹理插槽
-    if (slot == 0) return texture(textures[0], texCoords).rgb;
-    if (slot == 1) return texture(textures[1], texCoords).rgb;
-    if (slot == 2) return texture(textures[2], texCoords).rgb;
-    if (slot == 3) return texture(textures[3], texCoords).rgb;
-    if (slot == 4) return texture(textures[4], texCoords).rgb;
-    if (slot == 5) return texture(textures[5], texCoords).rgb;
-    if (slot == 6) return texture(textures[6], texCoords).rgb;
-    if (slot == 7) return texture(textures[7], texCoords).rgb;
-    if (slot == 8) return texture(textures[8], texCoords).rgb;
-    if (slot == 9) return texture(textures[9], texCoords).rgb;
-    if (slot == 10) return texture(textures[10], texCoords).rgb;
-    if (slot == 11) return texture(textures[11], texCoords).rgb;
-    if (slot == 12) return texture(textures[12], texCoords).rgb;
-    if (slot == 13) return texture(textures[13], texCoords).rgb;
-    if (slot == 14) return texture(textures[14], texCoords).rgb;
-    if (slot == 15) return texture(textures[15], texCoords).rgb;
-    if (slot == 16) return texture(textures[16], texCoords).rgb;
-    if (slot == 17) return texture(textures[17], texCoords).rgb;
-    if (slot == 18) return texture(textures[18], texCoords).rgb;
-    if (slot == 19) return texture(textures[19], texCoords).rgb;
-    if (slot == 20) return texture(textures[20], texCoords).rgb;
-    if (slot == 21) return texture(textures[21], texCoords).rgb;
-    if (slot == 22) return texture(textures[22], texCoords).rgb;
-    if (slot == 23) return texture(textures[23], texCoords).rgb;
-    if (slot == 24) return texture(textures[24], texCoords).rgb;
-    if (slot == 25) return texture(textures[25], texCoords).rgb;
-    if (slot == 26) return texture(textures[26], texCoords).rgb;
-    if (slot == 27) return texture(textures[27], texCoords).rgb;
-    if (slot == 28) return texture(textures[28], texCoords).rgb;
-    if (slot == 29) return texture(textures[29], texCoords).rgb;
-    if (slot == 30) return texture(textures[30], texCoords).rgb;
-    if (slot == 31) return texture(textures[31], texCoords).rgb;
-
-    // 默认值，若无有效插槽
-    return vec3(1.0, 1.0, 1.0); // 默认返回白色
+vec3 GetTextureColor(int slot, vec2 texCoords) {
+    if (slot == 0) return texture(texture0, texCoords).rgb;
+    else if (slot == 1) return texture(texture1, texCoords).rgb;
+    else if (slot == 2) return texture(texture2, texCoords).rgb;
+    else if (slot == 3) return texture(texture3, texCoords).rgb;
+    else if (slot == 4) return texture(texture4, texCoords).rgb;
+    else if (slot == 5) return texture(texture5, texCoords).rgb;
+    else if (slot == 6) return texture(texture6, texCoords).rgb;
+    else if (slot == 7) return texture(texture7, texCoords).rgb;
+    else if (slot == 8) return texture(texture8, texCoords).rgb;
+    else if (slot == 9) return texture(texture9, texCoords).rgb;
+    else if (slot == 10) return texture(texture10, texCoords).rgb;
+    else if (slot == 11) return texture(texture10, texCoords).rgb;
+    else if (slot == 12) return texture(texture10, texCoords).rgb;
+    else return vec3(1.0, 1.0, 1.0); // 默认返回白色
 }
-float GetTextureValue(int slot, vec2 texCoords) //单通道
-{
-    // 手动展开 32 个纹理插槽
-    if (slot == 0) return texture(textures[0], texCoords).r;
-    if (slot == 1) return texture(textures[1], texCoords).r;
-    if (slot == 2) return texture(textures[2], texCoords).r;
-    if (slot == 3) return texture(textures[3], texCoords).r;
-    if (slot == 4) return texture(textures[4], texCoords).r;
-    if (slot == 5) return texture(textures[5], texCoords).r;
-    if (slot == 6) return texture(textures[6], texCoords).r;
-    if (slot == 7) return texture(textures[7], texCoords).r;
-    if (slot == 8) return texture(textures[8], texCoords).r;
-    if (slot == 9) return texture(textures[9], texCoords).r;
-    if (slot == 10) return texture(textures[10], texCoords).r;
-    if (slot == 11) return texture(textures[11], texCoords).r;
-    if (slot == 12) return texture(textures[12], texCoords).r;
-    if (slot == 13) return texture(textures[13], texCoords).r;
-    if (slot == 14) return texture(textures[14], texCoords).r;
-    if (slot == 15) return texture(textures[15], texCoords).r;
-    if (slot == 16) return texture(textures[16], texCoords).r;
-    if (slot == 17) return texture(textures[17], texCoords).r;
-    if (slot == 18) return texture(textures[18], texCoords).r;
-    if (slot == 19) return texture(textures[19], texCoords).r;
-    if (slot == 20) return texture(textures[20], texCoords).r;
-    if (slot == 21) return texture(textures[21], texCoords).r;
-    if (slot == 22) return texture(textures[22], texCoords).r;
-    if (slot == 23) return texture(textures[23], texCoords).r;
-    if (slot == 24) return texture(textures[24], texCoords).r;
-    if (slot == 25) return texture(textures[25], texCoords).r;
-    if (slot == 26) return texture(textures[26], texCoords).r;
-    if (slot == 27) return texture(textures[27], texCoords).r;
-    if (slot == 28) return texture(textures[28], texCoords).r;
-    if (slot == 29) return texture(textures[29], texCoords).r;
-    if (slot == 30) return texture(textures[30], texCoords).r;
-    if (slot == 31) return texture(textures[31], texCoords).r;
 
-    // 默认值，若无有效插槽
-    return 0.0; // 默认返回 0
+float GetTextureValue(int slot, vec2 texCoords) {//单通道
+    if (slot == 0) return texture(texture0, texCoords).r;
+    else if (slot == 1) return texture(texture1, texCoords).r;
+    else if (slot == 2) return texture(texture2, texCoords).r;
+    else if (slot == 3) return texture(texture3, texCoords).r;
+    else if (slot == 4) return texture(texture4, texCoords).r;
+    else if (slot == 5) return texture(texture5, texCoords).r;
+    else if (slot == 6) return texture(texture6, texCoords).r;
+    else if (slot == 7) return texture(texture7, texCoords).r;
+    else if (slot == 8) return texture(texture8, texCoords).r;
+    else if (slot == 9) return texture(texture9, texCoords).r;
+    else if (slot == 10) return texture(texture10, texCoords).r;
+    else if (slot == 11) return texture(texture10, texCoords).r;
+    else if (slot == 12) return texture(texture10, texCoords).r;
+    else return 0.0; // 默认返回0.0
 }
+
 // 主函数
 void main()
 {
@@ -213,7 +184,7 @@ void main()
     if( alpha == 0){
         discard;
     }
-    FragColor = vec4(finalColor, alpha);
+    FragColor = vec4(finalColor, 1.0);
 }
 
 vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){
@@ -347,9 +318,6 @@ float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
                 }
                 else if(i == 2){
                     closestDepth = texture(PointShadowMap[2], sampleDirOffset).r * farPlane;
-                }
-                else if(i == 3){
-                    closestDepth = texture(PointShadowMap[3], sampleDirOffset).r * farPlane;
                 }
 
                 // 如果当前深度大于最近深度，则在阴影中

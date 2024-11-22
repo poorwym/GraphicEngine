@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include "Component.h"
 #include <string>
-extern struct Vertex;
+
 class Entity {
     friend class EntityController;
 private:
@@ -35,6 +35,6 @@ public:
     void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
     void Update(float deltaTime);                 // 更新实体
 
-    std::vector<Vertex> GetVertices(glm::mat4 globalTransform);
-    std::vector<unsigned int> GetIndices();
+    std::vector<std::vector<Vertex>*> GetVertices(glm::mat4 globalTransform);
+    std::vector<std::vector<unsigned int>*> GetIndices();
 };

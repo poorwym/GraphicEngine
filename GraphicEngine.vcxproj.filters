@@ -120,6 +120,9 @@
     <ClCompile Include="src\Quad.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\TextureArray.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -275,6 +278,9 @@
     <ClInclude Include="\\Mac\Home\Downloads\stb_image_write.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\TextureArray.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />
@@ -303,5 +309,7 @@
     <None Include="res\shaders\ShadowVisible.shader" />
     <None Include="res\shaders\screen.shader" />
     <None Include="res\shaders\FOD.shader" />
+    <None Include="res\shaders\Batch.shader" />
+    <None Include="res\shaders\cubeMapDepth.shader" />
   </ItemGroup>
 </Project>

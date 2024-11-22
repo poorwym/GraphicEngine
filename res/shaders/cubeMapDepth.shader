@@ -1,6 +1,9 @@
 #shader vertex
-#version 330 core
+#version 400 core
 layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec3 a_Normal;
+layout (location = 2) in vec2 a_TexCoords;
+layout (location = 3) in float a_Slots[7];
 
 uniform mat4 ShadowMatrices[6]; // 六个方向的视图投影矩阵
 uniform mat4 u_Model;
@@ -15,7 +18,7 @@ void main()
 }
 
 #shader fragment
-#version 330 core
+#version 400 core
 
 in vec3 FragPos;
 uniform vec3 lightPos;

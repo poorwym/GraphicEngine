@@ -14,6 +14,8 @@ private:
     VertexArray* m_VAO;
     VertexBuffer* m_VBO;
     IndexBuffer* m_IBO;
+    std::vector<Vertex> m_Vertices;
+    std::vector<unsigned int> m_Indices;
     void UpdateVAO();
 public:
     Scene();

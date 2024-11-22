@@ -29,7 +29,6 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* 
     va.Bind(); // 绑定 VAO
     ib.Bind(); // 绑定索引缓冲
     shader.Bind();
-
     // 如果有相机，设置相机相关的 Uniform
     if (camera)
     {
@@ -65,12 +64,18 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* 
 
 void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,  Shader& shader) const
 {
-    va.Bind(); // 绑定 VAO
-    ib.Bind(); // 绑定索引缓冲
-    // 绘制图元
+    const int maxIndicesPerBatch = 3000;
+    int totalIndices = ib.GetCount();
+
+    va.Bind();   // 绑定 VAO
+    ib.Bind();   // 绑定 IBO
+    shader.Bind(); // 绑定着色器
+
     GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
-    va.Unbind();
-    ib.Unbind();
+
+    va.Unbind();    // 解绑 VAO
+    ib.Unbind();    // 解绑 IBO
+    shader.Unbind();// 如果有必要，可以添加解绑着色器的代码
 }
 
 void Renderer::Clear() const

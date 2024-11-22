@@ -102,25 +102,25 @@ void Entity::Update(float deltaTime)
 	}
 }
 
-std::vector<Vertex> Entity::GetVertices(glm::mat4 globalTransform)
+std::vector<std::vector<Vertex>*> Entity::GetVertices(glm::mat4 globalTransform)
 {
 	glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
-	std::vector<Vertex> vertices;
+	std::vector<std::vector<Vertex>*> vertices;
 	for (auto& pair : m_Components) {
 		if (pair.second->GetType() == "MeshComponent") {
-			std::vector<Vertex> meshVertices = ((MeshComponent*)pair.second)->GetVertices(m_GlobalTransform); // 临时保存结果
+			std::vector<std::vector<Vertex>*> meshVertices = ((MeshComponent*)pair.second)->GetVertices(m_GlobalTransform); // 临时保存结果
 			vertices.insert(vertices.end(), meshVertices.begin(), meshVertices.end());
 		}
 	}
 	return vertices;
 }
 
-std::vector<unsigned int> Entity::GetIndices()
+std::vector<std::vector<unsigned int>*> Entity::GetIndices()
 {
-	std::vector<unsigned int> indices;
+	std::vector<std::vector<unsigned int>*> indices;
 	for (auto& pair : m_Components) {
         if (pair.second->GetType() == "MeshComponent") {
-			std::vector<unsigned int> meshIndices = ((MeshComponent*)pair.second)->GetIndices();
+			std::vector<std::vector<unsigned int>*> meshIndices = ((MeshComponent*)pair.second)->GetIndices();
             indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
 		}
 	}
