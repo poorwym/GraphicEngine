@@ -1,16 +1,18 @@
 #shader vertex
 #version 330 core
 
-layout(location = 0) in vec3 a_Position;
-layout(location = 1) in vec3 a_Normal;
-layout(location = 2) in vec2 a_TexCoords;
-layout (location = 3) in float a_Slot0;
-layout (location = 4) in float a_Slot1;
-layout (location = 5) in float a_Slot2;
-layout (location = 6) in float a_Slot3;
-layout (location = 7) in float a_Slot4;
-layout (location = 8) in float a_Slot5;
-layout (location = 9) in float a_Slot6;
+layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec3 a_Normal;
+layout (location = 2) in vec2 a_TexCoords;
+layout (location = 3) in vec3 a_Tangent;
+layout (location = 4) in vec3 a_Bitangent;
+layout (location = 5) in float a_Slot0;
+layout (location = 6) in float a_Slot1;
+layout (location = 7) in float a_Slot2;
+layout (location = 8) in float a_Slot3;
+layout (location = 9) in float a_Slot4;
+layout (location = 10) in float a_Slot5;
+layout (location = 11) in float a_Slot6;
 
 uniform mat4 u_MVP;
 uniform mat4 u_Model;
@@ -19,7 +21,10 @@ out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     vec3 Normal;
+    vec3 Tangent;
+    vec3 Bitangent;
     flat int Slots[7];
+    mat3 TBN;
 } vs_out;
 out vec4 FragPosLightSpace;
 uniform mat4 lightSpaceMatrix;
@@ -31,6 +36,8 @@ void main()
     vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
     FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
     vs_out.TexCoords = a_TexCoords;
+    vs_out.Tangent = a_Tangent;
+    vs_out.Bitangent = a_Bitangent;
     vs_out.Slots[0] = int(a_Slot0);
     vs_out.Slots[1] = int(a_Slot1);
     vs_out.Slots[2] = int(a_Slot2);
@@ -38,6 +45,13 @@ void main()
     vs_out.Slots[4] = int(a_Slot4);
     vs_out.Slots[5] = int(a_Slot5);
     vs_out.Slots[6] = int(a_Slot6);
+
+    vec3 T = normalize(mat3(u_Model) * a_Tangent);
+    vec3 B = normalize(mat3(u_Model) * a_Bitangent);
+    vec3 N = normalize(mat3(u_Model) * a_Normal);
+
+    // 构建 TBN 矩阵
+    vs_out.TBN = mat3(T, B, N);
 }
 
 #shader fragment
@@ -48,7 +62,10 @@ in VS_OUT {//顶点着色器输出
     vec3 FragPos;//片元位置，世界空间
     vec2 TexCoords;//纹理坐标
     vec3 Normal;//片元法线，世界空间
+    vec3 Tangent;
+    vec3 Bitangent;
     flat int Slots[7];
+    mat3 TBN;
 } fs_in;
 
 
@@ -110,10 +127,15 @@ float GetTextureValue(int slot, vec2 texCoords) {
 void main()
 {
     vec3 finalColor = vec3(0.0);
+    //计算颜色
     vec3 ambient = fs_in.Slots[0] != -1 ? GetTextureColor(fs_in.Slots[0], fs_in.TexCoords) : Diffuse;// 本来的颜色 0
     vec3 diffuse = ambient;
     vec3 specular = ambient;
-    vec3 normal = fs_in.Slots[1] != -1 ? GetTextureColor(fs_in.Slots[1], fs_in.TexCoords) : fs_in.Normal; // 法线 1
+    //计算法线
+    vec3 sampledNormal = fs_in.Slots[1] != -1 ? GetTextureColor(fs_in.Slots[1], fs_in.TexCoords) : fs_in.Normal; 
+    sampledNormal = normalize(sampledNormal * 2.0 - 1.0);
+    vec3 normal = normalize(fs_in.TBN * sampledNormal);
+    //计算其他不是很重要的参数
     float metallic = fs_in.Slots[2] != -1 ? GetTextureValue(fs_in.Slots[2], fs_in.TexCoords) : 0.0; // 金属度 2
     float roughness = fs_in.Slots[3] != -1 ? GetTextureValue(fs_in.Slots[3], fs_in.TexCoords) : 0.5; // 粗糙度 3
     float AO = fs_in.Slots[4] != -1 ? GetTextureValue(fs_in.Slots[4], fs_in.TexCoords) : 1.0; // 环境光遮蔽 4

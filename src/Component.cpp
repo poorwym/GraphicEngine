@@ -47,7 +47,11 @@ std::vector<std::vector<Vertex>*> MeshComponent::GetVertices(glm::mat4 globalTra
 		for (auto& vertex : mesh->GetVertices())
 		{
 			Vertex v = vertex;
-			v.Position = glm::vec3(globalTransform * glm::vec4(vertex.Position, 1.0f));
+			v.Position = glm::vec3(globalTransform * glm::vec4(vertex.Position, 1.0f)); // 顶点变换
+            v.Normal = glm::normalize(glm::mat3(glm::transpose(glm::inverse(globalTransform))) * vertex.Normal);// 法线变换
+			v.Tangent = glm::vec3(glm::mat3(globalTransform) * vertex.Tangent);
+            v.Bitangent = glm::vec3(glm::mat3(globalTransform) * vertex.Bitangent);
+			//vec3 transformedNormal = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
 			meshVertices->push_back(v);
 		}
         vertices.push_back(meshVertices);

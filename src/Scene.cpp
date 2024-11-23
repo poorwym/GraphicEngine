@@ -45,6 +45,8 @@ void Scene::UpdateVAO() {
 	layout.Push<float>(3); // Position: 3个浮点数
 	layout.Push<float>(3); // Normal: 3个浮点数
 	layout.Push<float>(2); // TexCoords: 2个浮点数
+    layout.Push<float>(3); // Tangent: 3个浮点数
+    layout.Push<float>(3); // Bitangent: 3个浮点数
 	layout.Push<float>(1); //textureSlot
 	layout.Push<float>(1);
 	layout.Push<float>(1);
