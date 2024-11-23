@@ -46,7 +46,7 @@ void DirectionalLight::Bind(Shader& shader, glm::mat4 globalTransform)
 
 void DirectionalLight::Update(float deltaTime)
 {
-	m_LightAmbient = glm::vec3(0.8f);
+	m_LightAmbient = glm::vec3(0.2f);
 	m_LightDiffuse = m_Intensity * m_Color;
 	m_LightSpecular = m_Intensity * m_Color;
 }
@@ -155,7 +155,7 @@ void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 
 void PointLight::Update(float deltaTime)
 {
-	m_LightAmbient = glm::vec3(0.6f);
+	m_LightAmbient = glm::vec3(0.2f);
 	m_LightDiffuse = m_Intensity * m_Color;
 	m_LightSpecular = m_Intensity * m_Color;
 }

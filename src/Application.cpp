@@ -66,6 +66,8 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 int main(void)
 {
+   
+    
     GLFWwindow* window;
 
     /* Initialize the library */
