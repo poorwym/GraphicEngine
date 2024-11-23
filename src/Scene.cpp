@@ -8,12 +8,8 @@
 extern DirectionalLightController directionalLightController;
 static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
-	for (auto& texture : textureList) {
-		unsigned int slot = textureSlots[texture->GetTextureID()];
-		std::string uniformName = "texture"+std::to_string(slot);
-		shader.setUniform1i(uniformName.c_str(), slot);
-		texture->Bind(slot);
-	}
+	shader.setUniform1i("textures", 0);
+	textureArray->Bind();
 	shader.Unbind();
 }
 

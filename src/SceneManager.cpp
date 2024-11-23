@@ -10,6 +10,8 @@ std::map<PointLight*, unsigned int> pointLightID;
 std::vector<Texture*> textureList;
 std::map<unsigned int, int> textureSlots;
 
+TextureArray* textureArray = new TextureArray(1024, 1024, 128);
+
 SceneManager::SceneManager(Scene* scene)
 {
     m_Scene = scene;
@@ -83,4 +85,12 @@ void SceneManager::AddTexture(Texture* texture)
 {
     textureList.push_back(texture);
     if(textureSlots.find(texture->GetTextureID()) == textureSlots.end())  textureSlots[texture->GetTextureID()] = textureSlots.size();
+}
+
+int SceneManager::AddTexture(const char* path)
+{
+    static int counter = 0;
+    textureArray->AddTexture(path);
+    counter++;
+    return counter - 1;
 }

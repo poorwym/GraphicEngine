@@ -1,5 +1,5 @@
 #shader vertex
-#version 400 core
+#version 330 core
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
@@ -41,7 +41,7 @@ void main()
 }
 
 #shader fragment
-#version 400 core
+#version 330 core
 out vec4 FragColor;
 
 in VS_OUT {//顶点着色器输出
@@ -51,19 +51,8 @@ in VS_OUT {//顶点着色器输出
     flat int Slots[7];
 } fs_in;
 
-uniform sampler2D texture0;
-uniform sampler2D texture1;
-uniform sampler2D texture2;
-uniform sampler2D texture3;
-uniform sampler2D texture4;
-uniform sampler2D texture5;
-uniform sampler2D texture6;
-uniform sampler2D texture7;
-uniform sampler2D texture8;
-uniform sampler2D texture9;
-uniform sampler2D texture10;
-uniform sampler2D texture11;
-uniform sampler2D texture12;
+
+uniform samplerArray textures;
 
 uniform sampler2D ShadowMap; //slot 31
 uniform float farPlane;
@@ -108,38 +97,13 @@ vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);
 vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);
 vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);
 float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i);
+
 vec3 GetTextureColor(int slot, vec2 texCoords) {
-    if (slot == 0) return texture(texture0, texCoords).rgb;
-    else if (slot == 1) return texture(texture1, texCoords).rgb;
-    else if (slot == 2) return texture(texture2, texCoords).rgb;
-    else if (slot == 3) return texture(texture3, texCoords).rgb;
-    else if (slot == 4) return texture(texture4, texCoords).rgb;
-    else if (slot == 5) return texture(texture5, texCoords).rgb;
-    else if (slot == 6) return texture(texture6, texCoords).rgb;
-    else if (slot == 7) return texture(texture7, texCoords).rgb;
-    else if (slot == 8) return texture(texture8, texCoords).rgb;
-    else if (slot == 9) return texture(texture9, texCoords).rgb;
-    else if (slot == 10) return texture(texture10, texCoords).rgb;
-    else if (slot == 11) return texture(texture10, texCoords).rgb;
-    else if (slot == 12) return texture(texture10, texCoords).rgb;
-    else return vec3(1.0, 1.0, 1.0); // 默认返回白色
+    return texture(textures, vec3(texCoords, float(slot))).rgb;
 }
 
-float GetTextureValue(int slot, vec2 texCoords) {//单通道
-    if (slot == 0) return texture(texture0, texCoords).r;
-    else if (slot == 1) return texture(texture1, texCoords).r;
-    else if (slot == 2) return texture(texture2, texCoords).r;
-    else if (slot == 3) return texture(texture3, texCoords).r;
-    else if (slot == 4) return texture(texture4, texCoords).r;
-    else if (slot == 5) return texture(texture5, texCoords).r;
-    else if (slot == 6) return texture(texture6, texCoords).r;
-    else if (slot == 7) return texture(texture7, texCoords).r;
-    else if (slot == 8) return texture(texture8, texCoords).r;
-    else if (slot == 9) return texture(texture9, texCoords).r;
-    else if (slot == 10) return texture(texture10, texCoords).r;
-    else if (slot == 11) return texture(texture10, texCoords).r;
-    else if (slot == 12) return texture(texture10, texCoords).r;
-    else return 0.0; // 默认返回0.0
+float GetTextureValue(int slot, vec2 texCoords) {
+    return texture(textures, vec3(texCoords, float(slot))).r;
 }
 
 // 主函数

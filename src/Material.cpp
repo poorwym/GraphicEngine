@@ -87,7 +87,10 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	m_NormalMap(nullptr), m_DissolveTextureMap(nullptr), m_SpecularExponentTextureMap(nullptr),m_Ambient(glm::vec3(0.0f)),
 	m_Emission(glm::vec3(0.0f)), m_Diffuse(glm::vec3(0.8f)),
 	m_Specular(glm::vec3(0.1f)), m_Transmittance(glm::vec3(0.0f)),
-	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2)
+	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2),
+	AlbedoMapSlot(-1), NormalMapSlot(-1), EmissionMapSlot(-1),
+	MetallicMapSlot(-1), RoughnessMapSlot(-1),
+	AlphaMapSlot(-1),AOMapSlot(-1)
 {
 	std::cout << "Load Texture " << filePath << std::endl;
 	if(m.emission) m_Emission = glm::vec3(m.emission[0], m.emission[1], m.emission[2]);
@@ -101,43 +104,36 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	if(m.dissolve) m_d = m.dissolve;
 
 	if (m.diffuse_texname.size() > 0){//1
-		m_AlbedoMap = new Texture(filePath+m.diffuse_texname.c_str());
-		sceneManager.AddTexture(m_AlbedoMap);
-		std::cout << filePath + m.diffuse_texname.c_str() << std::endl;
+        std::string Path = filePath + m.diffuse_texname;
+		AlbedoMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.bump_texname.size() > 0){//2
-		m_NormalMap = new Texture(filePath+m.bump_texname.c_str());
-        sceneManager.AddTexture(m_NormalMap);
-		std::cout << filePath + m.bump_texname.c_str() << std::endl;
+		std::string Path = filePath + m.bump_texname;
+		NormalMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.emissive_texname.size()) {//3
-		m_EmissionMap = new Texture(filePath+m.emissive_texname.c_str());
-        sceneManager.AddTexture(m_EmissionMap);
-		std::cout << filePath + m.emissive_texname.c_str() << std::endl;
+		std::string Path = filePath + m.emissive_texname;
+        EmissionMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.roughness_texname.size()) {//5
-		m_RoughnessMap = new Texture(filePath+m.roughness_texname.c_str());
-        sceneManager.AddTexture(m_RoughnessMap);
-		std::cout << filePath + m.roughness_texname.c_str() << std::endl;
+		std::string Path = filePath + m.roughness_texname;
+        RoughnessMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.metallic_texname.size()) {//6
-		m_MetallicMap = new Texture(filePath+m.metallic_texname.c_str());
-        sceneManager.AddTexture(m_MetallicMap);
-		std::cout << filePath + m.metallic_texname.c_str() << std::endl;
+		std::string Path = filePath + m.metallic_texname;
+        MetallicMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.normal_texname.size()) {//7
-		m_NormalMap = new Texture(filePath+m.normal_texname.c_str());
-		sceneManager.AddTexture(m_NormalMap);
-		std::cout << filePath + m.normal_texname.c_str() << std::endl;
+		std::string Path = filePath + m.normal_texname;
+        NormalMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 	if (m.specular_highlight_texname.size()) {//8
 		m_SpecularExponentTextureMap = new Texture(filePath+m.specular_highlight_texname.c_str());
 		std::cout << filePath + m.specular_highlight_texname.c_str() << std::endl;
 	}
 	if (m.alpha_texname.size()) { //15
-		m_AlphaMap = new Texture(filePath+m.alpha_texname.c_str());
-		sceneManager.AddTexture(m_AlphaMap);
-        std::cout << filePath + m.alpha_texname.c_str() << std::endl;
+		std::string Path = filePath + m.alpha_texname;
+		AlphaMapSlot = sceneManager.AddTexture(Path.c_str());
 	}
 }
 PBRMaterial::~PBRMaterial()
@@ -249,39 +245,5 @@ void PBRMaterial::SetHeightMap(Texture* map)
 	m_HeightMap = map;
 }
 
-int PBRMaterial::GetAlbedoMapSlot() const
-{
-	return m_AlbedoMap ? textureSlots[m_AlbedoMap->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetNormalMapSlot() const
-{
-	return m_NormalMap ? textureSlots[m_NormalMap->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetMetallicMapSlot() const
-{
-	return m_MetallicMap ? textureSlots[m_MetallicMap->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetRoughnessMapSlot() const
-{
-	return m_RoughnessMap ? textureSlots[m_RoughnessMap->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetAOMapSlot() const
-{
-	return m_AO ? textureSlots[m_AO->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetEmissionMapSlot() const
-{
-	return m_EmissionMap ? textureSlots[m_EmissionMap->GetTextureID()] : -1;
-}
-
-int PBRMaterial::GetAlphaMapSlot() const
-{
-	return m_AlphaMap ? textureSlots[m_AlphaMap->GetTextureID()] : -1;
-}
 
 

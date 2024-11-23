@@ -72,8 +72,8 @@ int main(void)
     if (!glfwInit())
         return -1;
     
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//设置OpenGL版本主版本号 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);//设置OpenGL版本次版本号
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
 
 
@@ -103,7 +103,9 @@ int main(void)
 
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glDepthFunc(GL_LESS));
-
+    GLint maxLayers;
+    glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayers);
+    std::cout << "Max TextureArray layers: " << maxLayers << std::endl;
 
     /* Loop until the user closes the window */
     //ImGui initialization

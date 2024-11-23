@@ -51,6 +51,14 @@ private:
     Texture* m_DissolveTextureMap;
     Texture* m_BumpMap;
     Texture* m_AlphaMap;
+
+    int AlbedoMapSlot;
+    int NormalMapSlot;
+    int MetallicMapSlot;
+    int RoughnessMapSlot;
+    int AOMapSlot;
+    int EmissionMapSlot;
+    int AlphaMapSlot;
 public:
     PBRMaterial();
     PBRMaterial(const std::string& filePath, const tinyobj::material_t& m);
@@ -68,11 +76,11 @@ public:
     void SetEmisionMap(Texture* map);
     void SetHeightMap(Texture* map);
 
-    int GetAlbedoMapSlot() const;
-    int GetNormalMapSlot()  const;
-    int GetMetallicMapSlot()   const;
-    int GetRoughnessMapSlot()  const;
-    int GetAOMapSlot()    const;
-    int GetEmissionMapSlot()   const;
-    int GetAlphaMapSlot()      const;
+    inline int GetAlbedoMapSlot() const { return AlbedoMapSlot; };
+    inline int GetNormalMapSlot()  const { return NormalMapSlot; };
+    inline int GetMetallicMapSlot()   const { return MetallicMapSlot;};
+    inline int GetRoughnessMapSlot()  const {    return RoughnessMapSlot; };
+    inline int GetAOMapSlot()    const { return AOMapSlot; };
+    inline int GetEmissionMapSlot()   const { return EmissionMapSlot; };
+    inline int GetAlphaMapSlot()      const {return AlphaMapSlot; };
 };
