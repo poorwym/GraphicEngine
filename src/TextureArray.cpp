@@ -1,6 +1,8 @@
 #include "TextureArray.h"
 #include "stb_image/stb_image.h"
 #include <iostream>
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image/stb_image_resize2.h"
 
 TextureArray::TextureArray(int width, int height, int maxLayers)
     : m_RendererID(0), m_Width(width), m_Height(height), m_Layers(0), m_MaxLayers(maxLayers), m_Initialized(false)
@@ -43,12 +45,34 @@ void TextureArray::AddTexture(const std::string& path)
         std::cerr << "Failed to load texture at path: " << path << std::endl;
         return;
     }
+    else {
+        std::cout << "Loaded texture at path: " << path << std::endl;
+    }
 
     if (width != m_Width || height != m_Height) {
-        std::cerr << "TextureArray: Texture dimensions do not match. Expected: "
-            << m_Width << "x" << m_Height << ", Got: " << width << "x" << height << std::endl;
+        std::cerr << "TextureArray: Resizing texture from " << width << "x" << height
+            << " to " << m_Width << "x" << m_Height << std::endl;
+
+        // 创建一个新的缓冲区，用于存储调整大小后的纹理数据
+        unsigned char* resizedBuffer = new unsigned char[m_Width * m_Height * 4]; // RGBA 格式
+
+        // 调整大小
+        unsigned char* result = stbir_resize_uint8_linear(
+            localBuffer, width, height, 0,                  // 输入图像数据及其宽度、高度
+            resizedBuffer, m_Width, m_Height, 0,           // 输出图像数据及其宽度、高度
+            STBIR_RGBA                                              // 每像素的通道数（RGBA）
+        );
+
+        // 释放原始加载的纹理数据
         stbi_image_free(localBuffer);
-        return;
+
+        if (result == 0) {
+            std::cerr << "TextureArray: Failed to resize texture." << std::endl;
+            delete[] resizedBuffer; // 释放分配的缓冲区
+            return;
+        }
+
+        localBuffer = resizedBuffer; // 将调整后的数据指向 localBuffer
     }
 
     // 上传纹理数据到纹理数组的当前层
@@ -56,7 +80,9 @@ void TextureArray::AddTexture(const std::string& path)
     GLCall(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, m_Layers, m_Width, m_Height, 1, GL_RGBA, GL_UNSIGNED_BYTE, localBuffer));
     GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0)); // 解绑
 
-    stbi_image_free(localBuffer); // 释放加载的贴图数据
+    // 释放加载的或调整大小后的贴图数据
+    stbi_image_free(localBuffer);
+
     m_Layers++; // 增加当前层数
 }
 

@@ -52,7 +52,7 @@ in VS_OUT {//顶点着色器输出
 } fs_in;
 
 
-uniform samplerArray textures;
+uniform sampler2DArray textures;
 
 uniform sampler2D ShadowMap; //slot 31
 uniform float farPlane;
@@ -120,10 +120,7 @@ void main()
     vec3 emission = fs_in.Slots[5] != -1 ? GetTextureColor(fs_in.Slots[5], fs_in.TexCoords) : Emission; // 自发光 5
     float alpha = fs_in.Slots[6] != -1 ? GetTextureValue(fs_in.Slots[6], fs_in.TexCoords) : 1.0;
 
-    vec3 viewDir = normalize(viewPos - fs_in.FragPos);    if(metallic > 0.0) {
-        specular = diffuse; // 对于金属材质，使用Albedo颜色作为F0
-        diffuse = vec3(0.0); // 金属没有漫反射
-    }
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
 
     vec3 ambientColor = CalculateAmbientColor(ambient, directionalLight.lightAmbient, AO);
     vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
@@ -220,7 +217,7 @@ vec3 CalculateSpecularColor(vec3 specular, vec3 lightSpecular, vec3 lightDir, ve
 }
 
 const int sampleRate = 5;
-const float bias = 0.0005;
+const float bias = 0.000005;
 float ShadowCalculation(vec4 fragPosLightSpace) //PCF
 {
     // 透视除法

@@ -281,6 +281,9 @@
     <ClInclude Include="src\TextureArray.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="\\Mac\Home\Downloads\stb_image_resize2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />

@@ -71,11 +71,6 @@ void Material::SetRoughness(Shader& shader, float value)
 	m_Roughness = value;
 	 shader.setUniform1f("u_Material.Roughness", m_Roughness);
 }
-
-PBRMaterial::PBRMaterial()
-	:m_AO(nullptr),m_EmissionMap(nullptr), m_HeightMap(nullptr),m_AlbedoMap(nullptr),m_MetallicMap(nullptr), m_RoughnessMap(nullptr),m_NormalMap(nullptr)
-{
-}
 static glm::vec3 ConvertToVec3(const float* v)
 {
 	return glm::vec3(v[0], v[1], v[2]);

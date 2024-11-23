@@ -226,6 +226,7 @@
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
     <ClInclude Include="src\Quad.h" />
+    <ClInclude Include="\\Mac\Home\Downloads\stb_image_resize2.h" />
     <ClInclude Include="\\Mac\Home\Downloads\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>

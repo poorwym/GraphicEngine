@@ -106,26 +106,6 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
 }
 
 
-PBRMaterial* ResourceManager::LoadPBRMaterial(const std::string& filePath)
-{
-    PBRMaterial* material = new PBRMaterial();
-    Texture* albedo = new Texture(filePath+"col.png");// 漫反射贴图
-    if (albedo) material->SetAlbedoMap(albedo);
-    Texture* normal = new Texture(filePath+"nrm.png");// 法线贴图
-    if (normal) material->SetNormalMap(normal);
-    Texture* metallic = new Texture(filePath+"met.png");//金属度贴图
-    if (metallic) material->SetMetallicMap(metallic);
-    Texture* roughness = new Texture(filePath+"roughness.png");//粗糙度贴图
-    if(roughness) material->SetRoughnessMap(roughness);
-    Texture* ao = new Texture(filePath+"ao.png");//环境光遮蔽贴图
-    if (ao) material->SetAO(ao);
-    Texture* height = new Texture(filePath+"height.png");//高度贴图
-    if (height) material->SetHeightMap(height);
-    Texture* emision = new Texture(filePath+"emision.png");//自发光贴图
-    if (emision) material->SetEmisionMap(emision);
-    return material;
-}
-
 void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height)
 {
     std::string directory = "output/images/";

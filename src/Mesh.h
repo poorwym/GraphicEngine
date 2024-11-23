@@ -30,8 +30,6 @@ public:
 
     void Bind() const;                         // 绑定 VAO，准备绘制
     void Unbind() const;                       // 解除 VAO 绑定
-    void RenderDepthMap(Shader& shader, glm::mat4 globalTranform);
-    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform);
 
     inline const std::vector<Vertex>& GetVertices() const { return m_Vertices; };
     inline const std::vector<unsigned int>& GetIndices() const { return m_Indices; };

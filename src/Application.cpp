@@ -65,9 +65,7 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 int main(void)
-{
-   
-    
+{    
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -127,6 +125,7 @@ int main(void)
     RealTimeRender(window);
 }
 static void LoadModel(SceneManager& sceneManager) {
+    textureArray = new TextureArray(1024, 1024, 256);
     //load sun
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
@@ -259,81 +258,44 @@ void RealTimeRender(GLFWwindow* window) {
 
 
 void PBR_Render(Camera& camera, Scene* scene) {
-
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/PBRshader.shader");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/Batch.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     mainShader->Bind();
-    mainShader->setUniform1i("AlbedoMap", 0);
-    mainShader->setUniform1i("NormalMap", 1);
-    mainShader->setUniform1i("MetallicMap", 2);
-    mainShader->setUniform1i("RoughnessMap", 3);
-    mainShader->setUniform1i("AOMap", 4);
-    mainShader->setUniform1i("EmissionMap", 5);
-    mainShader->setUniform1i("HeightMap", 6);
-    mainShader->setUniform1i("DissolveTextureMap", 8);
-    mainShader->setUniform1i("ShadowMap", 7);
-    mainShader->setUniform1i("SpecularExponentTextureMap", 9);
     mainShader->setUniform1f("farPlane", FAR_PLANE);
-    mainShader->setUniform1i("AlphaMap", 15);
+    mainShader->setUniform1i("ShadowMap", 31);
     mainShader->Unbind();
-
-    std::vector<std::string> faces
-    {
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg"
-    };
-    // 创建天空盒实例
-    Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-    GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+     GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+     GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+     mainShader->Bind();
+     mainShader->setUniform1i("numPointLights", pointLightID.size());
+     mainShader->Unbind();
 
-    mainShader->Bind();
-    mainShader->setUniform1i("numPointLights", pointLightID.size());
-    mainShader->Unbind();
+     ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
+     scene->RenderShadowMap(depthShader, cubeDepthShader);
 
-    ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
-    scene->RenderShadowMap(depthShader, cubeDepthShader);
-
-    //render visibility
-    ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
-    depthMapFBO.Bind();
-    depthShader->Bind();
-    glm::mat4 SpaceMatrix = camera.GetProjectionMatrix() * camera.GetViewMatrix();
-    depthShader->setUniformMat4f("SpaceMatrix", SpaceMatrix);
-    scene->RenderDepthMap(*depthShader);
-    depthShader->Unbind();
-    depthMapFBO.Unbind();
-    //bind visibilityMap
-    depthMapFBO.BindTexture(10);
-
-    //render
-    colorFBO.Bind();
-    GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-    skybox.Draw(camera);
-    mainShader->Bind();
-    mainShader->setUniform1i("ShadowMap", 7);
-    mainShader->setUniform1i("ViewDepthMap", 10);
-    for(int i=0; i < 4; i++)
-    {
-        mainShader->setUniform1i("PointShadowMap["+std::to_string(i) + "]", 11 + i);
-    }
-    scene->BindLight(*mainShader, glm::mat4(1.0f));
-    scene->Render(*mainShader, camera);
-    mainShader->Unbind();
-    colorFBO.Unbind();
-    //post render
-    ColorFBO finalPicture = PostRender(colorFBO, camera);
-    resourceManager.SaveFBOToPNG(colorFBO, "test.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+     //render
+     ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
+     colorFBO.Bind();
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     mainShader->Bind();
+     mainShader->setUniform1i("ShadowMap", 31);
+     for (int i = 0; i < 4; i++)
+     {
+         mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
+     }
+     scene->BindLight(*mainShader, glm::mat4(1.0f));
+     scene->BatchRender(*mainShader, camera);
+     mainShader->Unbind();
+     colorFBO.Unbind();
+     //post render
+     ColorFBO t = PostRender(colorFBO, camera);
+     resourceManager.SaveFBOToPNG(t, "nb.png", WINDOW_WIDTH, WINDOW_HEIGHT);
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;

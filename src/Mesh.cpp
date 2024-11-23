@@ -76,27 +76,3 @@ void Mesh::Unbind() const
     m_IndexBuffer->Unbind();
 }
 
-void Mesh::RenderDepthMap(Shader& shader, glm::mat4 globalTranform)
-{
-    if (m_PBRMaterial) m_PBRMaterial->Bind(shader);
-    if (m_Material) m_Material->Bind(shader);
-
-    Renderer renderer;
-    renderer.Draw(*m_VAO, *m_IndexBuffer, nullptr, shader, globalTranform);
-
-    if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
-    if (m_Material) m_Material->Unbind(shader);
-}
-
-void Mesh::Render(Shader& shader, Camera& camera, glm::mat4 globalTranform)
-{
-    shader.Bind();
-    if(m_PBRMaterial) m_PBRMaterial->Bind(shader);
-    if(m_Material) m_Material -> Bind(shader);
-
-    Renderer renderer;
-    renderer.Draw(*m_VAO, *m_IndexBuffer, &camera, shader, globalTranform);
-
-    if (m_PBRMaterial) m_PBRMaterial->Unbind(shader);
-    if (m_Material) m_Material->Unbind(shader);
-}

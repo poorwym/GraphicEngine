@@ -10,7 +10,7 @@ std::map<PointLight*, unsigned int> pointLightID;
 std::vector<Texture*> textureList;
 std::map<unsigned int, int> textureSlots;
 
-TextureArray* textureArray = new TextureArray(1024, 1024, 128);
+TextureArray* textureArray = nullptr;
 
 SceneManager::SceneManager(Scene* scene)
 {
