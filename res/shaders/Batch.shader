@@ -33,7 +33,7 @@ void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0);
     vs_out.FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
-    vs_out.Normal = mat3(transpose(inverse(u_Model))) * a_Normal; //世界空间法线向量
+    vs_out.Normal = a_Normal; //世界空间法线向量
     FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
     vs_out.TexCoords = a_TexCoords;
     vs_out.Tangent = a_Tangent;
@@ -132,9 +132,15 @@ void main()
     vec3 diffuse = ambient;
     vec3 specular = ambient;
     //计算法线
-    vec3 sampledNormal = fs_in.Slots[1] != -1 ? GetTextureColor(fs_in.Slots[1], fs_in.TexCoords) : fs_in.Normal; 
-    sampledNormal = normalize(sampledNormal * 2.0 - 1.0);
-    vec3 normal = normalize(fs_in.TBN * sampledNormal);
+    vec3 normal = vec3(0.0);
+    if( fs_in.Slots[1] != -1){
+        vec3 sampledNormal =  GetTextureColor(fs_in.Slots[1], fs_in.TexCoords); 
+        sampledNormal = normalize(sampledNormal * 2.0 - 1.0);
+        normal = normalize(fs_in.TBN * sampledNormal);
+    }
+    else{
+        normal = normalize(fs_in.Normal);
+    }
     //计算其他不是很重要的参数
     float metallic = fs_in.Slots[2] != -1 ? GetTextureValue(fs_in.Slots[2], fs_in.TexCoords) : 0.0; // 金属度 2
     float roughness = fs_in.Slots[3] != -1 ? GetTextureValue(fs_in.Slots[3], fs_in.TexCoords) : 0.5; // 粗糙度 3
@@ -284,7 +290,7 @@ float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
     // PCF 采样参数
     float bias = 0.005; // 深度偏移，避免阴影失真
     int samples = 4;   // 采样次数，值越高阴影越柔和，性能开销也越大
-    float offset = 0.05; // 偏移范围（柔和程度）
+    float offset = 0.0000005; // 偏移范围（柔和程度）
 
     for (int x = -samples / 2; x <= samples / 2; ++x) {
         for (int y = -samples / 2; y <= samples / 2; ++y) {

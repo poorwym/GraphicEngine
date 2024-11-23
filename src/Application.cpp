@@ -129,7 +129,7 @@ static void LoadModel(SceneManager& sceneManager) {
     //load sun
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
-    PointLight* pointLight = new PointLight("PointLight", _WHITE, 1.0f, glm::vec3(0.0f, 0.5f, 0.0f));
+    PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
 }
 static void InitModel() {
@@ -137,8 +137,8 @@ static void InitModel() {
 }
 
 static void InitCamera(Camera& camera) {
-    camera.SetPosition(glm::vec3(9.670f, 2.000f, 7.819f));
-    camera.SetTarget(glm::vec3(5.884, 0.175, 4.545));
+    camera.SetPosition(glm::vec3(25.293f, 2.000f, 4.469f));
+    camera.SetTarget(glm::vec3(20.102, 1.561, 3.356));
     camera.SetFocus(0.2f, 1.0f, 0.05);
 }
 void RealTimeRender(GLFWwindow* window) {
