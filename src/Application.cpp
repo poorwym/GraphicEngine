@@ -41,7 +41,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 SceneManager sceneManager(nullptr);
 
-void PBR_Render(Camera& camera, Scene* scene);
+void RayTracing(Camera& camera, Scene* scene);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -162,9 +162,9 @@ void RealTimeRender(GLFWwindow* window) {
     LoadModel(sceneManager);
     InitModel();
 
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/Batch.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.shader");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
@@ -240,9 +240,9 @@ void RealTimeRender(GLFWwindow* window) {
         scene->Update(deltaTime);
         
 
-        ImGui::Begin("PBRrender");
+        ImGui::Begin("RayTracing");
         if (ImGui::Button("Render")) {
-            PBR_Render(camera, scene);
+            RayTracing(camera, scene);
         }
         ImGui::End();
 
@@ -257,50 +257,14 @@ void RealTimeRender(GLFWwindow* window) {
 
 
 
-void PBR_Render(Camera& camera, Scene* scene) {
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/Batch.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/depth_shader.shader");
-    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/cubeMapDepth.shader");
-    ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    //这段真的非常非常重要，忘记绑定了。
-    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
-    mainShader->Bind();
-    mainShader->setUniform1f("farPlane", FAR_PLANE);
-    mainShader->setUniform1i("ShadowMap", 31);
-    mainShader->Unbind();
-    DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-     GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-     GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-     mainShader->Bind();
-     mainShader->setUniform1i("numPointLights", pointLightID.size());
-     mainShader->Unbind();
-
-     ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
-     scene->RenderShadowMap(depthShader, cubeDepthShader);
-
-     //render
-     ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
-     colorFBO.Bind();
-     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-     mainShader->Bind();
-     mainShader->setUniform1i("ShadowMap", 31);
-     for (int i = 0; i < 4; i++)
-     {
-         mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
-     }
-     scene->BindLight(*mainShader, glm::mat4(1.0f));
-     scene->BatchRender(*mainShader, camera);
-     mainShader->Unbind();
-     colorFBO.Unbind();
-     //post render
-     ColorFBO t = PostRender(colorFBO, camera);
-     resourceManager.SaveFBOToPNG(t, "nb.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+void RayTracing(Camera& camera, Scene* scene) {
+    
+     //resourceManager.SaveFBOToPNG(t, "nb.png", WINDOW_WIDTH, WINDOW_HEIGHT);
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/screen.shader");
+    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/screen.shader");
     colorFBO.BindTexture(0);
     colorFBO.BindDepthTexture(1);
     screenShader->Bind();
@@ -308,13 +272,14 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     //screenShader->setUniform1i("depthTexture", 1);
     screenQuad.Render(*screenShader);
     screenShader->Unbind();
+    delete screenShader;
 }
 
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.shader");
     finalFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         colorFBO.BindTexture(0);
@@ -328,6 +293,6 @@ static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
             screenQuad.Render(*FODshader);
         FODshader->Unbind();
     finalFBO.Unbind();
-
+    delete FODshader;
     return finalFBO;
 }

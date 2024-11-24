@@ -244,8 +244,8 @@ vec3 CalculateSpecularColor(vec3 specular, vec3 lightSpecular, vec3 lightDir, ve
     return specularColor;
 }
 
-const int sampleRate = 5;
-const float bias = 0.000005;
+const int sampleRate = 10;
+const float bias = 0.0000005;
 float ShadowCalculation(vec4 fragPosLightSpace) //PCF
 {
     // 透视除法
@@ -289,8 +289,8 @@ float PointShadowCalculation(vec3 fragPos, vec3 lightPos, int i) { //PCF
 
     // PCF 采样参数
     float bias = 0.005; // 深度偏移，避免阴影失真
-    int samples = 4;   // 采样次数，值越高阴影越柔和，性能开销也越大
-    float offset = 0.0000005; // 偏移范围（柔和程度）
+    int samples = 8;   // 采样次数，值越高阴影越柔和，性能开销也越大
+    float offset = 0.00000005; // 偏移范围（柔和程度）
 
     for (int x = -samples / 2; x <= samples / 2; ++x) {
         for (int y = -samples / 2; y <= samples / 2; ++y) {

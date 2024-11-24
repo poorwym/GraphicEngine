@@ -116,7 +116,7 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 	}
 }
 
-void Scene::RenderDepthMap(Shader& shader)
+void Scene::RenderDepthMap(Shader& shader) const
 {
 	Renderer renderer;
 	renderer.Draw(*m_VAO, *m_IBO, nullptr, shader, glm::mat4(1.0f));

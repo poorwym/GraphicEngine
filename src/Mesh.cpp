@@ -62,13 +62,13 @@ static void CalcTangent(std::vector<Vertex>& vertices) {
 }
 static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
     for (Vertex& vertex : vertices) {
-        vertex.TextureSlots[0] = static_cast<float>(material -> GetAlbedoMapSlot()); //0
-        vertex.TextureSlots[1] = static_cast<float>(material -> GetNormalMapSlot()); //1
-        vertex.TextureSlots[2] = static_cast<float>(material -> GetMetallicMapSlot()); //2
-        vertex.TextureSlots[3] = static_cast<float>(material -> GetRoughnessMapSlot()); //3
-        vertex.TextureSlots[4] = static_cast<float>(material -> GetAOMapSlot()); //4
-        vertex.TextureSlots[5] = static_cast<float>(material->GetEmissionMapSlot()); //5
-        vertex.TextureSlots[6] = static_cast<float>(material -> GetAlphaMapSlot()); //6
+        vertex.material.AlbedoMapIndex = static_cast<float>(material -> GetAlbedoMapSlot()); //0
+        vertex.material.NormalMapIndex = static_cast<float>(material -> GetNormalMapSlot()); //1
+        vertex.material.MetallicMapIndex = static_cast<float>(material -> GetMetallicMapSlot()); //2
+        vertex.material.RoughnessMapIndex = static_cast<float>(material -> GetRoughnessMapSlot()); //3
+        vertex.material.AOMapIndex = static_cast<float>(material -> GetAOMapSlot()); //4
+        vertex.material.EmissionMapIndex = static_cast<float>(material->GetEmissionMapSlot()); //5
+        vertex.material.AlphaMapIndex = static_cast<float>(material -> GetAlphaMapSlot()); //6
     }
 }
 static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {

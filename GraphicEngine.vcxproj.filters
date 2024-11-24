@@ -123,6 +123,9 @@
     <ClCompile Include="src\TextureArray.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\ShaderStorageBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -284,20 +287,18 @@
     <ClInclude Include="\\Mac\Home\Downloads\stb_image_resize2.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\ShaderStorageBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\Basic.shader" />
     <None Include="document\advice.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="document\GLTF.md" />
     <None Include="document\光源的建议.md" />
-    <None Include="res\shaders\light.shader" />
     <None Include="document\PBR.md" />
     <None Include="document\ImGui.md" />
-    <None Include="res\shaders\PBRshader.shader" />
-    <None Include="res\shaders\depth_shader.shader" />
     <None Include="document\mtl.md" />
-    <None Include="res\shaders\skybox.shader" />
     <None Include="Dependencies\GLEW\doc\advanced.html" />
     <None Include="Dependencies\GLEW\doc\basic.html" />
     <None Include="Dependencies\GLEW\doc\build.html" />
@@ -309,10 +310,5 @@
     <None Include="Dependencies\GLEW\doc\log.html" />
     <None Include="Dependencies\GLEW\doc\wglew.html" />
     <None Include="Debug\glew32.dll" />
-    <None Include="res\shaders\ShadowVisible.shader" />
-    <None Include="res\shaders\screen.shader" />
-    <None Include="res\shaders\FOD.shader" />
-    <None Include="res\shaders\Batch.shader" />
-    <None Include="res\shaders\cubeMapDepth.shader" />
   </ItemGroup>
 </Project>

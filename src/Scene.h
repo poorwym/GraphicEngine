@@ -25,7 +25,7 @@ public:
     void AddNode(SceneNode* node);           // ÃÌº” µÃÂ
     void SetDirectionalLight(DirectionalLight* dirLight);
     void BindLight(Shader& shader, glm::mat4 globalTransform);
-    void RenderDepthMap(Shader& shader);
+    void RenderDepthMap(Shader& shader) const;
     void RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader);
     void BatchRender(Shader& shader, Camera& camera);
     void Render(Shader& shader,Camera& camera);
