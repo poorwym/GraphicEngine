@@ -1,6 +1,5 @@
-// Skybox.cpp
 #include "Skybox.h"
-#include <stb_image/stb_image.h>
+#include <opencv2/opencv.hpp>  // 引入OpenCV
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -102,24 +101,20 @@ unsigned int Skybox::loadCubemap(const std::vector<std::string>& faces)
     unsigned int textureID;
     GLCall(glGenTextures(1, &textureID));
     GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, textureID));
-   
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(false); // 通常天空盒不需要翻转
-
+    // 使用 OpenCV 加载图片
     for (unsigned int i = 0; i < faces.size(); i++)
     {
-        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 4);
-        if (data)
-        {
-            GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-            stbi_image_free(data);
-        }
-        else
-        {
+        cv::Mat image = cv::imread(faces[i]);
+        if (image.empty()) {
             std::cerr << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
+            continue;
         }
+
+        // OpenCV 图像为 BGR 格式，OpenGL 要求为 RGBA 格式，因此需要转换
+        cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
+
+        GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, image.cols, image.rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data));
     }
 
     // 设置立方体贴图的参数

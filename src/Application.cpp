@@ -31,6 +31,8 @@
 #include "SceneManager.h"
 #include "Quad.h"
 #include<map>
+
+#include"opencv2/opencv.hpp"
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -67,6 +69,8 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main(void)
 {    
     GLFWwindow* window;
+    cv::setUseOptimized(false);  // 禁用 OpenCV 的并行优化
+    cv::setNumThreads(1);        // 设置 OpenCV 为单线程，禁用并行计算
 
     /* Initialize the library */
     if (!glfwInit())

@@ -1,47 +1,59 @@
 #include "Texture.h"
+#include <opencv2/opencv.hpp>
 #include <iostream>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image/stb_image.h"
-
 Texture::Texture(const std::string& path)
-		:m_RendererID(0), m_FilePath(path), m_LocalBuffer(nullptr),
-		m_Width(0), m_Height(0), m_BPP(0)
+    : m_RendererID(0), m_FilePath(path), m_LocalBuffer(nullptr),
+    m_Width(0), m_Height(0), m_BPP(0)
 {
-	stbi_set_flip_vertically_on_load(1);//把贴图翻转，好像openGL所有贴图是反的
-	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);//4代表 RGBA（4通道）
-	//std::cout << "m_LocalBuffer " << m_LocalBuffer << std::endl;
-	if (!m_LocalBuffer) {
-		std::cerr << "Failed to load texture at path: " << m_FilePath << std::endl;
-		return; // 或者抛出异常
-	}
-	GLCall(glGenTextures(1, &m_RendererID));//1个贴图
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));//2D texture
+    // 使用 OpenCV 加载图像
+    cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED); // 加载图像（包括 alpha 通道）
+    if (image.empty()) {
+        std::cerr << "Failed to load texture at path: " << m_FilePath << std::endl;
+        return; // 或者抛出异常
+    }
+    else {
+        std::cout << "Loaded texture at path: " << m_FilePath << std::endl;
+    }
 
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));//参数日后解释
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));//参数日后解释
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    // OpenCV 加载的图像数据转换为 OpenGL 可用的格式
+    m_Width = image.cols;
+    m_Height = image.rows;
+    m_BPP = image.channels(); // 通道数，RGBA = 4
 
-	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_LocalBuffer));//日后解释
-	GLCall(glBindTexture(GL_TEXTURE_2D, 0));//解绑
+    // OpenCV 读取的图像数据已经是正确格式，直接使用它
+    m_LocalBuffer = image.data;
 
-	if (m_LocalBuffer)
-		stbi_image_free(m_LocalBuffer);//释放内存
+    // 创建 OpenGL 纹理
+    GLCall(glGenTextures(1, &m_RendererID));
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+
+    // 设置纹理参数
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+    // 上传纹理数据到 GPU
+    GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_LocalBuffer));
+    GLCall(glBindTexture(GL_TEXTURE_2D, 0)); // 解绑
+
+    // 释放 OpenCV 图像数据（如果是深拷贝，OpenCV 会管理图像内存）
+    // 如果 OpenCV 图像是浅拷贝，它会在 `Texture` 析构时被释放，所以无需调用 `cv::Mat` 的 `release`。
 }
 
 Texture::~Texture()
 {
-	GLCall(glDeleteTextures(1, &m_RendererID));
+    GLCall(glDeleteTextures(1, &m_RendererID));
 }
 
 void Texture::Bind(unsigned int slot) const
 {
-	GLCall(glActiveTexture(GL_TEXTURE0 + slot));//使用槽位slot
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+    GLCall(glActiveTexture(GL_TEXTURE0 + slot)); // 激活纹理单元
+    GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID)); // 绑定纹理
 }
- 
+
 void Texture::Unbind() const
 {
-	GLCall(glBindTexture(GL_TEXTURE_2D, 0));//解绑
+    GLCall(glBindTexture(GL_TEXTURE_2D, 0)); // 解绑纹理
 }

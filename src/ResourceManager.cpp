@@ -2,12 +2,11 @@
 #include <iostream>
 #include <vector>
 #include "Component.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image/stb_image_write.h"
 #include <GL/glew.h>
 #include <filesystem>
+#include <opencv2/opencv.hpp>  // 引入 OpenCV 头文件
 #ifndef TINYOBJLOADER_IMPLEMENTATION
-    #define TINYOBJLOADER_IMPLEMENTATION
+#define TINYOBJLOADER_IMPLEMENTATION
 #endif 
 #include "TinyOBJLoader/tiny_obj_loader.h"
 
@@ -132,8 +131,9 @@ void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filena
         }
     }
 
-    // 使用 stb_image_write 保存 PNG
-    if (stbi_write_png(fullPath.c_str(), width, height, 4, pixels.data(), width * 4)) {
+    // 使用 OpenCV 保存 PNG 图片
+    cv::Mat img(height, width, CV_8UC4, pixels.data()); // 使用 OpenCV 的矩阵类型
+    if (cv::imwrite(fullPath, img)) {
         std::cout << "Successfully saved FBO to " << fullPath << std::endl;
     }
     else {
@@ -154,4 +154,3 @@ Texture* ResourceManager::Load<Texture>(const std::string& filePath)
     Texture* texture = new Texture(filePath);
     return texture;
 }
-
