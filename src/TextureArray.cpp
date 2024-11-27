@@ -56,9 +56,13 @@ void TextureArray::AddTexture(const std::string& path)
 
         image = resizedImage; // 更新 image 为调整大小后的图像
     }
-    //GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 
-    cv::imshow("test", image);
+    // 将图像从 BGR 转换为 RGB 
+    cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
+    // 翻转图像
+    cv::flip(image, image, 0);
+
+    GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 
     // 将图像数据转化为合适的格式以上传到 OpenGL
     GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, m_RendererID));

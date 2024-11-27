@@ -51,7 +51,7 @@ float skyboxVertices[] = {
 };
 
 Skybox::Skybox(const std::vector<std::string>& faces)
-    : skyboxShader("res/shaders/skybox.shader") // 确保 Shader 类可以接受顶点和片段着色器路径
+    : skyboxShader("res/shaders/RealTimeRendering/skybox.shader") // 确保 Shader 类可以接受顶点和片段着色器路径
 {
     // 加载立方体贴图
     cubemapTexture = loadCubemap(faces);
