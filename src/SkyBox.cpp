@@ -1,5 +1,5 @@
 #include "Skybox.h"
-#include <opencv2/opencv.hpp>  // “˝»ÎOpenCV
+#include "opencv2/opencv.hpp"
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

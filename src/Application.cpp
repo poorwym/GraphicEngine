@@ -30,9 +30,10 @@
 #include "LightController.h"
 #include "SceneManager.h"
 #include "Quad.h"
-#include<map>
+#include <map>
 
-#include"opencv2/opencv.hpp"
+#include "opencv2/opencv.hpp"
+
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -69,15 +70,13 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main(void)
 {    
     GLFWwindow* window;
-    cv::setUseOptimized(false);  // 禁用 OpenCV 的并行优化
-    cv::setNumThreads(1);        // 设置 OpenCV 为单线程，禁用并行计算
 
     /* Initialize the library */
     if (!glfwInit())
         return -1;
     
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//设置OpenGL版本主版本号 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//设置OpenGL版本次版本号
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//设置OpenGL版本主版本号 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
 
 
@@ -89,6 +88,7 @@ int main(void)
         return -1;
     }
 
+
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE; // 启用实验性功能以确保现代 OpenGL 功能可用
@@ -97,10 +97,16 @@ int main(void)
 
     GLCall(glfwSwapInterval(1));
 
-    if (glewInit() != GLEW_OK) {
-        std::cout << "error";
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::cout << "GLEW initialization failed: " << glewGetErrorString(err) << std::endl;
+        return -1; // 或者其他错误处理方式
     }
-    std::cout << glGetString(GL_VERSION) << std::endl;
+
+    // 获取 OpenGL 版本信息
+    const char* version = (const char*)glGetString(GL_VERSION);
+    // 输出 OpenGL 版本
+    std::cout << "OpenGL Version: " << version << std::endl;
 
     GLCall(glEnable(GL_BLEND));
     GLCall(glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA));

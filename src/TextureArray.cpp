@@ -1,5 +1,5 @@
 #include "TextureArray.h"
-#include <opencv2/opencv.hpp>
+#include "opencv2/opencv.hpp"
 #include <iostream>
 
 TextureArray::TextureArray(int width, int height, int maxLayers)
@@ -56,6 +56,9 @@ void TextureArray::AddTexture(const std::string& path)
 
         image = resizedImage; // 更新 image 为调整大小后的图像
     }
+    //GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+
+    cv::imshow("test", image);
 
     // 将图像数据转化为合适的格式以上传到 OpenGL
     GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, m_RendererID));
