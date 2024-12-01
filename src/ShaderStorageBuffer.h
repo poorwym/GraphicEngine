@@ -1,16 +1,6 @@
 #pragma once
 #include "Renderer.h"
 
-struct Triangle {
-    glm::vec3 v0;               // 顶点 0 的位置
-    glm::vec3 v1;               // 顶点 1 的位置
-    glm::vec3 v2;               // 顶点 2 的位置
-    glm::vec3 normal;           // 面法线
-    glm::vec3 tangent;          // 切线（如果使用法线贴图）
-    glm::vec3 bitangent;        // 副切线（如果使用法线贴图）
-    glm::vec2 texCoords[3];     // 三个顶点的纹理坐标
-    int materialIndex;          // 材质索引
-};
 
 class ShaderStorageBuffer
 {

@@ -1,5 +1,5 @@
 #shader vertex
-#version 330 core
+#version 450 core
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec3 a_Normal;
@@ -13,6 +13,7 @@ layout (location = 8) in float a_Slot3;
 layout (location = 9) in float a_Slot4;
 layout (location = 10) in float a_Slot5;
 layout (location = 11) in float a_Slot6;
+layout (location = 12) in float a_Slot7;
 
 uniform mat4 u_MVP;
 uniform mat4 u_Model;
@@ -23,7 +24,7 @@ out VS_OUT {
     vec3 Normal;
     vec3 Tangent;
     vec3 Bitangent;
-    flat int Slots[7];
+    flat int Slots[8];
     mat3 TBN;
 } vs_out;
 out vec4 FragPosLightSpace;
@@ -55,7 +56,7 @@ void main()
 }
 
 #shader fragment
-#version 330 core
+#version 450 core
 out vec4 FragColor;
 
 in VS_OUT {//顶点着色器输出
@@ -64,7 +65,7 @@ in VS_OUT {//顶点着色器输出
     vec3 Normal;//片元法线，世界空间
     vec3 Tangent;
     vec3 Bitangent;
-    flat int Slots[7];
+    flat int Slots[8];
     mat3 TBN;
 } fs_in;
 
@@ -149,7 +150,6 @@ void main()
     float alpha = fs_in.Slots[6] != -1 ? GetTextureValue(fs_in.Slots[6], fs_in.TexCoords) : 1.0;
 
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
-
     vec3 ambientColor = CalculateAmbientColor(ambient, directionalLight.lightAmbient, AO);
     vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
     vec3 specularColor = CalculateSpecularColor(specular, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);

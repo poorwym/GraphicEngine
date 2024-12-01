@@ -4,7 +4,7 @@
 #include "Component.h"
 #include <GL/glew.h>
 #include <filesystem>
-#include <opencv2/opencv.hpp>  // 引入 OpenCV 头文件
+
 #ifndef TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_IMPLEMENTATION
 #endif 
@@ -138,6 +138,91 @@ void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filena
     }
     else {
         std::cerr << "Failed to save FBO to " << fullPath << std::endl;
+    }
+}
+
+cv::Mat ResourceManager::SaveFBOToMat(ColorFBO& colorFBO, int width, int height)
+{
+    // 绑定帧缓冲
+    colorFBO.Bind();
+
+    // 创建一个数组来存储像素数据
+    std::vector<unsigned char> pixels(width * height * 4); // 假设是 RGBA 格式
+
+    // 读取帧缓冲的颜色附件
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    // 解除绑定
+    colorFBO.Unbind();
+
+    // OpenGL 的像素原点在左下角，需要将图像翻转
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x], pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+
+    // 创建 cv::Mat 并拷贝数据
+    cv::Mat mat(height, width, CV_8UC4, pixels.data());
+
+    // 使用 clone() 以确保 mat 拥有自己的数据
+    cv::Mat matCopy = mat.clone();
+
+    // 确认 matCopy 数据有效
+    if (matCopy.empty()) {
+        std::cerr << "Error: matCopy is empty after cloning." << std::endl;
+    }
+    else {
+        std::cout << "SaveFBOToMat: Successfully created matCopy with "
+            << matCopy.rows << " rows and " << matCopy.cols << " cols." << std::endl;
+    }
+
+    return matCopy;
+}
+
+void ResourceManager::SaveMatToPNG(cv::Mat& mat, const std::string& filename, int width, int height)
+{
+    // 定义输出目录
+    std::string directory = "output/images/";
+    std::string fullPath = directory + filename;
+
+    // 检查并调整图像尺寸（如果需要）
+    cv::Mat resizedMat;
+    if (width > 0 && height > 0) {
+        cv::resize(mat, resizedMat, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+    }
+    else {
+        resizedMat = mat;
+    }
+
+    // 确保图像具有 4 个通道（RGBA）
+    cv::Mat rgbaMat;
+    if (resizedMat.channels() == 1) {
+        // 灰度图转换为 BGRA
+        cv::cvtColor(resizedMat, rgbaMat, cv::COLOR_GRAY2BGRA);
+    }
+    else if (resizedMat.channels() == 3) {
+        // BGR 转换为 BGRA
+        cv::cvtColor(resizedMat, rgbaMat, cv::COLOR_BGR2BGRA);
+    }
+    else if (resizedMat.channels() == 4) {
+        rgbaMat = resizedMat.clone();
+    }
+    else {
+        std::cerr << "Unsupported number of channels: " << resizedMat.channels() << std::endl;
+        return;
+    }
+
+    // 将 BGRA 转换为 RGBA
+    cv::Mat rgbaFinal;
+    cv::cvtColor(rgbaMat, rgbaFinal, cv::COLOR_BGRA2RGBA);
+
+    // 保存为 PNG 文件
+    if (cv::imwrite(fullPath, rgbaFinal)) {
+        std::cout << "Successfully saved Mat to " << fullPath << std::endl;
+    }
+    else {
+        std::cerr << "Failed to save Mat to " << fullPath << std::endl;
     }
 }
 

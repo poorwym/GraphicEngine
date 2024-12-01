@@ -46,3 +46,41 @@ void Quad::Render(Shader& shader)
     m_VAO->Unbind();
     shader.Unbind();
 }
+
+// Full-screen quad vertices (NDC coordinates)
+float simpleQuadVertices[] = {
+    // positions
+    -1.0f,  1.0f,  // Top-left
+    -1.0f, -1.0f,  // Bottom-left
+     1.0f, -1.0f,  // Bottom-right
+
+    -1.0f,  1.0f,  // Top-left
+     1.0f, -1.0f,  // Bottom-right
+     1.0f,  1.0f   // Top-right
+};
+
+SimpleQuad::SimpleQuad()
+{
+    m_VAO = new VertexArray();
+    m_VBO = new VertexBuffer(simpleQuadVertices, 12 * sizeof(float));
+    VertexBufferLayout layout;
+    layout.Push<float>(2);
+    m_VAO->Bind();
+    m_VAO->AddBuffer(*m_VBO, layout);
+    m_VAO->Unbind();
+}
+
+SimpleQuad::~SimpleQuad()
+{
+    delete m_VAO;
+    delete m_VBO;
+}
+
+void SimpleQuad::Render(Shader& shader)
+{
+    shader.Bind();
+    m_VAO->Bind();
+    GLCall(glDrawArrays(GL_TRIANGLES, 0, 6));
+    m_VAO->Unbind();
+    shader.Unbind();
+}

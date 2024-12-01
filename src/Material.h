@@ -15,6 +15,7 @@ struct Material {
     float AOMapIndex; //4
     float EmissionMapIndex; //5
     float AlphaMapIndex; //6
+    float padding;
 };
 
 class PBRMaterial{

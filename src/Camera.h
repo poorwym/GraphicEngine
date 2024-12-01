@@ -22,20 +22,27 @@ private:
 
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
-    inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // 获取视图矩阵
-    inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }// 获取投影矩阵
     void SetPosition(const glm::vec3& position);
     void SetRotation(const float& yaw, const float& pitch);
     void SetTarget(const glm::vec3& target);
-    inline float GetFocusDepth() const {return m_FocusDepth;}
-    inline float GetFocusRange() const {return m_FocusRange;}
-    inline float GetMaxBlur() const {   return m_MaxBlur;}
+    
     void SetFocus(float focusDepth, float focusRange, float maxBlur);
     void ProcessKeyboard(std::string pressedKey, float deltaTime, float velocity);// 键盘控制
     void ProcessMouseMovement(float xOffset, float yOffset);
     void ProcessMouseScroll(float zoomAngle);
     void Bind(Shader& shader);
     void Update(float deltaTime);         // 根据输入更新摄像机
+
     inline glm::vec3 GetPosition() const { return m_CameraPosition; }
     inline glm::vec3 GetTarget() const { return m_TargetPosition; }
+    inline glm::vec3 GetUpDirection() const { return m_UpDirection; }
+    inline float GetAspectRatio() const { return m_AspectRatio; }
+    inline float GetNearClip() const { return m_NearClip; }
+    inline float GetFarClip() const { return m_FarClip; }
+    inline float GetFov() const { return m_Fov; }
+    inline float GetFocusDepth() const { return m_FocusDepth; }
+    inline float GetFocusRange() const { return m_FocusRange; }
+    inline float GetMaxBlur() const { return m_MaxBlur; }
+    inline glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }      // 获取视图矩阵
+    inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }// 获取投影矩阵
 };

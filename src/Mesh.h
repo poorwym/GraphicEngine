@@ -17,6 +17,15 @@ struct Vertex {
     Material material;
 };
 
+struct Triangle {
+    glm::vec4 position[3];
+    glm::vec4 normal;
+    glm::vec4 texCoords[3];
+    glm::vec4 tangent;
+    glm::vec4 bitangent;
+    Material material;
+};
+
 class Mesh {
 public:
     Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);

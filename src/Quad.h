@@ -18,3 +18,15 @@ private:
 	VertexBuffer* m_VBO;
 	IndexBuffer* m_IBO;
 };
+
+class SimpleQuad {
+public:
+	SimpleQuad();
+	~SimpleQuad();
+
+	void Render(Shader& shader);
+
+private:
+	VertexArray* m_VAO;
+	VertexBuffer* m_VBO;
+};

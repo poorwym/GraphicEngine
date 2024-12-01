@@ -18,6 +18,7 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "SkyBox.h"
 
+
 #include "test/TestClearColor.h"
 #include "test/TestTexture2D.h"
 #include "Camera.h"
@@ -33,6 +34,8 @@
 #include <map>
 
 #include "opencv2/opencv.hpp"
+#include "ShaderStorageBuffer.h"
+#include "Filter.h"
 
 DirectionalLightController directionalLightController;
 
@@ -70,7 +73,8 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main(void)
 {    
     GLFWwindow* window;
-
+    // 设置 OpenCV 日志级别为 ERROR，减少信息输出
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -137,7 +141,7 @@ int main(void)
 static void LoadModel(SceneManager& sceneManager) {
     textureArray = new TextureArray(1024, 1024, 256);
     //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.0f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
@@ -239,7 +243,6 @@ void RealTimeRender(GLFWwindow* window) {
         {
             mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
         }
-        scene->BindLight(*mainShader, glm::mat4(1.0f));
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
         colorFBO.Unbind();
@@ -265,11 +268,169 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
+// 计算切线和副切线的函数
+static void CalculateTangentBitangent(Triangle& tri) {
+    glm::vec3 edge1 = tri.position[1] - tri.position[0];
+    glm::vec3 edge2 = tri.position[2] - tri.position[0];
+
+    glm::vec2 deltaUV1 = tri.texCoords[1] - tri.texCoords[0];
+    glm::vec2 deltaUV2 = tri.texCoords[2] - tri.texCoords[0];
+
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+    glm::vec3 tangent, bitangent;
+
+    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+    tangent = glm::normalize(tangent);
+
+    bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+    bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+    bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+    bitangent = glm::normalize(bitangent);
+
+    tri.tangent = glm::vec4(tangent, 0.0f);
+    tri.bitangent = glm::vec4(bitangent, 0.0f);
+}
+
 
 
 void RayTracing(Camera& camera, Scene* scene) {
-    
-     //resourceManager.SaveFBOToPNG(t, "nb.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/RayTracing.shader");
+     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+     std::vector<Triangle> triangles;
+     int size = scene->GetIndices()->size();
+     std::vector<unsigned int>* indices = scene->GetIndices();
+     std::vector<Vertex>* vertices = scene->GetVertices();
+     for (int i = 0;i < size - 2; i += 3) {
+         unsigned int idx1 = indices->at(i);
+         unsigned int idx2 = indices->at(i + 1);
+         unsigned int idx3 = indices->at(i + 2);
+         Vertex v1 = vertices->at(idx1);
+         Vertex v2 = vertices->at(idx2);
+         Vertex v3 = vertices->at(idx3);
+         glm::vec3 normal = glm::normalize(v1.Normal + v2.Normal + v3.Normal);
+         Triangle triangle;
+         triangle.position[0] = glm::vec4(v1.Position, 0.0f);
+         triangle.position[1] = glm::vec4(v2.Position, 0.0f);
+         triangle.position[2] = glm::vec4(v3.Position, 0.0f);
+         triangle.normal = glm::vec4(normal, 0.0f);
+         triangle.texCoords[0] = glm::vec4(v1.TexCoords, 0.0f, 0.0f);
+         triangle.texCoords[1] = glm::vec4(v2.TexCoords, 0.0f, 0.0f);
+         triangle.texCoords[2] = glm::vec4(v3.TexCoords, 0.0f, 0.0f);
+         triangle.material = v1.material;
+         CalculateTangentBitangent(triangle);
+         triangles.push_back(triangle);
+     }
+     ShaderStorageBuffer* ssbo = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
+     int numTriangles = triangles.size();
+     ssbo->Bind();
+
+     mainShader->Bind();
+     mainShader->setUniform1i("numTriangles", numTriangles);
+     mainShader->Unbind();
+
+     ssbo->Bind();
+     std::vector<cv::Mat> matArray;
+     for (int i = 0; i <= 4; i++) {
+         std::cout << "Render Mat " << i << std::endl;
+         colorFBO.Bind();
+         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+         scene->RayTracingRender(*mainShader, camera);
+         colorFBO.Unbind();
+         ColorFBO postRenderFBO = PostRender(colorFBO, camera);
+         cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
+         // 确保图像是4通道的
+         if (mat.channels() == 1) {
+             cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
+         }
+         else if (mat.channels() == 3) {
+             cv::cvtColor(mat, mat, cv::COLOR_BGR2BGRA);
+         }
+         else if (mat.channels() == 4) {
+             std::cout << "mat" << i << " channels: " << mat.channels() << std::endl;
+         }
+         else {
+             std::cerr << "Unsupported number of channels: " << mat.channels() << ". Skipping this image." << std::endl;
+             continue;
+         }
+         matArray.push_back(mat);
+
+         std::cout << "Render Completed" << std::endl;
+     }
+     ssbo->Unbind();
+
+     cv::Mat denoisedPicture;
+     // 去噪处理：通过平均多个图像
+     if (!matArray.empty()) {
+         // 获取第一张图像的尺寸和通道数
+         cv::Size referenceSize = matArray[0].size();
+         int referenceChannels = matArray[0].channels();
+
+         // 初始化累加器为浮点型，避免精度丢失
+         cv::Mat accumulator = cv::Mat::zeros(referenceSize, CV_32FC4); // 修改为4通道
+
+         for (size_t i = 0; i < matArray.size(); ++i) {
+             const cv::Mat& mat = matArray[i];
+             std::cout << "Image " << i << ": size = " << mat.size()
+                 << ", channels = " << mat.channels()
+                 << ", type = " << mat.type()
+                 << ", isContinuous = " << mat.isContinuous()
+                 << ", empty = " << mat.empty() << std::endl;
+             // 检查图像是否为空
+             if (mat.empty()) {
+                 std::cerr << "Error: Image " << i << " is empty. Skipping this image." << std::endl;
+                 continue;
+             }
+
+             // 检查尺寸
+             if (mat.size() != referenceSize) {
+                 std::cerr << "Error: Image " << i << " size mismatch. Expected " << referenceSize << ", got " << mat.size() << ". Skipping this image." << std::endl;
+                 continue;
+             }
+
+             // 检查通道数
+             if (mat.channels() != 4) {
+                 std::cerr << "Error: Image " << i << " channel mismatch. Expected 4 channels, got " << mat.channels() << ". Skipping this image." << std::endl;
+                 continue;
+             }
+
+             // 转换为32位浮点数
+             cv::Mat matFloat = cv::Mat::zeros(referenceSize, CV_32FC4);
+             mat.convertTo(matFloat, CV_32FC4); // 修改为4通道
+
+             // 累加
+             try {
+                 accumulator += matFloat;
+             }
+             catch (const cv::Exception& e) {
+                 std::cerr << "OpenCV Exception during accumulation of Image " << i << ": " << e.what() << std::endl;
+                 continue;
+             }
+         }
+
+         // 计算平均值
+         accumulator /= static_cast<float>(matArray.size());
+
+         // 转换回8位图像
+         accumulator.convertTo(denoisedPicture, CV_8UC4);
+
+         std::cout << "Denoising completed by averaging." << std::endl;
+     }
+     else {
+         // 处理 matArray 为空的情况
+         std::cerr << "Error: matArray is empty. No images to denoise." << std::endl;
+     }
+
+     cv::Mat finalPicture = denoisedPicture;
+
+     // 保存去噪后的图像
+     resourceManager.SaveMatToPNG(finalPicture, "final.png", WINDOW_WIDTH, WINDOW_HEIGHT);
+     std::cout << "Final image saved as final.png" << std::endl;
+
+     // 释放资源
+     delete ssbo;
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;

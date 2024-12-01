@@ -5,6 +5,7 @@
 #include "LightController.h"
 #include "color.h"
 #include "SceneManager.h"
+#include "Quad.h"
 extern DirectionalLightController directionalLightController;
 static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
@@ -54,10 +55,15 @@ void Scene::UpdateVAO() {
 	layout.Push<float>(1);
 	layout.Push<float>(1);
 	layout.Push<float>(1);
+	layout.Push<float>(1);
 	m_Vertices.clear();
 	m_Indices.clear();
 	m_Vertices = vertices;
     m_Indices = indices;
+
+	delete m_VAO;
+	delete m_VBO;
+    delete m_IBO;
 
 	m_VAO = new VertexArray();
 	m_VBO = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
@@ -108,12 +114,14 @@ void Scene::SetDirectionalLight(DirectionalLight* dirLight)
 
 void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
+	shader.Bind();
 	m_DirLight->Bind(shader, globalTransform);
 	shader.setUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
 		node->BindLight(shader, globalTransform);
 	}
+	shader.Unbind();
 }
 
 void Scene::RenderDepthMap(Shader& shader) const
@@ -160,9 +168,33 @@ void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
 void Scene::BatchRender(Shader& shader, Camera& camera)
 {
 	BatchBindTextures(shader);
+	BindLight(shader, glm::mat4(1.0f));
 	Renderer render;
 	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
 	render.Draw(*m_VAO, *m_IBO, &camera, shader, glm::mat4(1.0f), &lightSpaceMatrix);
+	textureArray->Unbind();
+}
+
+void Scene::RayTracingRender(Shader& shader, Camera& camera)
+{
+	BatchBindTextures(shader);
+
+	shader.Bind();
+	shader.setUniformVec3f("cameraPosition", camera.GetPosition());
+    shader.setUniform1f("nearPlane", camera.GetNearClip());
+    shader.setUniform1i("screenWidth", WINDOW_WIDTH);
+    shader.setUniform1i("screenHeight", WINDOW_HEIGHT);
+    shader.setUniform1f("fov", camera.GetFov());
+    shader.setUniform1f("aspectRatio", camera.GetAspectRatio());
+	shader.setUniformMat4f("viewMatrix", camera.GetViewMatrix());
+    shader.setUniform1f("seed", glfwGetTime());
+	shader.Unbind();
+
+	BindLight(shader, glm::mat4(1.0f));
+
+	SimpleQuad quad;
+    quad.Render(shader);
+	textureArray->Unbind();
 }
 
 void Scene::Render(Shader& shader, Camera& camera)

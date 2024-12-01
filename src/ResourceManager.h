@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "Material.h"
 #include "Component.h"
+#include <opencv2/opencv.hpp>
 
 class ResourceManager {
 public:
@@ -16,6 +17,8 @@ public:
     void Unload(T* resource);                     // Ð¶ÔØ×ÊÔ´
 
     void SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height);
+    cv::Mat SaveFBOToMat(ColorFBO& colorFBO, int width, int height);
+    void SaveMatToPNG(cv::Mat& mat, const std::string& filename, int width, int height);
 };
 
 template<typename T>

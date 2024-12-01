@@ -28,8 +28,11 @@ public:
     void RenderDepthMap(Shader& shader) const;
     void RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader);
     void BatchRender(Shader& shader, Camera& camera);
+    void RayTracingRender(Shader& shader, Camera& camera);
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // É¾³ýÊµÌå
     void OnImGuiTree();
     inline DirectionalLight* GetDirectionalLight() const {return m_DirLight;}
+    inline std::vector<Vertex>* GetVertices() {return &m_Vertices;}
+    inline std::vector<unsigned int>* GetIndices() {return &m_Indices;}
 };

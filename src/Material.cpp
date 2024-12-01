@@ -25,7 +25,7 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	:m_Emission(glm::vec3(0.0f)), m_Diffuse(glm::vec3(0.8f)),
 	m_Specular(glm::vec3(0.1f)), m_Transmittance(glm::vec3(0.0f)),
 	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2),
-	m_Material({-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f})
+	m_Material({-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f})
 {
 	std::cout << "Load Texture " << filePath << std::endl;
 	if(m.emission) m_Emission = glm::vec3(m.emission[0], m.emission[1], m.emission[2]);

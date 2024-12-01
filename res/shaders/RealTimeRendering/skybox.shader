@@ -1,5 +1,5 @@
 #shader vertex
-#version 330 core
+#version 450 core
 layout (location = 0) in vec3 aPos;
 
 out vec3 TexCoords;
@@ -16,7 +16,7 @@ void main()
 }
 
 #shader fragment
-#version 330 core
+#version 450 core
 out vec4 FragColor;
 
 in vec3 TexCoords;
