@@ -175,6 +175,7 @@ void RealTimeRender(GLFWwindow* window) {
     sceneManager = SceneManager(scene);
     LoadModel(sceneManager);
     InitModel();
+    scene->ResetVAO();
 
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
@@ -268,34 +269,6 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-// 计算切线和副切线的函数
-static void CalculateTangentBitangent(Triangle& tri) {
-    glm::vec3 edge1 = tri.position[1] - tri.position[0];
-    glm::vec3 edge2 = tri.position[2] - tri.position[0];
-
-    glm::vec2 deltaUV1 = tri.texCoords[1] - tri.texCoords[0];
-    glm::vec2 deltaUV2 = tri.texCoords[2] - tri.texCoords[0];
-
-    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-    glm::vec3 tangent, bitangent;
-
-    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-    tangent = glm::normalize(tangent);
-
-    bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-    bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-    bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-    bitangent = glm::normalize(bitangent);
-
-    tri.tangent = glm::vec4(tangent, 0.0f);
-    tri.bitangent = glm::vec4(bitangent, 0.0f);
-}
-
-
-
 void RayTracing(Camera& camera, Scene* scene) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/RayTracing.shader");
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -310,37 +283,55 @@ void RayTracing(Camera& camera, Scene* scene) {
          Vertex v1 = vertices->at(idx1);
          Vertex v2 = vertices->at(idx2);
          Vertex v3 = vertices->at(idx3);
-         glm::vec3 normal = glm::normalize(v1.Normal + v2.Normal + v3.Normal);
          Triangle triangle;
          triangle.position[0] = glm::vec4(v1.Position, 0.0f);
          triangle.position[1] = glm::vec4(v2.Position, 0.0f);
          triangle.position[2] = glm::vec4(v3.Position, 0.0f);
-         triangle.normal = glm::vec4(normal, 0.0f);
+         triangle.normal[0] = glm::vec4(v1.Normal, 0.0f);
+         triangle.normal[1] = glm::vec4(v2.Normal, 0.0f);
+         triangle.normal[2] = glm::vec4(v3.Normal, 0.0f);
          triangle.texCoords[0] = glm::vec4(v1.TexCoords, 0.0f, 0.0f);
          triangle.texCoords[1] = glm::vec4(v2.TexCoords, 0.0f, 0.0f);
          triangle.texCoords[2] = glm::vec4(v3.TexCoords, 0.0f, 0.0f);
+         triangle.tangent[0] = glm::vec4(v1.Tangent, 0.0f);
+         triangle.tangent[1] = glm::vec4(v2.Tangent, 0.0f);
+         triangle.tangent[2] = glm::vec4(v3.Tangent, 0.0f);
+         triangle.bitangent[0] = glm::vec4(v1.Bitangent, 0.0f);
+         triangle.bitangent[1] = glm::vec4(v2.Bitangent, 0.0f);
+         triangle.bitangent[2] = glm::vec4(v3.Bitangent, 0.0f);
          triangle.material = v1.material;
-         CalculateTangentBitangent(triangle);
          triangles.push_back(triangle);
      }
      ShaderStorageBuffer* ssbo = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
      int numTriangles = triangles.size();
-     ssbo->Bind();
+     GLint64 maxSSBOSize = 0;
+     glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxSSBOSize);
+     std::cout << "Maximum SSBO size: " << maxSSBOSize << " bytes" << std::endl;
 
+     size_t ssboSize = triangles.size() * sizeof(Triangle);
+     std::cout << "Current SSBO size: " << ssboSize << " bytes" << std::endl;
+
+     if (ssboSize > maxSSBOSize) {
+         std::cerr << "Error: SSBO size exceeds the maximum allowed size." << std::endl;
+         // 采取措施，例如减少场景复杂度或分批处理
+         return;
+     }
      mainShader->Bind();
      mainShader->setUniform1i("numTriangles", numTriangles);
      mainShader->Unbind();
 
-     ssbo->Bind();
      std::vector<cv::Mat> matArray;
      for (int i = 0; i <= 4; i++) {
          std::cout << "Render Mat " << i << std::endl;
+         ssbo->Bind();
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+         std::cout << "Start" << std::endl;
          scene->RayTracingRender(*mainShader, camera);
+         std::cout << "End" << std::endl;
          colorFBO.Unbind();
-         ColorFBO postRenderFBO = PostRender(colorFBO, camera);
-         cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
+         //ColorFBO postRenderFBO = PostRender(colorFBO, camera);
+         cv::Mat mat = resourceManager.SaveFBOToMat(colorFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
          // 确保图像是4通道的
          if (mat.channels() == 1) {
              cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
@@ -356,7 +347,7 @@ void RayTracing(Camera& camera, Scene* scene) {
              continue;
          }
          matArray.push_back(mat);
-
+         ssbo->Unbind();
          std::cout << "Render Completed" << std::endl;
      }
      ssbo->Unbind();

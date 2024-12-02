@@ -146,11 +146,30 @@ cv::Mat ResourceManager::SaveFBOToMat(ColorFBO& colorFBO, int width, int height)
     // 绑定帧缓冲
     colorFBO.Bind();
 
+    // 检查 FBO 是否完整
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete: " << status << std::endl;
+        colorFBO.Unbind();
+        return cv::Mat(); // 返回空 Mat
+    }
+
     // 创建一个数组来存储像素数据
     std::vector<unsigned char> pixels(width * height * 4); // 假设是 RGBA 格式
 
+    // 设置像素对齐
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
     // 读取帧缓冲的颜色附件
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    GLCall(glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data()));
+
+    // 检查 OpenGL 错误
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error during glReadPixels: " << error << std::endl;
+        colorFBO.Unbind();
+        return cv::Mat(); // 返回空 Mat
+    }
 
     // 解除绑定
     colorFBO.Unbind();

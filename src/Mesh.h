@@ -19,10 +19,10 @@ struct Vertex {
 
 struct Triangle {
     glm::vec4 position[3];
-    glm::vec4 normal;
+    glm::vec4 normal[3];
     glm::vec4 texCoords[3];
-    glm::vec4 tangent;
-    glm::vec4 bitangent;
+    glm::vec4 tangent[3];
+    glm::vec4 bitangent[3];
     Material material;
 };
 

@@ -142,6 +142,7 @@ void PointLight::SetQuadratic(float quadratic)
 
 void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 {
+	shader.Bind();
 	glm::vec3 position = globalTransform * glm::vec4(m_LightPos, 1.0f);
 	std::string number = std::to_string(pointLightID[this]);
 	shader.setUniformVec3f("pointLights[" + number + "].lightPos", position);
@@ -151,6 +152,7 @@ void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 	shader.setUniform1f("pointLights[" + number + "].constant", m_Constant);
 	shader.setUniform1f("pointLights[" + number + "].linear", m_Linear);
 	shader.setUniform1f("pointLights[" + number + "].quadratic", m_Quadratic);
+	shader.Unbind();
 }
 
 void PointLight::Update(float deltaTime)

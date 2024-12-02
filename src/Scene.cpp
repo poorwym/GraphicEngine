@@ -14,7 +14,13 @@ static void BatchBindTextures(Shader& shader) {
 	shader.Unbind();
 }
 
-void Scene::UpdateVAO() {
+void Scene::UpdateVBO() {
+	m_VBO->Bind();
+	m_VBO->setData(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
+    m_VBO->Unbind();
+}
+void Scene::UpdateVertices()
+{
 	std::vector<std::vector<Vertex>*> batchVertices;
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
@@ -35,19 +41,26 @@ void Scene::UpdateVAO() {
 		std::vector<unsigned int> t_indices = *(batchIndices[i]);
 		vertices.insert(vertices.end(), t_vertices.begin(), t_vertices.end());
 		for (auto& index : t_indices) {
-            index += offset;
+			index += offset;
 			indices.push_back(index);
 		}
-        offset += t_vertices.size();
+		offset += t_vertices.size();
 		delete batchVertices[i];
-        delete batchIndices[i];
+		delete batchIndices[i];
 	}
+	m_Vertices.clear();
+	m_Indices.clear();
+	m_Vertices = vertices;
+	m_Indices = indices;
+}
+void Scene::ResetVAO()
+{
 	VertexBufferLayout layout;
 	layout.Push<float>(3); // Position: 3个浮点数
 	layout.Push<float>(3); // Normal: 3个浮点数
 	layout.Push<float>(2); // TexCoords: 2个浮点数
-    layout.Push<float>(3); // Tangent: 3个浮点数
-    layout.Push<float>(3); // Bitangent: 3个浮点数
+	layout.Push<float>(3); // Tangent: 3个浮点数
+	layout.Push<float>(3); // Bitangent: 3个浮点数
 	layout.Push<float>(1); //textureSlot
 	layout.Push<float>(1);
 	layout.Push<float>(1);
@@ -56,25 +69,18 @@ void Scene::UpdateVAO() {
 	layout.Push<float>(1);
 	layout.Push<float>(1);
 	layout.Push<float>(1);
-	m_Vertices.clear();
-	m_Indices.clear();
-	m_Vertices = vertices;
-    m_Indices = indices;
-
-	delete m_VAO;
-	delete m_VBO;
-    delete m_IBO;
-
+	UpdateVertices();
 	m_VAO = new VertexArray();
-	m_VBO = new VertexBuffer(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
-	m_VAO->AddBuffer(*m_VBO, layout);
-	m_IBO = new IndexBuffer(m_Indices.data(), m_Indices.size());
+	m_VBO = new VertexBuffer(nullptr, m_Vertices.size() * sizeof(Vertex));
+	UpdateVBO();
+    m_IBO = new IndexBuffer(m_Indices.data(), m_Indices.size());
 
-	m_VAO->Unbind();
-	m_IBO->Unbind();
+	m_VAO->Bind();
+    m_VAO->AddBuffer(*m_VBO, layout);
+    m_VAO->Unbind();
 }
 Scene::Scene()
-	:m_DirLight(nullptr)
+	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr)
 {
 }
 
@@ -116,6 +122,7 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
 	shader.Bind();
 	m_DirLight->Bind(shader, globalTransform);
+	shader.setUniform1i("numPointLights", pointLightID.size());
 	shader.setUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
@@ -132,7 +139,8 @@ void Scene::RenderDepthMap(Shader& shader) const
 
 void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
 {
-	UpdateVAO();
+	//UpdateVertices();
+	UpdateVBO();
 	depthShader->Bind();
 	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
 	depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);

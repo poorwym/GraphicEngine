@@ -14,10 +14,10 @@ struct Material {
 
 struct Triangle {
     vec4 position[3];
-    vec4 normal;
+    vec4 normal[3];
     vec4 texCoords[3];
-    vec4 tangent;
-    vec4 bitangent;
+    vec4 tangent[3];
+    vec4 bitangent[3];
     Material material;
 };
 
@@ -62,10 +62,10 @@ struct Material {
 
 struct Triangle {
     vec4 position[3];
-    vec4 normal;
+    vec4 normal[3];
     vec4 texCoords[3];
-    vec4 tangent;
-    vec4 bitangent;
+    vec4 tangent[3];
+    vec4 bitangent[3];
     Material material;
 };
 
@@ -112,7 +112,7 @@ uniform mat4 viewMatrix;    // 视图矩阵
 
 uniform float seed;
 
-#define MAX_DEPTH 2  // 最大递归深度
+#define MAX_DEPTH 1  // 最大递归深度
 const float PI = 3.14159265359;
 
 struct Ray {
@@ -132,7 +132,7 @@ vec3 GetTextureColor(int index, vec2 texCoords, int slot){
     else if(slot== 1)// normal
     {
         if(triangles[index].material.NormalMapIndex != -1 ) return texture(textures, vec3(texCoords, triangles[index].material.NormalMapIndex)).rgb;
-        return triangles[index].normal.xyz;
+        return vec3(0.0);
     }
     else if(slot== 5)// emission
     {
@@ -164,7 +164,7 @@ float GetTextureValue(int index, vec2 texCoords, int slot){
     }
     return 0.0;
 }
-vec3 TraceRay(Ray ray);
+vec4 TraceRay(Ray ray);
 vec3 CalculateAmbientColor(vec3 albedo, vec3 ambientLight, float AO);// 环境光
 vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 normal);// 漫反射光
 vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);// 镜面光
@@ -212,13 +212,14 @@ void main(){
     ray.dir = rayDir;
     
     // 光线追踪
-    vec3 finalColor = TraceRay(ray);
+    vec4 finalColor = TraceRay(ray);
     
-    FragColor = vec4(finalColor, 1.0);
+    FragColor = finalColor;
 }
 
-bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNormal, out vec2 hitTexCoord, int index) // 使用 Möller-Trumbore 算法
+bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNormal, out vec2 hitTexCoord, int index)
 {
+    // Möller-Trumbore 算法实现
     vec3 edge1 = (tri.position[1] - tri.position[0]).xyz;
     vec3 edge2 = (tri.position[2] - tri.position[0]).xyz;
     vec3 h = cross(ray.dir, edge2);
@@ -240,15 +241,34 @@ bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNorma
         // 计算插值的纹理坐标
         hitTexCoord = (1.0 - u - v) * tri.texCoords[0].xy + u * tri.texCoords[1].xy + v * tri.texCoords[2].xy;
 
+        // 插值法线、切线和双切线
+        vec3 n0 = tri.normal[0].xyz;
+        vec3 n1 = tri.normal[1].xyz;
+        vec3 n2 = tri.normal[2].xyz;
+        vec3 interpolatedNormal = normalize((1.0 - u - v) * n0 + u * n1 + v * n2);
+
+        vec3 t0 = tri.tangent[0].xyz;
+        vec3 t1 = tri.tangent[1].xyz;
+        vec3 t2 = tri.tangent[2].xyz;
+        vec3 interpolatedTangent = normalize((1.0 - u - v) * t0 + u * t1 + v * t2);
+
+        vec3 b0 = tri.bitangent[0].xyz;
+        vec3 b1 = tri.bitangent[1].xyz;
+        vec3 b2 = tri.bitangent[2].xyz;
+        vec3 interpolatedBitangent = normalize((1.0 - u - v) * b0 + u * b1 + v * b2);
+
         // 构建 TBN 矩阵
-        mat3 TBN = mat3(tri.tangent.xyz, tri.bitangent.xyz, tri.normal.xyz);
+        mat3 TBN = mat3(interpolatedTangent, interpolatedBitangent, interpolatedNormal);
 
         // 获取法线贴图中的法线
-        vec3 tangentNormal = GetTextureColor(index, hitTexCoord, NORMAL_MAP_INDEX);
-        // 将法线从 [0,1] 映射到 [-1,1]
-        tangentNormal = tangentNormal * 2.0 - 1.0;
-        // 计算世界空间的法线
-        hitNormal = normalize(TBN * tangentNormal);
+        if(triangles[index].material.NormalMapIndex != -1){
+            vec3 tangentNormal = GetTextureColor(index, hitTexCoord, NORMAL_MAP_INDEX);
+            tangentNormal = tangentNormal * 2.0 - 1.0; // 将法线从 [0,1] 映射到 [-1,1]
+            hitNormal = normalize(TBN * tangentNormal);
+        }
+        else{
+            hitNormal = interpolatedNormal;
+        }
         return true;
     }
     else
@@ -278,9 +298,9 @@ bool SceneIntersection(Ray ray, out int hitIndex, out float tMin, out vec3 hitNo
     }
     return hit;
 }
-vec3 TraceRay(Ray ray)
+vec4 TraceRay(Ray ray)
 {
-    vec3 radiance = vec3(0.0);
+    vec4 radiance = vec4(0.0);
     vec3 throughput = vec3(1.0);
     for (int depth = 0; depth < MAX_DEPTH; ++depth)
     {
@@ -299,13 +319,18 @@ vec3 TraceRay(Ray ray)
             float alpha = GetTextureValue(hitIndex, hitTexCoord, ALPHA_MAP_INDEX);
             // 计算交点
             vec3 hitPoint = ray.origin + ray.dir * t + normal * 0.0001;
+
+            if(alpha < 0.01){
+                ray.origin = hitPoint + ray.dir * 0.001;
+                continue;
+            }
             // 计算方向光
             vec3 viewDir = normalize(ray.dir);// 从光线起点到交点的向量
             vec3 ambientColor = CalculateAmbientColor(albedo, directionalLight.lightAmbient, AO);
             vec3 diffuseColor = CalculateDiffuseColor(albedo, directionalLight.lightDiffuse, directionalLight.lightDir, normal);
             vec3 specularColor = CalculateSpecularColor(albedo, directionalLight.lightSpecular, directionalLight.lightDir, normal, viewDir, roughness, metallic);
             float dirLightShadow = CalculateDirectionShadow(hitPoint, directionalLight.lightDir, normal);
-            radiance += throughput * (emission + ambientColor + (1 - dirLightShadow) * (diffuseColor + specularColor));
+            radiance += vec4( throughput * ( emission + ambientColor + (1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
 
             // 计算点光源
             for(int i = 0; i < numPointLights; ++i){
@@ -317,17 +342,17 @@ vec3 TraceRay(Ray ray)
                 float pointShadow = CalculatePointShadow(hitPoint, pointLights[i].lightPos, distance, normal);
                 pointDiffuse = pointDiffuse * attenuation;
                 pointSpecular = pointSpecular * attenuation;
-                radiance += (1 - pointShadow) * (pointDiffuse + pointSpecular);
+                radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
             
-            throughput *= 0.1;
+            throughput *= diffuseColor * specularColor;
 
             ray.origin += ray.dir * t + normal * 0.0001;
             ray.dir = reflect(ray.dir, normal);
         }
         else
         {
-            radiance += throughput * vec3(1.0);
+            radiance += vec4( throughput * vec3(1.0), 1.0f);
             break;
         }
     }

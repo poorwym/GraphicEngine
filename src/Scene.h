@@ -16,9 +16,12 @@ private:
     IndexBuffer* m_IBO;
     std::vector<Vertex> m_Vertices;
     std::vector<unsigned int> m_Indices;
-    void UpdateVAO();
+    void UpdateVBO();
+    void UpdateVertices();
+    
 public:
     Scene();
+    void ResetVAO();
     void load(const std::string& filePath);   // 加载场景
     void save(const std::string& filePath);   // 保存场景
     void Update(float deltaTime);             // 更新场景
