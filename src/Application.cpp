@@ -36,6 +36,7 @@
 #include "opencv2/opencv.hpp"
 #include "ShaderStorageBuffer.h"
 #include "Filter.h"
+#include "BVHTree.h"
 
 DirectionalLightController directionalLightController;
 
@@ -140,8 +141,7 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     textureArray = new TextureArray(1024, 1024, 256);
-    //load sun
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.0f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
@@ -302,33 +302,42 @@ void RayTracing(Camera& camera, Scene* scene) {
          triangle.material = v1.material;
          triangles.push_back(triangle);
      }
-     ShaderStorageBuffer* ssbo = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
+     ShaderStorageBuffer* trianglesSSBO = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
      int numTriangles = triangles.size();
+     BVHTree tree(triangles);
+     ShaderStorageBuffer* BVHTreeSSBO = new ShaderStorageBuffer(tree.nodes.data(), tree.nodes.size() * sizeof(BVHNode), 1);
+     ShaderStorageBuffer* triangleIndexSSBO = new ShaderStorageBuffer(tree.triangleIndices.data(), tree.triangleIndices.size() * sizeof(int), 2);
+
      GLint64 maxSSBOSize = 0;
-     glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxSSBOSize);
-     std::cout << "Maximum SSBO size: " << maxSSBOSize << " bytes" << std::endl;
+     //错误检查
+     {
+         glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxSSBOSize);
+         std::cout << "Maximum SSBO size: " << maxSSBOSize << " bytes" << std::endl;
 
-     size_t ssboSize = triangles.size() * sizeof(Triangle);
-     std::cout << "Current SSBO size: " << ssboSize << " bytes" << std::endl;
+         size_t ssboSize = triangles.size() * sizeof(Triangle);
+         std::cout << "Current SSBO size: " << ssboSize << " bytes" << std::endl;
 
-     if (ssboSize > maxSSBOSize) {
-         std::cerr << "Error: SSBO size exceeds the maximum allowed size." << std::endl;
-         // 采取措施，例如减少场景复杂度或分批处理
-         return;
+         if (ssboSize > maxSSBOSize) {
+             std::cerr << "Error: SSBO size exceeds the maximum allowed size." << std::endl;
+             // 采取措施，例如减少场景复杂度或分批处理
+             return;
+         }
      }
      mainShader->Bind();
      mainShader->setUniform1i("numTriangles", numTriangles);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
-     for (int i = 0; i <= 4; i++) {
+     for (int i = 0; i <= 10; i++) {
          std::cout << "Render Mat " << i << std::endl;
-         ssbo->Bind();
+         //Bind ssbo
+         trianglesSSBO->Bind();
+         BVHTreeSSBO->Bind();
+         triangleIndexSSBO->Bind();
+         //render
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         std::cout << "Start" << std::endl;
          scene->RayTracingRender(*mainShader, camera);
-         std::cout << "End" << std::endl;
          colorFBO.Unbind();
          //ColorFBO postRenderFBO = PostRender(colorFBO, camera);
          cv::Mat mat = resourceManager.SaveFBOToMat(colorFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -347,10 +356,12 @@ void RayTracing(Camera& camera, Scene* scene) {
              continue;
          }
          matArray.push_back(mat);
-         ssbo->Unbind();
+         trianglesSSBO->Unbind();
+         BVHTreeSSBO->Unbind();
+         triangleIndexSSBO->Unbind();
          std::cout << "Render Completed" << std::endl;
      }
-     ssbo->Unbind();
+     trianglesSSBO->Unbind();
 
      cv::Mat denoisedPicture;
      // 去噪处理：通过平均多个图像
@@ -421,7 +432,7 @@ void RayTracing(Camera& camera, Scene* scene) {
      std::cout << "Final image saved as final.png" << std::endl;
 
      // 释放资源
-     delete ssbo;
+     delete trianglesSSBO;
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;

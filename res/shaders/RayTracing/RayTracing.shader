@@ -69,9 +69,38 @@ struct Triangle {
     Material material;
 };
 
+struct AABB {
+    vec3 min;
+    float pad1;
+    vec3 max;
+    float pad2;
+};
+
+struct BVHNode {
+    AABB bounds;
+    int left;   // 左子节点索引，-1 表示叶子节点
+    int right;  // 右子节点索引，-1 表示叶子节点
+    int start;  // 叶子节点中的三角形起始索引
+    int count;  // 叶子节点中的三角形数量
+    float pad3; // 填充以对齐
+    float pad4;
+    float pad5;
+    float pad6;
+};
+
 layout(std430, binding = 0) buffer TriangleBuffer {
     Triangle triangles[];
 };
+
+
+layout(std430, binding = 1) buffer BVHTreeBuffer {
+    BVHNode nodes[];
+};
+
+layout(std430, binding = 2) buffer TriangleIndicesBuffer {
+    int triangleIndices[];
+};
+
 uniform int numTriangles;
 
 uniform sampler2DArray textures;
@@ -170,6 +199,7 @@ vec3 CalculateDiffuseColor(vec3 albedo, vec3 lightDiffuse, vec3 lightDir, vec3 n
 vec3 CalculateSpecularColor(vec3 albedo, vec3 lightSpecular, vec3 lightDir, vec3 normal, vec3 viewDir, float roughness, float metallic);// 镜面光
 float CalculateDirectionShadow(vec3 hitPoint, vec3 lightDir, vec3 normal);// 计算方向光阴影
 float CalculatePointShadow(vec3 hitPoint, vec3 lightDir, float distance, vec3 normal); //计算点光源阴影
+bool BVHIntersection(Ray ray, out int hitIndex, out float tMin, out vec3 hitNormal, out vec2 hitTexCoord);
 
 in VS_OUT {
     vec2 TexCoords;
@@ -308,7 +338,7 @@ vec4 TraceRay(Ray ray)
         float t;
         vec3 hitNormal;
         vec2 hitTexCoord;
-        if (SceneIntersection(ray, hitIndex, t, hitNormal, hitTexCoord))
+        if (BVHIntersection(ray, hitIndex, t, hitNormal, hitTexCoord))
         {
             vec3 albedo = GetTextureColor(hitIndex, hitTexCoord, ALBEDO_MAP_INDEX);
             vec3 normal = hitNormal;
@@ -345,14 +375,14 @@ vec4 TraceRay(Ray ray)
                 radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
             
-            throughput *= diffuseColor * specularColor;
+            throughput *= metallic;
 
             ray.origin += ray.dir * t + normal * 0.0001;
             ray.dir = reflect(ray.dir, normal);
         }
         else
         {
-            radiance += vec4( throughput * vec3(1.0), 1.0f);
+            radiance += vec4( throughput * vec3(0.0), 1.0f);
             break;
         }
     }
@@ -473,7 +503,7 @@ float CalculateDirectionShadow(vec3 hitPoint, vec3 lightDir, vec3 normal){
         vec2 t4;
 
         // 进行光线与场景的相交测试
-        shadow += SceneIntersection(shadowRay, t1, t2, t3, t4) ? 1.0 : 0.0;
+        shadow += BVHIntersection(shadowRay, t1, t2, t3, t4) ? 1.0 : 0.0;
     }
 
     // 计算平均阴影因子
@@ -523,7 +553,7 @@ float CalculatePointShadow(vec3 hitPoint, vec3 lightDir, float distance, vec3 no
         vec2 t4;
 
         // 进行光线与场景的相交测试
-        if(SceneIntersection(shadowRay, t1, t_distance, t3, t4)){
+        if(BVHIntersection(shadowRay, t1, t_distance, t3, t4)){
             if(t_distance < newDistance){
                 shadow += 1.0; // 遮挡
             }
@@ -534,4 +564,87 @@ float CalculatePointShadow(vec3 hitPoint, vec3 lightDir, float distance, vec3 no
     shadow /= float(PCF_SAMPLES);
 
     return shadow; // 返回 0.0（无遮挡）到 1.0（完全遮挡）的阴影因子
+}
+
+// AABB 与 Ray 的相交测试函数
+bool AABBIntersect(Ray ray, AABB aabb, out float tMin, out float tMax) {
+    // 初始化 tMin 和 tMax
+    tMin = 0.0;
+    tMax = 10000.0; // 根据场景需求调整最大值
+
+    // 对每个轴进行相交测试
+    for(int i = 0; i < 3; i++) {
+        float invD = 1.0 / ray.dir[i];
+        float t0 = (aabb.min[i] - ray.origin[i]) * invD;
+        float t1 = (aabb.max[i] - ray.origin[i]) * invD;
+
+        // 确保 t0 是较小的值
+        if(invD < 0.0){
+            float temp = t0;
+            t0 = t1;
+            t1 = temp;
+        }
+
+        // 更新 tMin 和 tMax
+        tMin = max(tMin, t0);
+        tMax = min(tMax, t1);
+
+        // 如果没有相交
+        if(tMax < tMin){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool BVHIntersection(Ray ray, out int hitIndex, out float tMin, out vec3 hitNormal, out vec2 hitTexCoord) {
+    tMin = 10000.0;
+    hitIndex = -1;
+    bool hit = false;
+
+    // 使用栈来遍历 BVH 树
+    int stack[64];
+    int stackPtr = 0;
+    stack[stackPtr++] = 0; // 假设根节点的索引为 0
+
+    while (stackPtr > 0) {
+        int nodeIdx = stack[--stackPtr];
+        BVHNode node = nodes[nodeIdx];
+
+        // 相交测试
+        float t0, t1;
+        if (!AABBIntersect(ray, node.bounds, t0, t1)) {
+            continue;
+        }
+
+        if (node.left == -1 && node.right == -1) { // 叶子节点
+            for (int i = node.start; i < node.start + node.count; ++i) {
+                int triIdx = triangleIndices[i];
+                Triangle tri = triangles[triIdx];
+                float t;
+                vec3 normal;
+                vec2 texCoord;
+                if (RayIntersectsTriangle(ray, tri, t, normal, texCoord, triIdx)) {
+                    if (t < tMin && t > 0.0001) {
+                        tMin = t;
+                        hitIndex = triIdx;
+                        hitNormal = normal;
+                        hitTexCoord = texCoord;
+                        hit = true;
+                    }
+                }
+            }
+        } else {
+            // 先遍历左子节点，再右子节点
+            if (node.left != -1) {
+                stack[stackPtr++] = node.left;
+            }
+            if (node.right != -1) {
+                stack[stackPtr++] = node.right;
+            }
+        }
+    }
+
+    return hit;
 }

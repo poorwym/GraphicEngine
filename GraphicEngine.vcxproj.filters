@@ -129,6 +129,9 @@
     <ClCompile Include="src\Filter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\BVHTree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\test\Test.h">
@@ -294,6 +297,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\Filter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BVHTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
