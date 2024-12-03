@@ -171,7 +171,7 @@ void RealTimeRender(GLFWwindow* window) {
     InitCamera(camera);
     cameraController = new CameraController(&camera, window);
 
-    Scene* scene = new Scene();
+    Scene* scene = new Scene(50);
     sceneManager = SceneManager(scene);
     LoadModel(sceneManager);
     InitModel();

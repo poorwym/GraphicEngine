@@ -5,6 +5,7 @@
 #include "SceneNode.h"
 #include "Camera.h"
 #include <map>
+#include "Quad.h"
 
 class Scene {
 private:
@@ -18,9 +19,10 @@ private:
     std::vector<unsigned int> m_Indices;
     void UpdateVBO();
     void UpdateVertices();
+    TileQuad m_TileQuad;
     
 public:
-    Scene();
+    Scene(int n);
     void ResetVAO();
     void load(const std::string& filePath);   // 加载场景
     void save(const std::string& filePath);   // 保存场景

@@ -293,6 +293,10 @@ bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNorma
         // 获取法线贴图中的法线
         if(triangles[index].material.NormalMapIndex != -1){
             vec3 tangentNormal = GetTextureColor(index, hitTexCoord, NORMAL_MAP_INDEX);
+            float alpha = GetTextureValue(index, hitTexCoord, ALPHA_MAP_INDEX);
+            if(alpha < 0.5){
+                return false;
+            }
             tangentNormal = tangentNormal * 2.0 - 1.0; // 将法线从 [0,1] 映射到 [-1,1]
             hitNormal = normalize(TBN * tangentNormal);
         }

@@ -79,8 +79,8 @@ void Scene::ResetVAO()
     m_VAO->AddBuffer(*m_VBO, layout);
     m_VAO->Unbind();
 }
-Scene::Scene()
-	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr)
+Scene::Scene(int n)
+	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n)
 {
 }
 
@@ -200,8 +200,7 @@ void Scene::RayTracingRender(Shader& shader, Camera& camera)
 
 	BindLight(shader, glm::mat4(1.0f));
 
-	SimpleQuad quad;
-    quad.Render(shader);
+    m_TileQuad.Render(shader);
 	textureArray->Unbind();
 }
 

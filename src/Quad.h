@@ -22,6 +22,7 @@ private:
 class SimpleQuad {
 public:
 	SimpleQuad();
+	SimpleQuad(const std::vector<float>& vertices);
 	~SimpleQuad();
 
 	void Render(Shader& shader);
@@ -29,4 +30,18 @@ public:
 private:
 	VertexArray* m_VAO;
 	VertexBuffer* m_VBO;
+};
+
+class TileQuad {
+private:
+	std::vector<std::vector<float>> m_Vertices;
+	std::vector<SimpleQuad*> m_Quads;
+
+	VertexArray* m_VAO;
+	VertexBuffer* m_VBO;
+public:
+	TileQuad(int n);
+	~TileQuad();
+
+	void Render(Shader& shader);
 };
