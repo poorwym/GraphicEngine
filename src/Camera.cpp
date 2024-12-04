@@ -10,7 +10,7 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f)),
     m_Fov(fov),m_AspectRatio(aspectRatio),
     m_NearClip(nearClip), m_FarClip(farClip),
-    m_FocusDepth(0.2f), m_FocusRange(1.0f), m_MaxBlur(0.02f)
+    m_FocusDepth(0.9f), m_FocusRange(0.1f), m_MaxBlur(0.02f)
 {
     m_ProjectionMatrix = glm::perspective(
         glm::radians(m_Fov),      // йс╫г (Field of View)

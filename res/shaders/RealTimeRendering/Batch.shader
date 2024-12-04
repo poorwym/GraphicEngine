@@ -124,6 +124,8 @@ float GetTextureValue(int slot, vec2 texCoords) {
     return texture(textures, vec3(texCoords, float(slot))).r;
 }
 
+uniform float focusDepth;
+uniform float focusRange;
 // Ö÷º¯Êý
 void main()
 {
@@ -174,6 +176,9 @@ void main()
         discard;
     }
     FragColor = vec4(finalColor, 1.0);
+    if( abs(gl_FragCoord.z - focusDepth) <= focusRange){
+        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
 }
 
 vec3 CalculateAmbientColor(vec3 ambient, vec3 lightAmbient, float AO){

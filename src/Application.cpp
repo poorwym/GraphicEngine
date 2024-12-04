@@ -144,9 +144,9 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     textureArray = new TextureArray(1024, 1024, 256);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
@@ -158,7 +158,6 @@ static void InitModel() {
 static void InitCamera(Camera& camera) {
     camera.SetPosition(glm::vec3(25.293f, 2.000f, 4.469f));
     camera.SetTarget(glm::vec3(20.102, 1.561, 3.356));
-    camera.SetFocus(0.2f, 1.0f, 0.05);
 }
 void RealTimeRender(GLFWwindow* window) {
     // 定义视口宽高
@@ -234,6 +233,8 @@ void RealTimeRender(GLFWwindow* window) {
         cameraController->Update(deltaTime);
         mainShader->Bind();
         mainShader->setUniform1i("numPointLights", pointLightID.size());
+        mainShader->setUniform1f("focusDepth", camera.GetFocusDepth());
+        mainShader->setUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
 
         ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -495,7 +496,7 @@ static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& ca
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RayTracing/FOD.shader");
     finalFBO.Bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     colorFBO.BindTexture(0);

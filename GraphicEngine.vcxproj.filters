@@ -322,5 +322,6 @@
     <None Include="Dependencies\GLEW\doc\log.html" />
     <None Include="Dependencies\GLEW\doc\wglew.html" />
     <None Include="Debug\glew32.dll" />
+    <None Include="res\shaders\RayTracing\FOD.shader" />
   </ItemGroup>
 </Project>
