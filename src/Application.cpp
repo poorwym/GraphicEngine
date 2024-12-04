@@ -48,7 +48,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 SceneManager sceneManager(nullptr);
 
-void RayTracing(Camera& camera, Scene* scene);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -141,7 +141,9 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     textureArray = new TextureArray(1024, 1024, 256);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
@@ -177,6 +179,7 @@ void RealTimeRender(GLFWwindow* window) {
     InitModel();
     scene->ResetVAO();
 
+    int sampleRate = 10;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.shader");
@@ -252,11 +255,11 @@ void RealTimeRender(GLFWwindow* window) {
         RenderFBOtoScreen(t);
         //update
         scene->Update(deltaTime);
-        
 
         ImGui::Begin("RayTracing");
+        ImGui::SliderInt("Sample Rate", &sampleRate, 5, 50);
         if (ImGui::Button("Render")) {
-            RayTracing(camera, scene);
+            RayTracing(camera, scene, sampleRate);
         }
         ImGui::End();
 
@@ -269,8 +272,8 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene) {
-     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/RayTracing.shader");
+void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.shader");
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
      std::vector<Triangle> triangles;
      int size = scene->GetIndices()->size();
@@ -328,7 +331,7 @@ void RayTracing(Camera& camera, Scene* scene) {
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
-     for (int i = 0; i <= 10; i++) {
+     for (int i = 0; i <= sampleRate; i++) {
          std::cout << "Render Mat " << i << std::endl;
          //Bind ssbo
          trianglesSSBO->Bind();

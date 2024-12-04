@@ -6,7 +6,6 @@
 #include "Texture.h"
 #include"TinyOBJLoader/tiny_obj_loader.h"
 
-
 struct Material {
     float AlbedoMapIndex; //0
     float NormalMapIndex; //1
@@ -15,21 +14,31 @@ struct Material {
     float AOMapIndex; //4
     float EmissionMapIndex; //5
     float AlphaMapIndex; //6
-    float padding;
+    float HeightMapIndex; //7
+    //Ka
+    glm::vec4 Ambient;
+    //Kd
+    glm::vec4 Diffuse;
+    //Ks
+    glm::vec4 Specular;
+    //Ke
+    glm::vec4 Emission;
+    //d
+    float Dissolve;
+    //illum
+    float Illum;
+    //Ni
+    float OpticalDensity;
+    //Ns
+    float SpecularExponent;
+    float padding1;
+    float padding2;
+    float padding3;
+    float padding4;
 };
 
 class PBRMaterial{
 private:
-    glm::vec3   m_Ambient;
-    glm::vec3   m_Diffuse;
-    glm::vec3   m_Specular;
-    glm::vec3   m_Transmittance;
-    glm::vec3   m_Emission;
-    float       m_Shininess;
-    float       m_Ior;
-    float       m_d;
-    int         m_Illum;
-
     Material m_Material; 
 public:
     PBRMaterial(const std::string& filePath, const tinyobj::material_t& m);

@@ -69,6 +69,8 @@ void Scene::ResetVAO()
 	layout.Push<float>(1);
 	layout.Push<float>(1);
 	layout.Push<float>(1);
+
+	layout.AddStride(24 * sizeof(float));
 	UpdateVertices();
 	m_VAO = new VertexArray();
 	m_VBO = new VertexBuffer(nullptr, m_Vertices.size() * sizeof(Vertex));

@@ -22,21 +22,42 @@ static glm::vec3 ConvertToVec3(const float* v)
 }
 
 PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t& m)
-	:m_Emission(glm::vec3(0.0f)), m_Diffuse(glm::vec3(0.8f)),
-	m_Specular(glm::vec3(0.1f)), m_Transmittance(glm::vec3(0.0f)),
-	m_Shininess(16.0f), m_Ior(1.5f), m_Illum(2),
-	m_Material({-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f})
+	:m_Material({
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+	    -1.0f,
+		// Material properties
+		glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), // Default ambient color (Ka)
+		glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), // Default diffuse color (Kd)
+		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), // Default specular color (Ks)
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // Default emission color (Ke)
+		1.0f,                                  // Default transparency (d)
+		2.0f,                                     // Default illumination model
+		1.0f,                            // Default optical density (Ni)
+		32.0f,                        // Default shininess (Ns)
+		
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f
+	})
 {
 	std::cout << "Load Texture " << filePath << std::endl;
-	if(m.emission) m_Emission = glm::vec3(m.emission[0], m.emission[1], m.emission[2]);
-	if (m.diffuse) m_Diffuse = glm::vec3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
-	if (m.specular) m_Specular = glm::vec3(m.specular[0], m.specular[1], m.specular[2]);
-	if(m.illum) m_Illum = m.illum;
-	m_Shininess = m.illum == 5 ? m.shininess : 16.0f;
-	if(m.ior) m_Ior = m.ior;
-	if(m.ambient) m_Ambient = glm::vec3(m.ambient[0], m.ambient[1], m.ambient[2]);
-	if(m.transmittance) m_Transmittance = glm::vec3(m.transmittance[0], m.transmittance[1], m.transmittance[2]);
-	if(m.dissolve) m_d = m.dissolve;
+	if (m.ambient) m_Material.Ambient = glm::vec4(m.ambient[0], m.ambient[1], m.ambient[2], 0.0f);
+	if (m.diffuse) m_Material.Diffuse = glm::vec4(m.diffuse[0], m.diffuse[1], m.diffuse[2], 0.0f);
+	if (m.specular) m_Material.Specular = glm::vec4(m.specular[0], m.specular[1], m.specular[2], 0.0f);
+	if (m.illum) m_Material.Illum = m.illum;
+	if (m.dissolve) m_Material.Dissolve = m.dissolve;
+	if (m.emission) m_Material.Emission = glm::vec4(m.emission[0], m.emission[1], m.emission[2], 0.0f);
+	if (m.shininess) m_Material.SpecularExponent = m.shininess;
+	if (m.ior) m_Material.OpticalDensity = m.ior;
+
+
 
 	if (m.diffuse_texname.size() > 0){//1
         std::string Path = filePath + m.diffuse_texname;
@@ -61,10 +82,6 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	if (m.normal_texname.size()) {//7
 		std::string Path = filePath + m.normal_texname;
         m_Material.NormalMapIndex = sceneManager.AddTexture(Path.c_str());
-	}
-	if (m.specular_highlight_texname.size()) {//8
-		//m_SpecularExponentTextureMap = new Texture(filePath+m.specular_highlight_texname.c_str());
-		std::cout << filePath + m.specular_highlight_texname.c_str() << std::endl;
 	}
 	if (m.alpha_texname.size()) { //15
 		std::string Path = filePath + m.alpha_texname;
