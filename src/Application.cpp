@@ -52,6 +52,9 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
+static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& camera);
+
+
 static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -274,6 +277,19 @@ void RealTimeRender(GLFWwindow* window) {
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.shader");
+     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
+
+     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+     depthShader->Bind();
+     depthMapFBO.Bind();
+     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+     depthShader->setUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
+     scene->RenderDepthMap(*depthShader);
+     depthMapFBO.Unbind();
+     depthShader->Unbind();
+     glDepthMask(GL_TRUE);
+
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
      std::vector<Triangle> triangles;
      int size = scene->GetIndices()->size();
@@ -327,6 +343,8 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          }
      }
      mainShader->Bind();
+     depthMapFBO.BindTexture(0);
+     mainShader->setUniform1i("depthMap", 0);
      mainShader->setUniform1i("numTriangles", numTriangles);
      mainShader->Unbind();
 
@@ -342,8 +360,8 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
          scene->RayTracingRender(*mainShader, camera);
          colorFBO.Unbind();
-         //ColorFBO postRenderFBO = PostRender(colorFBO, camera);
-         cv::Mat mat = resourceManager.SaveFBOToMat(colorFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
+         ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
+         cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
          // 确保图像是4通道的
          if (mat.channels() == 1) {
              cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
@@ -364,7 +382,6 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          triangleIndexSSBO->Unbind();
          std::cout << "Render Completed" << std::endl;
      }
-     trianglesSSBO->Unbind();
 
      cv::Mat denoisedPicture;
      // 去噪处理：通过平均多个图像
@@ -451,6 +468,7 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     delete screenShader;
 }
 
+
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -468,6 +486,28 @@ static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
             FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
             screenQuad.Render(*FODshader);
         FODshader->Unbind();
+    finalFBO.Unbind();
+    delete FODshader;
+    return finalFBO;
+}
+
+static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& camera) {
+    static Quad screenQuad;
+    ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.shader");
+    finalFBO.Bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    colorFBO.BindTexture(0);
+    depthFBO.BindTexture(1);
+    FODshader->Bind();
+    FODshader->setUniform1i("screenTexture", 0);
+    FODshader->setUniform1i("depthTexture", 1);
+    FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
+    FODshader->setUniform1f("focusRange", camera.GetFocusRange());
+    FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
+    screenQuad.Render(*FODshader);
+    FODshader->Unbind();
     finalFBO.Unbind();
     delete FODshader;
     return finalFBO;

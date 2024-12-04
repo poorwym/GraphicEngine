@@ -87,14 +87,8 @@ void main(){
     // 光线追踪
     vec4 finalColor = TraceRay(ray, vec3(1.0));
     FragColor = finalColor;
-    /*
-    float t = 0.0;
-    int t_hitIndex;
-    vec3 t_hitNormal;
-    vec2 t_hitTexCoord;
-    bool t_bool = BVHIntersection(ray, t_hitIndex, t, t_hitNormal, t_hitTexCoord);
-    gl_FragDepth = t / farPlane;
-    */
+
+    //gl_FragDepth = texture(depthMap, uv).r;
 }
 
 

@@ -13,3 +13,5 @@ uniform float fov;          // 视角
 uniform float aspectRatio;  // 屏幕宽高比
 uniform mat4 viewMatrix;    // 视图矩阵
 uniform float seed; // 随机种子
+
+uniform sampler2D depthMap;
