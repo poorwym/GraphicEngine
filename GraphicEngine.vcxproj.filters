@@ -15,15 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\test\Test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test\TestClearColor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test\TestTexture2D.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\vendor\imgui\imgui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -132,17 +123,17 @@
     <ClCompile Include="src\BVHTree.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\TextureManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriangleSubdivider.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ComputeShader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\test\Test.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\test\TestClearColor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\test\TestTexture2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -302,6 +293,15 @@
     <ClInclude Include="src\BVHTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\TextureManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TriangleSubdivider.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ComputeShader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="document\advice.md" />
@@ -323,5 +323,7 @@
     <None Include="Dependencies\GLEW\doc\wglew.html" />
     <None Include="Debug\glew32.dll" />
     <None Include="res\shaders\RayTracing\FOD.shader" />
+    <None Include="res\shaders\ComputeShaders\ModelTransform.shader" />
+    <None Include="res\shaders\RealTimeRendering\layout.shader" />
   </ItemGroup>
 </Project>

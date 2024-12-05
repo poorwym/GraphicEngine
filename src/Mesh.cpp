@@ -8,67 +8,90 @@ static void scale(std::vector<Vertex>& vertices, float scaleRate) {
         vertex.Position.z *= scaleRate;
     }
 }
+// 重写后的 CalcTangent 函数
 static void CalcTangent(std::vector<Vertex>& vertices) {
-    // 首先初始化切线和双切线为零
-    for (Vertex& vertex : vertices) {
-        vertex.Tangent = glm::vec3(0.0f);
-        vertex.Bitangent = glm::vec3(0.0f);
+    if (vertices.empty()) {
+        std::cerr << "CalcTangent: Vertex list is empty." << std::endl;
+        return;
     }
 
-    // 假设顶点按三角形列表排列，每三个顶点组成一个三角形
+    // 初始化切线和双切线为零
+    for (Vertex& vertex : vertices) {
+        vertex.Tangent = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+        vertex.Bitangent = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    // 确保顶点数量是 3 的倍数
+    if (vertices.size() % 3 != 0) {
+        std::cerr << "CalcTangent: Vertex count is not a multiple of 3." << std::endl;
+        return;
+    }
+
     for (size_t i = 0; i < vertices.size(); i += 3) {
-        Vertex& v0 = vertices[i + 0];
+        Vertex& v0 = vertices[i];
         Vertex& v1 = vertices[i + 1];
         Vertex& v2 = vertices[i + 2];
 
+        // 提取 Position 和 TexCoords
+        glm::vec3 pos1 = glm::vec3(v0.Position);
+        glm::vec3 pos2 = glm::vec3(v1.Position);
+        glm::vec3 pos3 = glm::vec3(v2.Position);
+
+        glm::vec2 uv1 = glm::vec2(v0.TexCoords);
+        glm::vec2 uv2 = glm::vec2(v1.TexCoords);
+        glm::vec2 uv3 = glm::vec2(v2.TexCoords);
+
         // 计算边缘向量
-        glm::vec3 edge1 = v1.Position - v0.Position;
-        glm::vec3 edge2 = v2.Position - v0.Position;
+        glm::vec3 edge1 = pos2 - pos1;
+        glm::vec3 edge2 = pos3 - pos1;
 
         // 计算 UV 差值
-        glm::vec2 deltaUV1 = v1.TexCoords - v0.TexCoords;
-        glm::vec2 deltaUV2 = v2.TexCoords - v0.TexCoords;
+        glm::vec2 deltaUV1 = uv2 - uv1;
+        glm::vec2 deltaUV2 = uv3 - uv1;
 
         float denominator = deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y;
+
+        // 检查分母是否接近于零，避免除以零
+        if (abs(denominator - 0.0f) <= 1e-6f) {
+            // 分母接近于零，无法计算切线和双切线
+            continue;
+        }
+
         float f = 1.0f / denominator;
 
-        // 检查分母是否为零，避免除以零
-        if (std::isfinite(f)) {
-            glm::vec3 tangent;
-            tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-            tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-            tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        // 计算切线和双切线
+        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
 
-            glm::vec3 bitangent;
-            bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-            bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-            bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        // 累加切线和双切线到每个顶点
+        v0.Tangent += glm::vec4(tangent, 0.0f);
+        v1.Tangent += glm::vec4(tangent, 0.0f);
+        v2.Tangent += glm::vec4(tangent, 0.0f);
 
-            // 累加切线和双切线
-            v0.Tangent += tangent;
-            v1.Tangent += tangent;
-            v2.Tangent += tangent;
-
-            v0.Bitangent += bitangent;
-            v1.Bitangent += bitangent;
-            v2.Bitangent += bitangent;
-        }
+        v0.Bitangent += glm::vec4(bitangent, 0.0f);
+        v1.Bitangent += glm::vec4(bitangent, 0.0f);
+        v2.Bitangent += glm::vec4(bitangent, 0.0f);
     }
-    // 对切线和双切线进行标准化
+
+    // 对切线和双切线进行标准化，并计算手性
     for (Vertex& vertex : vertices) {
-        vertex.Tangent = glm::normalize(vertex.Tangent);
-        vertex.Bitangent = glm::normalize(vertex.Bitangent);
+        glm::vec3 tangent = glm::normalize(glm::vec3(vertex.Tangent));
+        glm::vec3 bitangent = glm::normalize(glm::vec3(vertex.Bitangent));
+
+        // 计算手性
+        float handedness = (glm::dot(glm::cross(glm::vec3(vertex.Normal), tangent), bitangent) < 0.0f) ? -1.0f : 1.0f;
+
+        // 将切线标准化并设置手性到 w 分量
+        vertex.Tangent = glm::vec4(tangent, handedness);
+
+        // 将双切线标准化（手性已存储在切线的 w 分量）
+        vertex.Bitangent = glm::vec4(bitangent, 0.0f);
     }
 }
+
 static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
     for (Vertex& vertex : vertices) {
-        vertex.material.AlbedoMapIndex = static_cast<float>(material -> GetAlbedoMapSlot()); //0
-        vertex.material.NormalMapIndex = static_cast<float>(material -> GetNormalMapSlot()); //1
-        vertex.material.MetallicMapIndex = static_cast<float>(material -> GetMetallicMapSlot()); //2
-        vertex.material.RoughnessMapIndex = static_cast<float>(material -> GetRoughnessMapSlot()); //3
-        vertex.material.AOMapIndex = static_cast<float>(material -> GetAOMapSlot()); //4
-        vertex.material.EmissionMapIndex = static_cast<float>(material->GetEmissionMapSlot()); //5
-        vertex.material.AlphaMapIndex = static_cast<float>(material -> GetAlphaMapSlot()); //6
+        vertex.material = material->GetMaterial();
     }
 }
 static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
@@ -77,16 +100,16 @@ static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned
         Vertex& v1 = vertices[indices[i + 1]];
         Vertex& v2 = vertices[indices[i + 2]];
 
-        glm::vec3 edge1 = v1.Position - v0.Position;
-        glm::vec3 edge2 = v2.Position - v0.Position;
+        glm::vec3 edge1 = glm::vec3(v1.Position - v0.Position);
+        glm::vec3 edge2 = glm::vec3(v2.Position - v0.Position);
 
         glm::vec3 normal = glm::cross(edge1, edge2);
         normal = glm::normalize(normal);
 
-        v0.Normal += normal;
+        v0.Normal += glm::vec4(normal, 0.0f);
     }
     for (Vertex& vertex : vertices) {
-        vertex.Normal = glm::normalize(vertex.Normal);
+        vertex.Normal = glm::vec4(glm::normalize(glm::vec3(vertex.Normal)), 1.0f);
     }
 }
 

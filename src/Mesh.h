@@ -9,11 +9,11 @@
 
 // 顶点结构体，包含位置信息、法线、UV 等
 struct Vertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-    glm::vec3 Tangent;
-    glm::vec3 Bitangent;
+    glm::vec4 Position;
+    glm::vec4 Normal;
+    glm::vec4 TexCoords;
+    glm::vec4 Tangent;
+    glm::vec4 Bitangent;
     Material material;
 };
 

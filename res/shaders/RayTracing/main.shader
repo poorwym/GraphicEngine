@@ -42,6 +42,7 @@ float rand(vec2 seed){
 #include "Shadow.shader"
 #include "TraceRay.shader"
 #include "material.shader"
+#include "BRDF.shader"
 
 in VS_OUT {
     vec2 TexCoords;

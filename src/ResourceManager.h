@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "Component.h"
 #include <opencv2/opencv.hpp>
+#include "ComputeShader.h"
 
 class ResourceManager {
 public:
@@ -31,3 +32,6 @@ Shader* ResourceManager::Load<Shader>(const std::string& filePath);
 
 template<>
 Texture* ResourceManager::Load<Texture>(const std::string& filePath);
+
+template<>
+ComputeShader* ResourceManager::Load<ComputeShader>(const std::string& filePath);

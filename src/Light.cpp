@@ -38,10 +38,10 @@ void Light::SetLightSpecular(glm::vec3 lightSpecular)
 }
 void DirectionalLight::Bind(Shader& shader, glm::mat4 globalTransform)
 {
-	shader.setUniformVec3f("directionalLight.lightDir", m_LightDir);
-	shader.setUniformVec3f("directionalLight.lightAmbient", m_LightAmbient);
-	shader.setUniformVec3f("directionalLight.lightDiffuse", m_LightDiffuse);
-	shader.setUniformVec3f("directionalLight.lightSpecular", m_LightSpecular);
+	shader.SetUniformVec3f("directionalLight.lightDir", m_LightDir);
+	shader.SetUniformVec3f("directionalLight.lightAmbient", m_LightAmbient);
+	shader.SetUniformVec3f("directionalLight.lightDiffuse", m_LightDiffuse);
+	shader.SetUniformVec3f("directionalLight.lightSpecular", m_LightSpecular);
 }
 
 void DirectionalLight::Update(float deltaTime)
@@ -145,13 +145,13 @@ void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 	shader.Bind();
 	glm::vec3 position = globalTransform * glm::vec4(m_LightPos, 1.0f);
 	std::string number = std::to_string(pointLightID[this]);
-	shader.setUniformVec3f("pointLights[" + number + "].lightPos", position);
-	shader.setUniformVec3f("pointLights[" + number + "].lightAmbient", m_LightAmbient);
-	shader.setUniformVec3f("pointLights[" + number + "].lightDiffuse", m_LightDiffuse);
-	shader.setUniformVec3f("pointLights[" + number + "].lightSpecular", m_LightSpecular);
-	shader.setUniform1f("pointLights[" + number + "].constant", m_Constant);
-	shader.setUniform1f("pointLights[" + number + "].linear", m_Linear);
-	shader.setUniform1f("pointLights[" + number + "].quadratic", m_Quadratic);
+	shader.SetUniformVec3f("pointLights[" + number + "].lightPos", position);
+	shader.SetUniformVec3f("pointLights[" + number + "].lightAmbient", m_LightAmbient);
+	shader.SetUniformVec3f("pointLights[" + number + "].lightDiffuse", m_LightDiffuse);
+	shader.SetUniformVec3f("pointLights[" + number + "].lightSpecular", m_LightSpecular);
+	shader.SetUniform1f("pointLights[" + number + "].constant", m_Constant);
+	shader.SetUniform1f("pointLights[" + number + "].linear", m_Linear);
+	shader.SetUniform1f("pointLights[" + number + "].quadratic", m_Quadratic);
 	shader.Unbind();
 }
 

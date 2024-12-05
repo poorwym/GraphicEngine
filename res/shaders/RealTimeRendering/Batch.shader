@@ -1,19 +1,7 @@
 #shader vertex
 #version 450 core
 
-layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec3 a_Normal;
-layout (location = 2) in vec2 a_TexCoords;
-layout (location = 3) in vec3 a_Tangent;
-layout (location = 4) in vec3 a_Bitangent;
-layout (location = 5) in float a_Slot0;
-layout (location = 6) in float a_Slot1;
-layout (location = 7) in float a_Slot2;
-layout (location = 8) in float a_Slot3;
-layout (location = 9) in float a_Slot4;
-layout (location = 10) in float a_Slot5;
-layout (location = 11) in float a_Slot6;
-layout (location = 12) in float a_Slot7;
+#include "layout.shader"
 
 uniform mat4 u_MVP;
 uniform mat4 u_Model;
@@ -32,13 +20,13 @@ uniform mat4 lightSpaceMatrix;
 
 void main()
 {
-    gl_Position = u_MVP * vec4(a_Position, 1.0);
-    vs_out.FragPos = vec3(u_Model * vec4(a_Position, 1.0)); // 世界空间位置
-    vs_out.Normal = a_Normal; //世界空间法线向量
+    gl_Position = u_MVP * inverse(u_Model) * a_Position;
+    vs_out.FragPos = vec3(a_Position); // 世界空间位置
+    vs_out.Normal = a_Normal.xyz; //世界空间法线向量
     FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
-    vs_out.TexCoords = a_TexCoords;
-    vs_out.Tangent = a_Tangent;
-    vs_out.Bitangent = a_Bitangent;
+    vs_out.TexCoords = a_TexCoords.xy;
+    vs_out.Tangent = a_Tangent.xyz;
+    vs_out.Bitangent = a_Bitangent.xyz;
     vs_out.Slots[0] = int(a_Slot0);
     vs_out.Slots[1] = int(a_Slot1);
     vs_out.Slots[2] = int(a_Slot2);
@@ -47,9 +35,9 @@ void main()
     vs_out.Slots[5] = int(a_Slot5);
     vs_out.Slots[6] = int(a_Slot6);
 
-    vec3 T = normalize(mat3(u_Model) * a_Tangent);
-    vec3 B = normalize(mat3(u_Model) * a_Bitangent);
-    vec3 N = normalize(mat3(u_Model) * a_Normal);
+    vec3 T = normalize(vec3(a_Tangent));
+    vec3 B = normalize(vec3(a_Bitangent));
+    vec3 N = normalize(vec3(a_Normal));
 
     // 构建 TBN 矩阵
     vs_out.TBN = mat3(T, B, N);

@@ -66,19 +66,23 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
                 vertex.Position = {
                     attrib.vertices[3 * idx.vertex_index + 0],
                     attrib.vertices[3 * idx.vertex_index + 1],
-                    attrib.vertices[3 * idx.vertex_index + 2]
+                    attrib.vertices[3 * idx.vertex_index + 2],
+                    1.0f
                 };
                 if (idx.normal_index >= 0) {
                     vertex.Normal = {
                         attrib.normals[3 * idx.normal_index + 0],
                         attrib.normals[3 * idx.normal_index + 1],
-                        attrib.normals[3 * idx.normal_index + 2]
+                        attrib.normals[3 * idx.normal_index + 2],
+                        1.0f
                     };
                 }
                 if (idx.texcoord_index >= 0) {
                     vertex.TexCoords = {
                         attrib.texcoords[2 * idx.texcoord_index + 0],
-                        attrib.texcoords[2 * idx.texcoord_index + 1]
+                        attrib.texcoords[2 * idx.texcoord_index + 1],
+                        0.0f,
+                        0.0f
                     };
                 }
 
@@ -257,4 +261,11 @@ Texture* ResourceManager::Load<Texture>(const std::string& filePath)
 {
     Texture* texture = new Texture(filePath);
     return texture;
+}
+
+template<>
+ComputeShader* ResourceManager::Load<ComputeShader>(const std::string& filePath)
+{
+    ComputeShader* computeShader = new ComputeShader(filePath);
+    return computeShader;
 }

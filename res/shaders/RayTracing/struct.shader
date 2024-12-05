@@ -24,7 +24,7 @@ struct Material {
     float OpticalDensity;
     //Ns
     float SpecularExponent;
-    float padding1;
+    float BumpMutiplier;
     float padding2;
     float padding3;
     float padding4;

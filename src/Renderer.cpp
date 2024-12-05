@@ -36,23 +36,23 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* 
         glm::mat4 view = camera->GetViewMatrix();
         glm::mat4 mvp = proj * view * model;
 
-        shader.setUniformVec3f("viewPos", camera->GetPosition());
-        shader.setUniformMat4f("u_View", view);
-        shader.setUniformMat4f("u_MVP", mvp);
+        shader.SetUniformVec3f("viewPos", camera->GetPosition());
+        shader.SetUniformMat4f("u_View", view);
+        shader.SetUniformMat4f("u_MVP", mvp);
     }
     else
     {
         // 如果没有相机，只设置模型矩阵
-        shader.setUniformMat4f("u_MVP", model);
+        shader.SetUniformMat4f("u_MVP", model);
     }
 
     // 始终设置模型矩阵
-    shader.setUniformMat4f("u_Model", model);
+    shader.SetUniformMat4f("u_Model", model);
 
     // 如果有光空间矩阵，设置它
     if (lightSpaceMatrix)
     {
-        shader.setUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
+        shader.SetUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
     }
 
     // 绘制图元

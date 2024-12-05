@@ -104,6 +104,12 @@ bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNorma
         // 计算插值的纹理坐标
         hitTexCoord = (1.0 - u - v) * tri.texCoords[0].xy + u * tri.texCoords[1].xy + v * tri.texCoords[2].xy;
 
+        // **在此处获取并检查 alpha 值，无论是否有法线贴图**
+        float alpha = GetAlpha(index, hitTexCoord);
+        if(alpha < 0.5){
+            return false;
+        }
+
         // 插值法线、切线和双切线
         vec3 n0 = tri.normal[0].xyz;
         vec3 n1 = tri.normal[1].xyz;
@@ -123,19 +129,20 @@ bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNorma
         // 构建 TBN 矩阵
         mat3 TBN = mat3(interpolatedTangent, interpolatedBitangent, interpolatedNormal);
 
-        // 获取法线贴图中的法线
+        vec3 combinedNormalTS = interpolatedNormal;
+
+        // 从法线贴图中获取法线并结合高度贴图的效果
         if(triangles[index].material.NormalMapIndex != -1){
-            vec3 tangentNormal = GetTextureColor(index, hitTexCoord, NORMAL_MAP_INDEX);
-            float alpha = GetTextureValue(index, hitTexCoord, ALPHA_MAP_INDEX);
-            if(alpha < 0.5){
-                return false;
-            }
-            tangentNormal = tangentNormal * 2.0 - 1.0; // 将法线从 [0,1] 映射到 [-1,1]
-            hitNormal = normalize(TBN * tangentNormal);
+            vec3 normalMapNormalTS = GetTextureColor(index, hitTexCoord, NORMAL_MAP_INDEX);
+            normalMapNormalTS = normalMapNormalTS * 2.0 - 1.0; // 将法线从 [0,1] 映射到 [-1,1]
+
+            // 将法线贴图的法线与高度贴图的法线结合
+            combinedNormalTS = normalize(combinedNormalTS * normalMapNormalTS);
         }
-        else{
-            hitNormal = interpolatedNormal;
-        }
+
+        // 将综合的扰动法线转换回世界空间
+        hitNormal = normalize(TBN * combinedNormalTS);
+
         return true;
     }
     else

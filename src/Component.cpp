@@ -1,4 +1,8 @@
 #include "Component.h"
+#include "ComputeShader.h"
+#include "ShaderStorageBuffer.h"
+#include <iostream>
+
 
 Component::Component()
 {
@@ -8,6 +12,7 @@ Component::Component()
 
 
 MeshComponent::MeshComponent()
+    :offset(0),m_NumVertices(0)
 {
 	SetType();
 }
@@ -22,6 +27,13 @@ MeshComponent::~MeshComponent()
 void MeshComponent::AddMesh(Mesh* mesh)
 {
 	m_Meshes.push_back(mesh);
+    const std::vector<Vertex>& meshVertices = mesh->GetVertices();
+    m_Vertices.insert(m_Vertices.end(), meshVertices.begin(), meshVertices.end());
+    const std::vector<unsigned int>& meshIndices = mesh->GetIndices();
+    for (unsigned int index : meshIndices) {
+        m_Indices.push_back(index + offset);
+    }
+    offset += meshVertices.size();
 }
 
 void MeshComponent::RenderDepthMap(Shader& shader, glm::mat4 globalTransform)
@@ -38,34 +50,56 @@ void MeshComponent::Update(float deltaTime)
 {
 }
 
-std::vector<std::vector<Vertex>*> MeshComponent::GetVertices(glm::mat4 globalTransform)
+
+std::vector<Vertex>* MeshComponent::GetVertices(const glm::mat4& globalTransform)
 {
-	std::vector<std::vector<Vertex>*> vertices;
-	for (auto& mesh : m_Meshes)
-	{
-		std::vector <Vertex> *meshVertices = new std::vector <Vertex>;
-		for (auto& vertex : mesh->GetVertices())
-		{
-			Vertex v = vertex;
-			v.Position = glm::vec3(globalTransform * glm::vec4(vertex.Position, 1.0f)); // 顶点变换
-            v.Normal = glm::normalize(glm::mat3(glm::transpose(glm::inverse(globalTransform))) * vertex.Normal);// 法线变换
-			v.Tangent = glm::vec3(glm::mat3(globalTransform) * vertex.Tangent);
-            v.Bitangent = glm::vec3(glm::mat3(globalTransform) * vertex.Bitangent);
-			//vec3 transformedNormal = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
-			meshVertices->push_back(v);
-		}
-        vertices.push_back(meshVertices);
-	}
-    return vertices;
+    //glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
+    static ComputeShader* computeShader = new ComputeShader("res/shaders/ComputeShaders/ModelTransform.shader");
+    m_NumVertices = m_Vertices.size();
+    m_TransformedVertices.resize(m_NumVertices);
+    // 创建顶点SSBO并上传数据
+    m_InputSSBO = ShaderStorageBuffer(m_Vertices.data(), sizeof(Vertex) * m_NumVertices, 0);
+    m_OutputSSBO = ShaderStorageBuffer(m_TransformedVertices.data(), sizeof(Vertex) * m_NumVertices, 1);
+    // 绑定顶点SSBO
+    m_InputSSBO.Bind();
+    m_OutputSSBO.Bind();
+    // 计算工作组数量
+    unsigned int localSizeX = 512;
+    unsigned int numGroups = static_cast<unsigned int>(ceil(m_NumVertices / (float)localSizeX));
+
+    // 绑定计算着色器并设置Uniform
+    computeShader->Bind();
+    computeShader->SetUniformMat4f("u_Model", globalTransform);
+    computeShader->SetUniformMat3f("normalMatrix", glm::transpose(glm::inverse(glm::mat3(globalTransform))));
+    computeShader->SetUniform1i("numVertices", m_NumVertices);
+
+    // 调度计算着色器
+    computeShader->Dispatch(numGroups, 1, 1);
+
+    // 内存屏障，确保计算着色器的写操作完成
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    // 解绑计算着色器
+    computeShader->Unbind();
+    // 解绑顶点SSBO
+    m_InputSSBO.Unbind();
+    m_OutputSSBO.Unbind();
+
+    // 读取更新后的顶点数据从GPU
+    void* mappedData = m_OutputSSBO.Map(GL_READ_ONLY);
+    if (mappedData)
+    {
+        std::memcpy(m_TransformedVertices.data(), mappedData, sizeof(Vertex) * m_NumVertices);
+        m_OutputSSBO.Unmap();
+    }
+    else
+    {
+        std::cerr << "Failed to map SSBO for reading." << std::endl;
+    }
+    return &m_TransformedVertices; // 返回更新后的顶点数据
 }
 
-std::vector<std::vector<unsigned int>*> MeshComponent::GetIndices()
+std::vector<unsigned int>* MeshComponent::GetIndices()
 {
-	std::vector<std::vector<unsigned int>*> indices;
-    for (auto& mesh : m_Meshes)
-    {
-		std::vector<unsigned int> *meshIndices = new std::vector<unsigned int>(mesh->GetIndices());
-		indices.push_back(meshIndices);
-    }
-    return indices;
+	return &m_Indices;
 }

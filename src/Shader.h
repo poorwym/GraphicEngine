@@ -23,13 +23,13 @@ public:
 	void Bind() const;
 	void Unbind() const;
 
-	void setUniformVec3f(const std::string& name, const glm::vec3& value);
-	void setUniform1i(const std::string& name, int v0);
-	void setUniform1f(const std::string& name, float v0);
-	void setUniform2f(const std::string& name, float v0, float v1);
-	void setUniform3f(const std::string& name, float v0, float v1, float v2);
-	void setUniform4f(const std::string &name, float v0, float v1, float v2, float v3);
-	void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
+	void SetUniformVec3f(const std::string& name, const glm::vec3& value);
+	void SetUniform1i(const std::string& name, int v0);
+	void SetUniform1f(const std::string& name, float v0);
+	void SetUniform2f(const std::string& name, float v0, float v1);
+	void SetUniform3f(const std::string& name, float v0, float v1, float v2);
+	void SetUniform4f(const std::string &name, float v0, float v1, float v2, float v3);
+	void SetUniformMat4f(const std::string& name, const glm::mat4& matrix);
 private:
 	unsigned int CreateShader(const std::string &vertexShader, const std::string &fragmentShader);
 	unsigned int CompileShader(unsigned int type, const std::string &source);

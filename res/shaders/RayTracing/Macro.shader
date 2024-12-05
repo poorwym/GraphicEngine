@@ -9,7 +9,10 @@
 #define HEIGHT_MAP_INDEX 7
 
 #define MAX_POINT_LIGHTS 3 // 最大点光源数量
-#define MAX_DEPTH 1  // 最大递归深度
+#define MAX_DEPTH 3  // 最大递归深度
+
+#define TEXTURE_HEIGHT 1024
+#define TEXTURE_WIDTH 1024
 
 const float PI = 3.14159265359;
 

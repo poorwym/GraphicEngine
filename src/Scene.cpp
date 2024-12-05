@@ -9,7 +9,7 @@
 extern DirectionalLightController directionalLightController;
 static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
-	shader.setUniform1i("textures", 0);
+	shader.SetUniform1i("textures", 0);
 	textureArray->Bind();
 	shader.Unbind();
 }
@@ -21,46 +21,40 @@ void Scene::UpdateVBO() {
 }
 void Scene::UpdateVertices()
 {
+	int offsets = 0;
 	std::vector<std::vector<Vertex>*> batchVertices;
-	for (auto& pair : m_SceneNodes) {
-		SceneNode* node = pair.second;
-		std::vector<std::vector<Vertex>*> nodeVertices = node->GetVertices(glm::mat4(1.0f));
-		batchVertices.insert(batchVertices.end(), nodeVertices.begin(), nodeVertices.end());
-	}
 	std::vector<std::vector<unsigned int>*> batchIndices;
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
-		std::vector<std::vector<unsigned int>*> nodeIndices = node->GetIndices();
-		batchIndices.insert(batchIndices.end(), nodeIndices.begin(), nodeIndices.end());
-	}
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	int offset = 0;
-	for (int i = 0; i < batchIndices.size(); i++) {
-		std::vector<Vertex> t_vertices = *(batchVertices[i]);
-		std::vector<unsigned int> t_indices = *(batchIndices[i]);
-		vertices.insert(vertices.end(), t_vertices.begin(), t_vertices.end());
-		for (auto& index : t_indices) {
-			index += offset;
-			indices.push_back(index);
-		}
-		offset += t_vertices.size();
-		delete batchVertices[i];
-		delete batchIndices[i];
+		std::vector<std::vector<Vertex>*> nodeVertices = node->GetVertices(glm::mat4(1.0f));
+        std::vector<std::vector<unsigned int>*> nodeIndices = node->GetIndices();
+        batchIndices.insert(batchIndices.end(), nodeIndices.begin(), nodeIndices.end());
+		batchVertices.insert(batchVertices.end(), nodeVertices.begin(), nodeVertices.end());
 	}
 	m_Vertices.clear();
-	m_Indices.clear();
-	m_Vertices = vertices;
-	m_Indices = indices;
+	m_Vertices.reserve(numVertices);
+	for (int i = 0; i < batchVertices.size(); i++) {
+		std::vector<Vertex>& vertices = *batchVertices[i];
+		m_Vertices.insert(m_Vertices.end(), vertices.begin(), vertices.end());
+		if(m_Indices.size() != -1)
+		{
+			std::vector<unsigned int>& indices = *batchIndices[i];
+			for (auto& index : indices) {
+				m_Indices.push_back(index + offsets);
+			}
+			offsets += vertices.size();
+		}
+	}
+    numVertices = m_Vertices.size();
 }
 void Scene::ResetVAO()
 {
 	VertexBufferLayout layout;
-	layout.Push<float>(3); // Position: 3个浮点数
-	layout.Push<float>(3); // Normal: 3个浮点数
-	layout.Push<float>(2); // TexCoords: 2个浮点数
-	layout.Push<float>(3); // Tangent: 3个浮点数
-	layout.Push<float>(3); // Bitangent: 3个浮点数
+	layout.Push<float>(4); // Position: 3个浮点数
+	layout.Push<float>(4); // Normal: 3个浮点数
+	layout.Push<float>(4); // TexCoords: 2个浮点数
+	layout.Push<float>(4); // Tangent: 3个浮点数
+	layout.Push<float>(4); // Bitangent: 3个浮点数
 	layout.Push<float>(1); //textureSlot
 	layout.Push<float>(1);
 	layout.Push<float>(1);
@@ -82,7 +76,7 @@ void Scene::ResetVAO()
     m_VAO->Unbind();
 }
 Scene::Scene(int n)
-	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n)
+	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n),numVertices(2)
 {
 }
 
@@ -124,8 +118,8 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
 	shader.Bind();
 	m_DirLight->Bind(shader, globalTransform);
-	shader.setUniform1i("numPointLights", pointLightID.size());
-	shader.setUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
+	shader.SetUniform1i("numPointLights", pointLightID.size());
+	shader.SetUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
 		node->BindLight(shader, globalTransform);
@@ -141,11 +135,11 @@ void Scene::RenderDepthMap(Shader& shader) const
 
 void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
 {
-	//UpdateVertices();
+	UpdateVertices();
 	UpdateVBO();
 	depthShader->Bind();
 	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
-	depthShader->setUniformMat4f("SpaceMatrix", lightSpaceMatrix);
+	depthShader->SetUniformMat4f("SpaceMatrix", lightSpaceMatrix);
 	m_DirLight->m_ShadowMapFBO->Bind();
 	RenderDepthMap(*depthShader);
 	depthShader->Unbind();
@@ -160,10 +154,10 @@ void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
 		std::vector<glm::mat4> shadowMatrices = pointlight->ComputePointLightShadowMatrices(NEAR_PLANE, FAR_PLANE);
 		pointlight->m_CubeShadowMapFBO->Bind();
 		cubeDepthShader->Bind();
-		cubeDepthShader->setUniform1f("farPlane", FAR_PLANE);
-		cubeDepthShader->setUniformVec3f("lightPos", pointlight->GetLightPos());
+		cubeDepthShader->SetUniform1f("farPlane", FAR_PLANE);
+		cubeDepthShader->SetUniformVec3f("lightPos", pointlight->GetLightPos());
 		for (unsigned int i = 0; i < 6; ++i) {
-			cubeDepthShader->setUniformMat4f("ShadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
+			cubeDepthShader->SetUniformMat4f("ShadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
 			pointlight->m_CubeShadowMapFBO->BindFace(i);
 			glClear(GL_DEPTH_BUFFER_BIT);
 			RenderDepthMap(*cubeDepthShader);
@@ -190,14 +184,14 @@ void Scene::RayTracingRender(Shader& shader, Camera& camera)
 	BatchBindTextures(shader);
 
 	shader.Bind();
-	shader.setUniformVec3f("cameraPosition", camera.GetPosition());
-    shader.setUniform1f("nearPlane", camera.GetNearClip());
-    shader.setUniform1i("screenWidth", WINDOW_WIDTH);
-    shader.setUniform1i("screenHeight", WINDOW_HEIGHT);
-    shader.setUniform1f("fov", camera.GetFov());
-    shader.setUniform1f("aspectRatio", camera.GetAspectRatio());
-	shader.setUniformMat4f("viewMatrix", camera.GetViewMatrix());
-    shader.setUniform1f("seed", glfwGetTime());
+	shader.SetUniformVec3f("cameraPosition", camera.GetPosition());
+    shader.SetUniform1f("nearPlane", camera.GetNearClip());
+    shader.SetUniform1i("screenWidth", WINDOW_WIDTH);
+    shader.SetUniform1i("screenHeight", WINDOW_HEIGHT);
+    shader.SetUniform1f("fov", camera.GetFov());
+    shader.SetUniform1f("aspectRatio", camera.GetAspectRatio());
+	shader.SetUniformMat4f("viewMatrix", camera.GetViewMatrix());
+    shader.SetUniform1f("seed", glfwGetTime());
 	shader.Unbind();
 
 	BindLight(shader, glm::mat4(1.0f));

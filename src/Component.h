@@ -1,9 +1,8 @@
 #pragma once
 #include "Mesh.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <string>
-
+#include "ShaderStorageBuffer.h"
 
 class Component {
 protected:
@@ -22,7 +21,14 @@ public:
 class MeshComponent : public Component
 {
 private:
+    int offset;
+    int m_NumVertices;
     std::vector<Mesh*> m_Meshes;
+    std::vector<Vertex> m_Vertices;
+    std::vector<unsigned int> m_Indices;
+    std::vector<Vertex> m_TransformedVertices;
+    ShaderStorageBuffer m_InputSSBO;
+    ShaderStorageBuffer m_OutputSSBO;
 public:
     MeshComponent();
     ~MeshComponent();
@@ -32,7 +38,7 @@ public:
     inline void SetType() override { m_Type = "MeshComponent";  } 
     void Update(float deltaTime) override;
 
-    std::vector<std::vector<Vertex>*> GetVertices(glm::mat4 globalTransform);
-    std::vector<std::vector<unsigned int>*> GetIndices();
+    std::vector<Vertex>* GetVertices(const glm::mat4& globalTransform);
+    std::vector<unsigned int>* GetIndices();
 };
 

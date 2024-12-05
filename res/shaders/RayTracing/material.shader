@@ -87,7 +87,7 @@ float GetMetallic(int hitIndex, vec2 hitTexCoord){
     {
         return GetTextureValue(hitIndex, hitTexCoord, METALLIC_MAP_INDEX);
     }
-    return triangles[hitIndex].material.SpecularExponent / 1000;
+    return triangles[hitIndex].material.SpecularExponent / 100;
 }
 
 vec3 GetNormal(int hitIndex, vec2 hitTexCoord){
@@ -118,4 +118,11 @@ float GetIllum(int hitIndex){
 
 float GetDissolve(int hitIndex){
     return triangles[hitIndex].material.Dissolve;
+}
+
+float GetHeight(int hitIndex, vec2 hitTexCoord){
+    if(triangles[hitIndex].material.HeightMapIndex != -1){
+        return GetTextureValue(hitIndex, hitTexCoord, HEIGHT_MAP_INDEX);
+    }
+    return 0.0;
 }

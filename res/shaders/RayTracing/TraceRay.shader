@@ -23,13 +23,13 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             float alpha = GetAlpha(hitIndex, hitTexCoord);
 
             //float illum = GetIllum(hitIndex);
-            float illum = 3;
+            float illum = 4;
             float dissolve = GetDissolve(hitIndex);
             // 计算交点
             vec3 hitPoint = ray.origin + ray.dir * t + normal * 0.0001;
 
             if(alpha < 0.01){
-                ray.origin = hitPoint + ray.dir * 0.001;
+                ray.origin = hitPoint + ray.dir * 0.01;
                 continue;
             }
             // 计算方向光
@@ -64,11 +64,20 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 pointSpecular = pointSpecular * attenuation;
                 radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
+            vec3 N = normal;
+            vec3 V = ray.dir;
+            vec3 L = -reflect(ray.dir, normal);
+            vec3 F0 = mix(vec3(0.04), specular, metallic);
+            vec3 CookBrdf = CookTorranceBRDF(N, V, L, F0, roughness);
             
-            throughput *= metallic;
+            throughput *= mix(vec3(0.0), CookBrdf, metallic);
+            //停止采样
+            if(metallic < 0.1){
+                break;
+            }
 
             ray.origin += ray.dir * t + normal * 0.0001;
-            ray.dir = reflect(ray.dir, normal);
+            ray.dir = -L;
         }
         else
         {

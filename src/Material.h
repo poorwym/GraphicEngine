@@ -31,8 +31,9 @@ struct Material {
     float OpticalDensity;
     //Ns
     float SpecularExponent;
-    float padding1;
-    float padding2;
+    //bump
+    float BumpMutiplier;
+    uint32_t HeightMap; //CPU�˵ĸ߶�ͼ
     float padding3;
     float padding4;
 };
@@ -50,4 +51,6 @@ public:
     inline float GetAOMapSlot()    const { return m_Material.AOMapIndex; };
     inline float GetEmissionMapSlot()   const { return m_Material.EmissionMapIndex; };
     inline float GetAlphaMapSlot()      const {return m_Material.AlphaMapIndex; };
+    inline float GetHeightMapSlot()    const { return m_Material.HeightMapIndex; };
+    inline const Material& GetMaterial() const { return m_Material; }
 };

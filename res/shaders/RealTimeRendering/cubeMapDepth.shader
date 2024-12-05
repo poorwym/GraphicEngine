@@ -1,9 +1,7 @@
 #shader vertex
 #version 450 core
-layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec3 a_Normal;
-layout (location = 2) in vec2 a_TexCoords;
-layout (location = 3) in float a_Slots[7];
+
+#include "layout.shader"
 
 uniform mat4 ShadowMatrices[6]; // 六个方向的视图投影矩阵
 uniform mat4 u_Model;
@@ -13,7 +11,7 @@ out vec3 FragPos;               // 世界空间位置
 
 void main()
 {
-    FragPos = vec3(u_Model * vec4(a_Position, 1.0));
+    FragPos = vec3(u_Model * a_Position);
     gl_Position = ShadowMatrices[gl_InstanceID] * vec4(FragPos - lightPos, 1.0); // 使用 gl_InstanceID
 }
 

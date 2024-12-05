@@ -52,7 +52,7 @@ float CalculatePointShadow(vec3 hitPoint, vec3 lightDir, float distance, vec3 no
     float shadow = 0.0;
 
     // 定义采样半径，可以根据需要调整
-    float radius = 0.05;
+    float radius = 0.5;
 
     // 计算原始光源位置
     vec3 originalLightPos = hitPoint + lightDir * distance;

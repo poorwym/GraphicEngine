@@ -68,7 +68,7 @@ Skybox::Skybox(const std::vector<std::string>& faces)
 
     // 配置着色器
     skyboxShader.Bind();
-    skyboxShader.setUniform1i("skybox", 0);
+    skyboxShader.SetUniform1i("skybox", 0);
 }
 
 Skybox::~Skybox()
@@ -82,9 +82,9 @@ void Skybox::Draw(Camera& camera)
 {
     // 更改视图矩阵，使天空盒不受摄像机位置影响
     skyboxShader.Bind();
-    skyboxShader.setUniformMat4f("view", camera.GetViewMatrix());
-    skyboxShader.setUniformMat4f("projection", camera.GetProjectionMatrix());
-    skyboxShader.setUniformMat4f("model", glm::translate(glm::mat4(1.0f), camera.GetPosition()));
+    skyboxShader.SetUniformMat4f("view", camera.GetViewMatrix());
+    skyboxShader.SetUniformMat4f("projection", camera.GetProjectionMatrix());
+    skyboxShader.SetUniformMat4f("model", glm::translate(glm::mat4(1.0f), camera.GetPosition()));
 
     // 渲染天空盒
     GLCall(glDepthFunc(GL_LEQUAL));  // 更改深度函数以确保天空盒渲染在其他所有物体之后

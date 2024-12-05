@@ -19,8 +19,6 @@
 #include "SkyBox.h"
 
 
-#include "test/TestClearColor.h"
-#include "test/TestTexture2D.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "ResourceManager.h"
@@ -37,6 +35,10 @@
 #include "ShaderStorageBuffer.h"
 #include "Filter.h"
 #include "BVHTree.h"
+#include "TextureManager.h"
+#include "TriangleSubdivider.h"
+
+extern TextureManager textureManager;
 
 DirectionalLightController directionalLightController;
 
@@ -54,7 +56,7 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
 static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& camera);
 
-
+// 视口初始化
 static void ViewPortInit(int width, int height) {
     GLCall(glViewport(0, 0, width, height));
     GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -144,12 +146,16 @@ int main(void)
 }
 static void LoadModel(SceneManager& sceneManager) {
     textureArray = new TextureArray(1024, 1024, 256);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    sceneManager.AddEntity(meshComponent1, "Pumpkin", "node1", nullptr);
+    //MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    //MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
+    sceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);
+    //sceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
+    //sceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
 }
 static void InitModel() {
 
@@ -175,13 +181,13 @@ void RealTimeRender(GLFWwindow* window) {
     InitCamera(camera);
     cameraController = new CameraController(&camera, window);
 
-    Scene* scene = new Scene(50);
+    Scene* scene = new Scene(10);
     sceneManager = SceneManager(scene);
     LoadModel(sceneManager);
     InitModel();
     scene->ResetVAO();
 
-    int sampleRate = 10;
+    int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.shader");
@@ -189,8 +195,8 @@ void RealTimeRender(GLFWwindow* window) {
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
     mainShader->Bind();
-    mainShader->setUniform1f("farPlane", far_plane);
-    mainShader->setUniform1i("ShadowMap", 31);
+    mainShader->SetUniform1f("farPlane", far_plane);
+    mainShader->SetUniform1i("ShadowMap", 31);
     mainShader->Unbind();
 
 
@@ -232,9 +238,9 @@ void RealTimeRender(GLFWwindow* window) {
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
         mainShader->Bind();
-        mainShader->setUniform1i("numPointLights", pointLightID.size());
-        mainShader->setUniform1f("focusDepth", camera.GetFocusDepth());
-        mainShader->setUniform1f("focusRange", camera.GetFocusRange());
+        mainShader->SetUniform1i("numPointLights", pointLightID.size());
+        mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
+        mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
 
         ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -246,10 +252,10 @@ void RealTimeRender(GLFWwindow* window) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         skybox.Draw(camera);
         mainShader->Bind();
-        mainShader->setUniform1i("ShadowMap", 31);
+        mainShader->SetUniform1i("ShadowMap", 31);
         for (int i = 0; i < 4; i++)
         {
-            mainShader->setUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
+            mainShader->SetUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
         }
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
@@ -260,8 +266,14 @@ void RealTimeRender(GLFWwindow* window) {
         //update
         scene->Update(deltaTime);
 
+        ImGui::Begin("Update");
+        if (ImGui::Button("Update")) {
+            scene->UpdateVertices();
+        }
+        ImGui::End();
+
         ImGui::Begin("RayTracing");
-        ImGui::SliderInt("Sample Rate", &sampleRate, 5, 50);
+        ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
         if (ImGui::Button("Render")) {
             RayTracing(camera, scene, sampleRate);
         }
@@ -282,49 +294,61 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-     depthShader->Bind();
-     depthMapFBO.Bind();
-     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-     depthShader->setUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
-     scene->RenderDepthMap(*depthShader);
-     depthMapFBO.Unbind();
-     depthShader->Unbind();
-     glDepthMask(GL_TRUE);
+     std::cout << "Depth Rendering..." << std::endl;
+     {
+         depthShader->Bind();
+         depthMapFBO.Bind();
+         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+         depthShader->SetUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
+         scene->RenderDepthMap(*depthShader);
+         depthMapFBO.Unbind();
+         depthShader->Unbind();
+     }
+     std::cout << "Depth Render Complete!" << std::endl;
 
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
      std::vector<Triangle> triangles;
      int size = scene->GetIndices()->size();
      std::vector<unsigned int>* indices = scene->GetIndices();
      std::vector<Vertex>* vertices = scene->GetVertices();
-     for (int i = 0;i < size - 2; i += 3) {
-         unsigned int idx1 = indices->at(i);
-         unsigned int idx2 = indices->at(i + 1);
-         unsigned int idx3 = indices->at(i + 2);
-         Vertex v1 = vertices->at(idx1);
-         Vertex v2 = vertices->at(idx2);
-         Vertex v3 = vertices->at(idx3);
-         Triangle triangle;
-         triangle.position[0] = glm::vec4(v1.Position, 0.0f);
-         triangle.position[1] = glm::vec4(v2.Position, 0.0f);
-         triangle.position[2] = glm::vec4(v3.Position, 0.0f);
-         triangle.normal[0] = glm::vec4(v1.Normal, 0.0f);
-         triangle.normal[1] = glm::vec4(v2.Normal, 0.0f);
-         triangle.normal[2] = glm::vec4(v3.Normal, 0.0f);
-         triangle.texCoords[0] = glm::vec4(v1.TexCoords, 0.0f, 0.0f);
-         triangle.texCoords[1] = glm::vec4(v2.TexCoords, 0.0f, 0.0f);
-         triangle.texCoords[2] = glm::vec4(v3.TexCoords, 0.0f, 0.0f);
-         triangle.tangent[0] = glm::vec4(v1.Tangent, 0.0f);
-         triangle.tangent[1] = glm::vec4(v2.Tangent, 0.0f);
-         triangle.tangent[2] = glm::vec4(v3.Tangent, 0.0f);
-         triangle.bitangent[0] = glm::vec4(v1.Bitangent, 0.0f);
-         triangle.bitangent[1] = glm::vec4(v2.Bitangent, 0.0f);
-         triangle.bitangent[2] = glm::vec4(v3.Bitangent, 0.0f);
-         triangle.material = v1.material;
-         triangles.push_back(triangle);
+     std::cout << "Getting Triangles" << std::endl;
+     {
+         TriangleSubdivider triangleSubdivider;
+         for (int i = 0;i < size - 2; i += 3) {
+             unsigned int idx1 = indices->at(i);
+             unsigned int idx2 = indices->at(i + 1);
+             unsigned int idx3 = indices->at(i + 2);
+             Vertex v1 = vertices->at(idx1);
+             Vertex v2 = vertices->at(idx2);
+             Vertex v3 = vertices->at(idx3);
+             // 创建三角形
+             Triangle triangle = triangleSubdivider.CreateTriangle(v1, v2, v3);
+             /*
+             std::vector<Triangle> dividedTriangles;
+             float length = glm::distance(v1.Position, v2.Position);
+             int n = (int)(length / MAX_TRIANGLE_EDGE_LENGTH);
+             // 进行division
+             triangleSubdivider.SubdivideTriangle(triangle, n, dividedTriangles);
+             // 调整高度
+             CPUTexture* heightTexture = textureManager.GetTexture(v1.material.HeightMap);
+             float bumpMutiplier = v1.material.BumpMutiplier;
+             for (Triangle& triangle : dividedTriangles) {
+                 triangleSubdivider.AdjustHeight(triangle, heightTexture, bumpMutiplier);
+             }
+             
+             triangles.insert(triangles.end(), dividedTriangles.begin(), dividedTriangles.end());
+             */
+             triangles.push_back(triangle);
+         }
      }
      ShaderStorageBuffer* trianglesSSBO = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
      int numTriangles = triangles.size();
+     std::cout << "numTriangles: " << numTriangles << std::endl;
+
+     std::cout << "Creating BVHTree..." << std::endl;
      BVHTree tree(triangles);
+     std::cout << "BVHTree Created" << std::endl;
+
      ShaderStorageBuffer* BVHTreeSSBO = new ShaderStorageBuffer(tree.nodes.data(), tree.nodes.size() * sizeof(BVHNode), 1);
      ShaderStorageBuffer* triangleIndexSSBO = new ShaderStorageBuffer(tree.triangleIndices.data(), tree.triangleIndices.size() * sizeof(int), 2);
 
@@ -345,8 +369,8 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
      }
      mainShader->Bind();
      depthMapFBO.BindTexture(0);
-     mainShader->setUniform1i("depthMap", 0);
-     mainShader->setUniform1i("numTriangles", numTriangles);
+     mainShader->SetUniform1i("depthMap", 0);
+     mainShader->SetUniform1i("numTriangles", numTriangles);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
@@ -462,8 +486,8 @@ static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     colorFBO.BindTexture(0);
     colorFBO.BindDepthTexture(1);
     screenShader->Bind();
-    screenShader->setUniform1i("screenTexture", 0);
-    //screenShader->setUniform1i("depthTexture", 1);
+    screenShader->SetUniform1i("screenTexture", 0);
+    //screenShader->SetUniform1i("depthTexture", 1);
     screenQuad.Render(*screenShader);
     screenShader->Unbind();
     delete screenShader;
@@ -480,11 +504,11 @@ static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
         colorFBO.BindTexture(0);
         colorFBO.BindDepthTexture(1);
         FODshader->Bind();
-            FODshader->setUniform1i("screenTexture", 0);
-            FODshader->setUniform1i("depthTexture", 1);
-            FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
-            FODshader->setUniform1f("focusRange", camera.GetFocusRange());
-            FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
+            FODshader->SetUniform1i("screenTexture", 0);
+            FODshader->SetUniform1i("depthTexture", 1);
+            FODshader->SetUniform1f("focusDepth", camera.GetFocusDepth());
+            FODshader->SetUniform1f("focusRange", camera.GetFocusRange());
+            FODshader->SetUniform1f("maxBlur", camera.GetMaxBlur());
             screenQuad.Render(*FODshader);
         FODshader->Unbind();
     finalFBO.Unbind();
@@ -502,11 +526,11 @@ static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& ca
     colorFBO.BindTexture(0);
     depthFBO.BindTexture(1);
     FODshader->Bind();
-    FODshader->setUniform1i("screenTexture", 0);
-    FODshader->setUniform1i("depthTexture", 1);
-    FODshader->setUniform1f("focusDepth", camera.GetFocusDepth());
-    FODshader->setUniform1f("focusRange", camera.GetFocusRange());
-    FODshader->setUniform1f("maxBlur", camera.GetMaxBlur());
+    FODshader->SetUniform1i("screenTexture", 0);
+    FODshader->SetUniform1i("depthTexture", 1);
+    FODshader->SetUniform1f("focusDepth", camera.GetFocusDepth());
+    FODshader->SetUniform1f("focusRange", camera.GetFocusRange());
+    FODshader->SetUniform1f("maxBlur", camera.GetMaxBlur());
     screenQuad.Render(*FODshader);
     FODshader->Unbind();
     finalFBO.Unbind();

@@ -18,11 +18,13 @@ private:
     std::vector<Vertex> m_Vertices;
     std::vector<unsigned int> m_Indices;
     void UpdateVBO();
-    void UpdateVertices();
+    int numVertices = 0;
+    
     TileQuad m_TileQuad;
     
 public:
     Scene(int n);
+    void UpdateVertices();
     void ResetVAO();
     void load(const std::string& filePath);   // 加载场景
     void save(const std::string& filePath);   // 保存场景

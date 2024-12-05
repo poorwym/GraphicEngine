@@ -69,3 +69,9 @@ float GetIllum(int hitIndex);
 
 // 获取材质的不透明度（Dissolve）
 float GetDissolve(int hitIndex);
+
+// 获取材质的法线贴图高度（Height）
+float GetHeight(int hitIndex, vec2 hitTexCoord);
+
+// 计算 Cook-Torrance BRDF
+vec3 CookTorranceBRDF(vec3 N, vec3 V, vec3 L, vec3 F0, float roughness);

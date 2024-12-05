@@ -2,6 +2,9 @@
 #include <iostream>
 #include <string>
 #include"SceneManager.h"
+#include "TextureManager.h"
+
+extern TextureManager textureManager;
 
 extern SceneManager sceneManager;
 
@@ -36,13 +39,13 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 		glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), // Default diffuse color (Kd)
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), // Default specular color (Ks)
 		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // Default emission color (Ke)
-		1.0f,                                  // Default transparency (d)
-		2.0f,                                     // Default illumination model
-		1.0f,                            // Default optical density (Ni)
-		32.0f,                        // Default shininess (Ns)
+		1.0f,                               // Default transparency (d)
+		2.0f,                               // Default illumination model
+		1.0f,								// Default optical density (Ni)
+		0.0f,								// Default shininess (Ns)
 		
 		0.0f,
-		0.0f,
+		0,
 		0.0f,
 		0.0f
 	})
@@ -65,7 +68,9 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 	}
 	if (m.bump_texname.size() > 0){//2
 		std::string Path = filePath + m.bump_texname;
-        m_Material.NormalMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.HeightMapIndex = sceneManager.AddTexture(Path.c_str());
+		m_Material.BumpMutiplier = 0.05;
+		m_Material.HeightMap = textureManager.AddTexture(new CPUTexture(Path));
 	}
 	if (m.emissive_texname.size()) {//3
 		std::string Path = filePath + m.emissive_texname;
