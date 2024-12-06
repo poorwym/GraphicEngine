@@ -1,18 +1,20 @@
 #pragma once
 #include "Entity.h"
+#include <string>
 
 class EntityController {
 public:
     EntityController(Entity* entity);
 
+    const char* GetImGuiTitle();
     void Update(float deltaTime);                 // 根据输入更新实体的状态
-    void MoveEntity(const glm::vec3& direction);  // 移动物体
-    void RotateEntity(const glm::vec3& axis, float angle); // 旋转物体
+    void TranslateEntity(const glm::vec3& direction);  // 移动物体
+    void RotateEntity(const glm::vec3& rotation); // 旋转物体
     void ScaleEntity(const glm::vec3& scale);     // 缩放物体
-
     void SelectEntity(Entity* entity);            // 选择一个实体
-    void DeselectEntity();                        // 取消选择
+    void DeselectEntity();                        // MoveEntity取消选择
+    void OnImGuiRender();
 
 private:
-    Entity* controlledEntity;
+    Entity* m_ControlledEntity;
 };

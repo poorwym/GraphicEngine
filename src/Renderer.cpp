@@ -24,19 +24,62 @@ bool GLLogCall(const char* function, const char* file, int line) {//打印错误信息
     return true;
 }
 
-void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model, const glm::mat4* lightSpaceMatrix) const
 {
-    va.Bind();//绑定vao
-
-    ib.Bind();//绑定ib
-
+    va.Bind(); // 绑定 VAO
+    ib.Bind(); // 绑定索引缓冲
     shader.Bind();
+    // 如果有相机，设置相机相关的 Uniform
+    if (camera)
+    {
+        glm::mat4 proj = camera->GetProjectionMatrix();
+        glm::mat4 view = camera->GetViewMatrix();
+        glm::mat4 mvp = proj * view * model;
 
+        shader.SetUniformVec3f("viewPos", camera->GetPosition());
+        shader.SetUniformMat4f("u_View", view);
+        shader.SetUniformMat4f("u_MVP", mvp);
+    }
+    else
+    {
+        // 如果没有相机，只设置模型矩阵
+        shader.SetUniformMat4f("u_MVP", model);
+    }
 
-    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));//画三角形，ib.GetCount为indices的长度，GL_UNSIGNED_INT表示索引的类型,nullptr表示索引的指针(因为已经绑定了ibo所以不需要任何指针
+    // 始终设置模型矩阵
+    shader.SetUniformMat4f("u_Model", model);
+
+    // 如果有光空间矩阵，设置它
+    if (lightSpaceMatrix)
+    {
+        shader.SetUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
+    }
+
+    // 绘制图元
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+
+    va.Unbind();
+    ib.Unbind();
+}
+
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,  Shader& shader) const
+{
+    const int maxIndicesPerBatch = 3000;
+    int totalIndices = ib.GetCount();
+
+    va.Bind();   // 绑定 VAO
+    ib.Bind();   // 绑定 IBO
+    shader.Bind(); // 绑定着色器
+
+    GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形
+
+    va.Unbind();    // 解绑 VAO
+    ib.Unbind();    // 解绑 IBO
+    shader.Unbind();// 如果有必要，可以添加解绑着色器的代码
 }
 
 void Renderer::Clear() const
 {
     glClear(GL_COLOR_BUFFER_BIT);
 }
+

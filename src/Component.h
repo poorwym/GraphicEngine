@@ -1,31 +1,44 @@
 #pragma once
 #include "Mesh.h"
-#include "Material.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
+#include <string>
+#include "ShaderStorageBuffer.h"
 
 class Component {
+protected:
+    std::string m_Type;
+    glm::mat4 m_LocalTransform;
 public:
-    virtual ~Component() = default;
-    virtual void Update(float deltaTime) = 0;     // 更新组件
+    Component();
+    virtual void SetType() {};
+    virtual void RenderDepthMap(Shader& shader, glm::mat4 globalTransform) {};
+    virtual void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) {};
+    inline std::string GetType() { return m_Type;}
+    virtual void Translate(glm::vec3& translation) {};
+    virtual void Update(float deltaTime) {};
 };
 
-class TransformComponent : public Component {
+class MeshComponent : public Component
+{
+private:
+    int offset;
+    int m_NumVertices;
+    std::vector<Mesh*> m_Meshes;
+    std::vector<Vertex> m_Vertices;
+    std::vector<unsigned int> m_Indices;
+    std::vector<Vertex> m_TransformedVertices;
+    ShaderStorageBuffer m_InputSSBO;
+    ShaderStorageBuffer m_OutputSSBO;
 public:
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-
-    TransformComponent();
+    MeshComponent();
+    ~MeshComponent();
+    void AddMesh(Mesh* mesh);
+    void RenderDepthMap(Shader& shader, glm::mat4 globalTransform) override;
+    void Render(Shader& shader, Camera& camera, glm::mat4 globalTranform) override;
+    inline void SetType() override { m_Type = "MeshComponent";  } 
     void Update(float deltaTime) override;
+
+    std::vector<Vertex>* GetVertices(const glm::mat4& globalTransform);
+    std::vector<unsigned int>* GetIndices();
 };
 
-class RenderComponent : public Component {
-public:
-    Mesh* mesh;
-    Material* material;
-
-    RenderComponent(Mesh* mesh, Material* material);
-    void Update(float deltaTime) override;
-};
