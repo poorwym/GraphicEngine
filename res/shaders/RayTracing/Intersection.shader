@@ -137,12 +137,11 @@ bool RayIntersectsTriangle(Ray ray, Triangle tri, out float t, out vec3 hitNorma
             normalMapNormalTS = normalMapNormalTS * 2.0 - 1.0; // 将法线从 [0,1] 映射到 [-1,1]
 
             // 将法线贴图的法线与高度贴图的法线结合
-            combinedNormalTS = normalize(combinedNormalTS * normalMapNormalTS);
+            combinedNormalTS = normalize(TBN * normalMapNormalTS);
         }
 
-        // 将综合的扰动法线转换回世界空间
-        hitNormal = normalize(TBN * combinedNormalTS);
-
+        
+        hitNormal = combinedNormalTS;
         return true;
     }
     else

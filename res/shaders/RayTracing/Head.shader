@@ -75,3 +75,5 @@ float GetHeight(int hitIndex, vec2 hitTexCoord);
 
 // 计算 Cook-Torrance BRDF
 vec3 CookTorranceBRDF(vec3 N, vec3 V, vec3 L, vec3 F0, float roughness);
+
+float GetSpecularExponent(int hitIndex);

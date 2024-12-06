@@ -155,6 +155,8 @@
     <ClCompile Include="src\Component.cpp" />
     <ClCompile Include="src\ComputeShader.cpp" />
     <ClCompile Include="src\depthMap.cpp" />
+    <ClCompile Include="src\EngineState.cpp" />
+    <ClCompile Include="src\EngineSymbol.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\EntityController.cpp" />
     <ClCompile Include="src\Filter.cpp" />
@@ -203,6 +205,8 @@
     <ClInclude Include="src\Component.h" />
     <ClInclude Include="src\ComputeShader.h" />
     <ClInclude Include="src\depthMap.h" />
+    <ClInclude Include="src\EngineState.h" />
+    <ClInclude Include="src\EngineSymbol.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\EntityController.h" />
     <ClInclude Include="src\Filter.h" />

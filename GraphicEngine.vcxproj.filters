@@ -132,6 +132,12 @@
     <ClCompile Include="src\ComputeShader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\EngineSymbol.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EngineState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
@@ -300,6 +306,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\ComputeShader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EngineSymbol.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EngineState.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

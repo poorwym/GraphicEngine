@@ -15,6 +15,7 @@ bool needUpdate = false;
 TextureArray* textureArray = nullptr;
 
 SceneManager::SceneManager(Scene* scene)
+    :needUpdate(true)
 {
     m_Scene = scene;
 }

@@ -126,3 +126,7 @@ float GetHeight(int hitIndex, vec2 hitTexCoord){
     }
     return 0.0;
 }
+
+float GetSpecularExponent(int hitIndex){
+    return triangles[hitIndex].material.SpecularExponent;
+}

@@ -14,6 +14,7 @@ class SceneNode {
 private:
     std::string m_Name;
     glm::mat4 m_LocalTransform;
+    glm::mat4 m_PreviousTransform;
     std::map<std::string, SceneNode*> m_Children;
     glm::vec3 m_Position;
     glm::vec3 m_Rotation;

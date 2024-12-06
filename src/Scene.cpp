@@ -6,7 +6,10 @@
 #include "color.h"
 #include "SceneManager.h"
 #include "Quad.h"
+#include "EngineState.h"
+
 extern DirectionalLightController directionalLightController;
+
 static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
 	shader.SetUniform1i("textures", 0);
@@ -19,8 +22,13 @@ void Scene::UpdateVBO() {
 	m_VBO->setData(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
     m_VBO->Unbind();
 }
+extern EngineState engineState;
+
 void Scene::UpdateVertices()
 {
+	if (!engineState.needUpdate) {
+		return;
+	}
 	int offsets = 0;
 	std::vector<std::vector<Vertex>*> batchVertices;
 	std::vector<std::vector<unsigned int>*> batchIndices;
@@ -46,6 +54,7 @@ void Scene::UpdateVertices()
 		}
 	}
     numVertices = m_Vertices.size();
+	engineState.needUpdate = false;
 }
 void Scene::ResetVAO()
 {

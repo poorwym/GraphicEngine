@@ -3,6 +3,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "SceneManager.h"
+#include "EngineState.h"
+
 void SceneNode::AddChild(SceneNode* child)
 {
     m_Children[child->GetName()] = child;
@@ -55,6 +57,7 @@ void SceneNode::SetRotation(glm::vec3 rotation)
 {
     m_Rotation = rotation;
 }
+extern EngineState engineState;
 
 void SceneNode::Update(float deltaTime)
 {
@@ -68,6 +71,10 @@ void SceneNode::Update(float deltaTime)
     transform = glm::translate(transform, m_Position);
 
     m_LocalTransform = transform;
+    if (m_LocalTransform != m_PreviousTransform) {
+        m_PreviousTransform = m_LocalTransform;
+        engineState.needUpdate = true;
+    }
     if(m_Entity)
         m_Entity->Update(deltaTime);
     if(m_PointLight)

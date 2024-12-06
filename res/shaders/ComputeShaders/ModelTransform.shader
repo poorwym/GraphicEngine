@@ -69,5 +69,8 @@ void main(){
         outputVertices[i].Normal = vec4(normalize(normalMatrix * inputVertices[i].Normal.xyz), 0.0);
         outputVertices[i].Tangent = vec4(normalize(normalMatrix * inputVertices[i].Tangent.xyz), 0.0);
         outputVertices[i].Bitangent = vec4(normalize(normalMatrix * inputVertices[i].Bitangent.xyz), 0.0);
+
+        outputVertices[i].TexCoords =  inputVertices[i].TexCoords;
+        outputVertices[i].material =   inputVertices[i].material;
     }
 }

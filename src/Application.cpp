@@ -37,9 +37,12 @@
 #include "BVHTree.h"
 #include "TextureManager.h"
 #include "TriangleSubdivider.h"
+#include "EngineState.h"
 
 extern TextureManager textureManager;
 
+EngineState engineState;
+SceneManager sceneManager(nullptr);
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -48,7 +51,7 @@ float lastFrame = 0.0f; // 上一帧的时间
 // 相机控制器和资源管理器
 CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
-SceneManager sceneManager(nullptr);
+
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate);
 void RealTimeRender(GLFWwindow* window);
@@ -84,7 +87,6 @@ int main(void)
     /* Initialize the library */
     if (!glfwInit())
         return -1;
-    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//设置OpenGL版本主版本号 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);//设置OpenGL版本次版本号
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//设置使用核心模式
@@ -145,12 +147,12 @@ int main(void)
     RealTimeRender(window);
 }
 static void LoadModel(SceneManager& sceneManager) {
-    textureArray = new TextureArray(1024, 1024, 256);
+    textureArray = new TextureArray(1024, 1024, 2048);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
     //MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    //MeshComponent* meshComponent2 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
     sceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     sceneManager.AddPointLight(pointLight, "node2", nullptr);

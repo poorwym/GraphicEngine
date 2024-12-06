@@ -9,7 +9,7 @@ float CalculateDirectionShadow(vec3 hitPoint, vec3 lightDir, vec3 normal){
     float shadow = 0.0;
 
     // 定义采样半径，可以根据需要调整
-    float radius = 0.005;
+    float radius = 0.05;
 
     // 生成正交基（tangent 和 bitangent）
     vec3 up = abs(lightDir.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);

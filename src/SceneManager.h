@@ -10,6 +10,7 @@
 class SceneManager {
 private:
 	Scene* m_Scene;
+	bool needUpdate;
 public:
 	SceneManager(Scene* scene);
 	~SceneManager();

@@ -10,6 +10,7 @@ class Entity {
 private:
     std::map<unsigned int, Component*> m_Components;
     glm::mat4 m_LocalTransform;
+    glm::mat4 m_PreviousTransform;
     std::string m_Name;
     glm::vec3 m_Scale;
     glm::vec3 m_Rotation;

@@ -1,4 +1,25 @@
 
+vec3 CalculateReflectDirection(vec3 direction,vec3 normal, float specExp){
+    vec3 R = reflect(direction, normal); // V为入射方向, N为法线
+    float xi1 = rand(normal.xy * seed); // [0,1]区间随机数
+    float xi2 = rand(direction.xy * seed); // [0,1]区间随机数
+
+    float phi = 2.0 * PI * xi1;
+    // 将xi2通过 n+1 次方开根来控制分布
+    float cosTheta = pow(xi2, 1.0 / (specExp + 1.0));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    vec3 w = normalize(R);
+    vec3 helper = (abs(w.z) < 0.999f) ? vec3(0.0,0.0,1.0) : vec3(1.0,0.0,0.0);
+    vec3 u = normalize(cross(helper, w));
+    vec3 v = cross(w, u);
+
+    vec3 localDir = vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta);
+    vec3 newDir = normalize(u * localDir.x + v * localDir.y + w * localDir.z);
+    return newDir;
+
+}
+
 vec4 TraceRay(Ray ray, vec3 throughput)
 {
     vec4 radiance = vec4(0.0);
@@ -70,14 +91,14 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             vec3 F0 = mix(vec3(0.04), specular, metallic);
             vec3 CookBrdf = CookTorranceBRDF(N, V, L, F0, roughness);
             
-            throughput *= mix(vec3(0.0), CookBrdf, metallic);
+            throughput *= CookBrdf;
             //停止采样
             if(metallic < 0.1){
                 break;
             }
 
             ray.origin += ray.dir * t + normal * 0.0001;
-            ray.dir = -L;
+            ray.dir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
         }
         else
         {
