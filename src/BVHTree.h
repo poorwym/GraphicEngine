@@ -1,13 +1,8 @@
 #pragma once
 #include "Mesh.h"
 #include <algorithm>
+#include "AABB.h"
 
-struct AABB {
-    glm::vec3 min;
-    float pad1;
-    glm::vec3 max;
-    float pad2;
-};
 
 struct BVHNode {
     AABB bounds;

@@ -96,7 +96,7 @@ void SceneNode::OnImGuiTree()
         }
         if (ImGui::BeginPopup(m_Name.c_str()))
         {
-            sceneNodeControllerList[m_Name]->OnImGuiRender();
+            g_SceneNodeControllerList[m_Name]->OnImGuiRender();
             if (ImGui::Button("Close"))
             {
                 ImGui::CloseCurrentPopup();
@@ -111,7 +111,7 @@ void SceneNode::OnImGuiTree()
             }
             if (ImGui::BeginPopup(m_PointLight->GetName().c_str()))
             {
-                lightControllerList[m_PointLight->GetName()]->OnImGuiRender();
+                g_LightControllerList[m_PointLight->GetName()]->OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();
@@ -127,7 +127,7 @@ void SceneNode::OnImGuiTree()
             }
             if (ImGui::BeginPopup(m_Entity->GetName().c_str()))
             {
-                entityControllerList[m_Entity->GetName()]->OnImGuiRender();
+                g_EntityControllerList[m_Entity->GetName()]->OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();

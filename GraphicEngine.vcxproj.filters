@@ -138,6 +138,9 @@
     <ClCompile Include="src\EngineState.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\Octree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
@@ -314,6 +317,12 @@
     <ClInclude Include="src\EngineState.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\Octree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AABB.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="document\advice.md" />
@@ -334,8 +343,6 @@
     <None Include="Dependencies\GLEW\doc\log.html" />
     <None Include="Dependencies\GLEW\doc\wglew.html" />
     <None Include="Debug\glew32.dll" />
-    <None Include="res\shaders\RayTracing\FOD.shader" />
     <None Include="res\shaders\ComputeShaders\ModelTransform.shader" />
-    <None Include="res\shaders\RealTimeRendering\layout.shader" />
   </ItemGroup>
 </Project>

@@ -144,7 +144,7 @@ void PointLight::Bind(Shader& shader, glm::mat4 globalTransform)
 {
 	shader.Bind();
 	glm::vec3 position = globalTransform * glm::vec4(m_LightPos, 1.0f);
-	std::string number = std::to_string(pointLightID[this]);
+	std::string number = std::to_string(g_PointLightID[this]);
 	shader.SetUniformVec3f("pointLights[" + number + "].lightPos", position);
 	shader.SetUniformVec3f("pointLights[" + number + "].lightAmbient", m_LightAmbient);
 	shader.SetUniformVec3f("pointLights[" + number + "].lightDiffuse", m_LightDiffuse);

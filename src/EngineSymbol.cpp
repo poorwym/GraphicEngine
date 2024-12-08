@@ -23,7 +23,7 @@ EngineSymbol::EngineSymbol()
 
 	m_VAO->AddBuffer(*m_VBO, layout);
 
-	m_Shader = new Shader("res/shaders/EngineShader/Axis.shader");
+	m_Shader = new Shader("res/shaders/EngineShader/Axis.glsl");
 }
 void EngineSymbol::Render(Camera& camera)
 {
