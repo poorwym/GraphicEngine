@@ -43,5 +43,5 @@ public:
 	TileQuad(int n);
 	~TileQuad();
 
-	void Render(Shader& shader);
+	void Render(Shader& shader, GLFWwindow* window);
 };

@@ -141,6 +141,9 @@
     <ClCompile Include="src\Octree.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\NVIDIA_Nsight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
@@ -321,6 +324,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\AABB.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NVIDIA_Nsight.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

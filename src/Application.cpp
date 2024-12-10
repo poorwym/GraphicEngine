@@ -39,6 +39,8 @@
 #include "TriangleSubdivider.h"
 #include "EngineState.h"
 #include "Octree.h"
+#include "NGFX_Injection.h"
+#include "NVIDIA_Nsight.h"
 
 extern TextureManager g_TextureManager;
 
@@ -54,7 +56,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -79,9 +81,37 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
+extern NsightGraphicsManager& g_NsightGraphicsManager;
+
+// 定义调试回调函数
+void APIENTRY OpenGLDebugCallback(GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam) {
+    // 过滤不重要的消息
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+
+    std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
+
+    // 根据错误类型和严重性决定是否捕获帧
+    if (severity == GL_DEBUG_SEVERITY_HIGH) {
+        // 获取 NsightGraphicsManager 单例
+        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+        if (!nsightManager.CaptureFrame()) {
+            std::cerr << "Failed to capture frame on GPU error." << std::endl;
+        }
+    }
+}
 
 int main(void)
 {    
+    if (!g_NsightGraphicsManager.Initialize()) {
+        std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
+        return -1;
+    }
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -116,6 +146,16 @@ int main(void)
         return -1; // 或者其他错误处理方式
     }
 
+    // 设置 OpenGL 调试回调
+    int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // 同步回调
+        glDebugMessageCallback(OpenGLDebugCallback, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
+
     // 获取 OpenGL 版本信息
     const char* version = (const char*)glGetString(GL_VERSION);
     // 输出 OpenGL 版本
@@ -148,7 +188,7 @@ int main(void)
     RealTimeRender(window);
 }
 static void LoadModel(SceneManager& g_SceneManager) {
-    g_TextureArray = new TextureArray(1024, 1024, 2048);
+    g_TextureArray = new TextureArray(1024, 1024, 64);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
     //MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
@@ -184,7 +224,7 @@ void RealTimeRender(GLFWwindow* window) {
     InitCamera(camera);
     cameraController = new CameraController(&camera, window);
 
-    Scene* scene = new Scene(500);
+    Scene* scene = new Scene(50);
     g_SceneManager = SceneManager(scene);
     LoadModel(g_SceneManager);
     InitModel();
@@ -272,7 +312,7 @@ void RealTimeRender(GLFWwindow* window) {
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
         if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate);
+            RayTracing(camera, scene, sampleRate, window);
         }
         ImGui::End();
 
@@ -285,7 +325,7 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
@@ -377,7 +417,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          //render
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         scene->RayTracingRender(*mainShader, camera);
+         scene->RayTracingRender(*mainShader, camera, window);
          colorFBO.Unbind();
          ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
          cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);

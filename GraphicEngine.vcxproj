@@ -117,14 +117,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib;;NGFX_Injection.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,7 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -143,8 +143,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\x64\vc16\lib\;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib;glew32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\x64\vc16\lib\;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib;glew32.lib;NGFX_Injection.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -166,6 +166,7 @@
     <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\NVIDIA_Nsight.cpp" />
     <ClCompile Include="src\Octree.cpp" />
     <ClCompile Include="src\Quad.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
     <ClInclude Include="src\Quad.h" />
+    <ClInclude Include="src\NVIDIA_Nsight.h" />
     <ClInclude Include="\\Mac\Home\Downloads\stb_image_resize2.h" />
     <ClInclude Include="\\Mac\Home\Downloads\stb_image_write.h" />
   </ItemGroup>
