@@ -38,11 +38,14 @@
 #include "TextureManager.h"
 #include "TriangleSubdivider.h"
 #include "EngineState.h"
+#include "Octree.h"
+#include "NGFX_Injection.h"
+#include "NVIDIA_Nsight.h"
 
-extern TextureManager textureManager;
+extern TextureManager g_TextureManager;
 
 EngineState engineState;
-SceneManager sceneManager(nullptr);
+SceneManager g_SceneManager(nullptr);
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -53,7 +56,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -78,9 +81,37 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
+extern NsightGraphicsManager& g_NsightGraphicsManager;
+
+// 定义调试回调函数
+void APIENTRY OpenGLDebugCallback(GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam) {
+    // 过滤不重要的消息
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+
+    std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
+
+    // 根据错误类型和严重性决定是否捕获帧
+    if (severity == GL_DEBUG_SEVERITY_HIGH) {
+        // 获取 NsightGraphicsManager 单例
+        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+        if (!nsightManager.CaptureFrame()) {
+            std::cerr << "Failed to capture frame on GPU error." << std::endl;
+        }
+    }
+}
 
 int main(void)
 {    
+    if (!g_NsightGraphicsManager.Initialize()) {
+        std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
+        return -1;
+    }
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -115,6 +146,16 @@ int main(void)
         return -1; // 或者其他错误处理方式
     }
 
+    // 设置 OpenGL 调试回调
+    int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // 同步回调
+        glDebugMessageCallback(OpenGLDebugCallback, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
+
     // 获取 OpenGL 版本信息
     const char* version = (const char*)glGetString(GL_VERSION);
     // 输出 OpenGL 版本
@@ -146,18 +187,18 @@ int main(void)
     ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
     RealTimeRender(window);
 }
-static void LoadModel(SceneManager& sceneManager) {
-    textureArray = new TextureArray(1024, 1024, 2048);
+static void LoadModel(SceneManager& g_SceneManager) {
+    g_TextureArray = new TextureArray(1024, 1024, 64);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
     //MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    sceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
+    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
-    sceneManager.AddPointLight(pointLight, "node2", nullptr);
-    //sceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
-    //sceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
+    g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
+    //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
+    //g_SceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
 }
 static void InitModel() {
 
@@ -183,16 +224,16 @@ void RealTimeRender(GLFWwindow* window) {
     InitCamera(camera);
     cameraController = new CameraController(&camera, window);
 
-    Scene* scene = new Scene(10);
-    sceneManager = SceneManager(scene);
-    LoadModel(sceneManager);
+    Scene* scene = new Scene(50);
+    g_SceneManager = SceneManager(scene);
+    LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
 
     int sampleRate = 0;
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
-    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.shader");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.glsl");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
@@ -240,7 +281,7 @@ void RealTimeRender(GLFWwindow* window) {
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
         mainShader->Bind();
-        mainShader->SetUniform1i("numPointLights", pointLightID.size());
+        mainShader->SetUniform1i("numPointLights", g_PointLightID.size());
         mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
         mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
@@ -268,16 +309,10 @@ void RealTimeRender(GLFWwindow* window) {
         //update
         scene->Update(deltaTime);
 
-        ImGui::Begin("Update");
-        if (ImGui::Button("Update")) {
-            scene->UpdateVertices();
-        }
-        ImGui::End();
-
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
         if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate);
+            RayTracing(camera, scene, sampleRate, window);
         }
         ImGui::End();
 
@@ -290,9 +325,9 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
-     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.shader");
-     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window) {
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
+     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -307,6 +342,14 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          depthShader->Unbind();
      }
      std::cout << "Depth Render Complete!" << std::endl;
+
+     scene->FreeVAO();
+     std::cout << "VAO freed!" << std::endl;
+
+     std::cout << "Material SSBO Initializing..." << std::endl;
+     ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
+     int numMaterials = g_MaterialList.size();
+     std::cout << "Material SSBO Created!" << std::endl;
 
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
      std::vector<Triangle> triangles;
@@ -325,35 +368,22 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              Vertex v3 = vertices->at(idx3);
              // 创建三角形
              Triangle triangle = triangleSubdivider.CreateTriangle(v1, v2, v3);
-             /*
-             std::vector<Triangle> dividedTriangles;
-             float length = glm::distance(v1.Position, v2.Position);
-             int n = (int)(length / MAX_TRIANGLE_EDGE_LENGTH);
-             // 进行division
-             triangleSubdivider.SubdivideTriangle(triangle, n, dividedTriangles);
-             // 调整高度
-             CPUTexture* heightTexture = textureManager.GetTexture(v1.material.HeightMap);
-             float bumpMutiplier = v1.material.BumpMutiplier;
-             for (Triangle& triangle : dividedTriangles) {
-                 triangleSubdivider.AdjustHeight(triangle, heightTexture, bumpMutiplier);
-             }
-             
-             triangles.insert(triangles.end(), dividedTriangles.begin(), dividedTriangles.end());
-             */
              triangles.push_back(triangle);
          }
      }
-     ShaderStorageBuffer* trianglesSSBO = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
+     ShaderStorageBuffer trianglesSSBO(triangles.data(), triangles.size() * sizeof(Triangle), 1);
      int numTriangles = triangles.size();
      std::cout << "numTriangles: " << numTriangles << std::endl;
 
-     std::cout << "Creating BVHTree..." << std::endl;
-     BVHTree tree(triangles);
-     std::cout << "BVHTree Created" << std::endl;
 
-     ShaderStorageBuffer* BVHTreeSSBO = new ShaderStorageBuffer(tree.nodes.data(), tree.nodes.size() * sizeof(BVHNode), 1);
-     ShaderStorageBuffer* triangleIndexSSBO = new ShaderStorageBuffer(tree.triangleIndices.data(), tree.triangleIndices.size() * sizeof(int), 2);
+     std::cout << "Creating BVH Tree..." << std::endl;
+     BVHTree BVHTree(triangles);
+     std::cout << "BVH Tree Created" << std::endl;
 
+     ShaderStorageBuffer BVHssbo(BVHTree.nodes.data(), BVHTree.nodes.size() * sizeof(BVHNode), 2);
+     ShaderStorageBuffer triangleIndexBVHSSBO(BVHTree.triangleIndices.data(), BVHTree.triangleIndices.size() * sizeof(int), 3);
+
+     
      GLint64 maxSSBOSize = 0;
      //错误检查
      {
@@ -369,23 +399,25 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              return;
          }
      }
+
      mainShader->Bind();
      depthMapFBO.BindTexture(0);
      mainShader->SetUniform1i("depthMap", 0);
      mainShader->SetUniform1i("numTriangles", numTriangles);
+     mainShader->SetUniform1i("numMaterials", numMaterials);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
      for (int i = 0; i <= sampleRate; i++) {
          std::cout << "Render Mat " << i << std::endl;
          //Bind ssbo
-         trianglesSSBO->Bind();
-         BVHTreeSSBO->Bind();
-         triangleIndexSSBO->Bind();
+         trianglesSSBO.Bind();
+         BVHssbo.Bind();
+         triangleIndexBVHSSBO.Bind();
          //render
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         scene->RayTracingRender(*mainShader, camera);
+         scene->RayTracingRender(*mainShader, camera, window);
          colorFBO.Unbind();
          ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
          cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -404,9 +436,9 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              continue;
          }
          matArray.push_back(mat);
-         trianglesSSBO->Unbind();
-         BVHTreeSSBO->Unbind();
-         triangleIndexSSBO->Unbind();
+         BVHssbo.Unbind();
+         triangleIndexBVHSSBO.Unbind();
+         trianglesSSBO.Unbind();
          std::cout << "Render Completed" << std::endl;
      }
 
@@ -478,13 +510,14 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
      resourceManager.SaveMatToPNG(finalPicture, "final.png", WINDOW_WIDTH, WINDOW_HEIGHT);
      std::cout << "Final image saved as final.png" << std::endl;
 
-     // 释放资源
-     delete trianglesSSBO;
+     scene->ResetVAO();
+     std::cout << "VAO reset!" << std::endl;
+
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/screen.shader");
+    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/screen.glsl");
     colorFBO.BindTexture(0);
     colorFBO.BindDepthTexture(1);
     screenShader->Bind();
@@ -500,7 +533,7 @@ static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.glsl");
     finalFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         colorFBO.BindTexture(0);
@@ -522,7 +555,7 @@ static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& ca
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RayTracing/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RayTracing/FOD.glsl");
     finalFBO.Bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     colorFBO.BindTexture(0);

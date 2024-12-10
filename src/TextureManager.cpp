@@ -24,4 +24,4 @@ CPUTexture* TextureManager::GetTexture(uint32_t index) const {
     return nullptr;
 }
 
-TextureManager textureManager;
+TextureManager g_TextureManager;

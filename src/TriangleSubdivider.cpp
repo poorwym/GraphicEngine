@@ -1,5 +1,6 @@
 #include "TriangleSubdivider.h"
 #include <glm/glm.hpp>
+#include "SceneManager.h"
 
 void TriangleSubdivider::SubdivideTriangle(
     const Triangle& inputTriangle,
@@ -8,6 +9,9 @@ void TriangleSubdivider::SubdivideTriangle(
 ) {
     Subdivide(inputTriangle, subdivisionLevel, outputTriangles);
 }
+
+extern std::vector<Material> g_MaterialList;
+extern SceneManager g_SceneManager;
 
 Triangle TriangleSubdivider::CreateTriangle(Vertex& v1, Vertex& v2, Vertex& v3)
 {
@@ -27,7 +31,8 @@ Triangle TriangleSubdivider::CreateTriangle(Vertex& v1, Vertex& v2, Vertex& v3)
     triangle.bitangent[0] = v1.Bitangent;
     triangle.bitangent[1] = v2.Bitangent;
     triangle.bitangent[2] = v3.Bitangent;
-    triangle.material = v1.material;
+    
+    triangle.materialIndex = g_SceneManager.GetMaterialIndex(v1.material);
     return triangle;
 }
 
@@ -79,9 +84,9 @@ void TriangleSubdivider::Subdivide(
 
     // 提取三角形的三个顶点
     Vertex v0, v1, v2;
-    v0 = { triangle.position[0], triangle.normal[0], triangle.texCoords[0], triangle.tangent[0], triangle.bitangent[0], triangle.material };
-    v1 = { triangle.position[1], triangle.normal[1], triangle.texCoords[1], triangle.tangent[1], triangle.bitangent[1], triangle.material };
-    v2 = { triangle.position[2], triangle.normal[2], triangle.texCoords[2], triangle.tangent[2], triangle.bitangent[2], triangle.material };
+    //v0 = { triangle.position[0], triangle.normal[0], triangle.texCoords[0], triangle.tangent[0], triangle.bitangent[0], triangle.material };
+    //v1 = { triangle.position[1], triangle.normal[1], triangle.texCoords[1], triangle.tangent[1], triangle.bitangent[1], triangle.material };
+    //v2 = { triangle.position[2], triangle.normal[2], triangle.texCoords[2], triangle.tangent[2], triangle.bitangent[2], triangle.material };
 
     // 计算三条边的中点
     Vertex m0 = ComputeMidpoint(v0, v1);
@@ -112,7 +117,7 @@ void TriangleSubdivider::Subdivide(
     t0.bitangent[1] = m0.Bitangent;
     t0.bitangent[2] = m2.Bitangent;
 
-    t0.material = triangle.material;
+    //t0.material = triangle.material;
 
     // 三角形 t1
     t1.position[0] = m0.Position;
@@ -135,7 +140,7 @@ void TriangleSubdivider::Subdivide(
     t1.bitangent[1] = v1.Bitangent;
     t1.bitangent[2] = m1.Bitangent;
 
-    t1.material = triangle.material;
+    //t1.material = triangle.material;
 
     // 三角形 t2
     t2.position[0] = m2.Position;
@@ -158,7 +163,7 @@ void TriangleSubdivider::Subdivide(
     t2.bitangent[1] = m1.Bitangent;
     t2.bitangent[2] = v2.Bitangent;
 
-    t2.material = triangle.material;
+    //t2.material = triangle.material;
 
     // 三角形 t3
     t3.position[0] = m0.Position;
@@ -181,7 +186,7 @@ void TriangleSubdivider::Subdivide(
     t3.bitangent[1] = m1.Bitangent;
     t3.bitangent[2] = m2.Bitangent;
 
-    t3.material = triangle.material;
+    //t3.material = triangle.material;
 
     // 递归细分新生成的三角形
     Subdivide(t0, level - 1, triangles);

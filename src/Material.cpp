@@ -4,9 +4,10 @@
 #include"SceneManager.h"
 #include "TextureManager.h"
 
-extern TextureManager textureManager;
+extern TextureManager g_TextureManager;
 
-extern SceneManager sceneManager;
+extern SceneManager g_SceneManager;
+
 
 static std::string safe_substr(const std::string& str, size_t start) {
 	if (start < str.size()) {
@@ -64,34 +65,35 @@ PBRMaterial::PBRMaterial(const std::string& filePath, const tinyobj::material_t&
 
 	if (m.diffuse_texname.size() > 0){//1
         std::string Path = filePath + m.diffuse_texname;
-		m_Material.AlbedoMapIndex = sceneManager.AddTexture(Path.c_str());
+		m_Material.AlbedoMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
 	if (m.bump_texname.size() > 0){//2
 		std::string Path = filePath + m.bump_texname;
-        m_Material.HeightMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.HeightMapIndex = g_SceneManager.AddTexture(Path.c_str());
 		m_Material.BumpMutiplier = 0.05;
-		m_Material.HeightMap = textureManager.AddTexture(new CPUTexture(Path));
+		m_Material.HeightMap = g_TextureManager.AddTexture(new CPUTexture(Path));
 	}
 	if (m.emissive_texname.size()) {//3
 		std::string Path = filePath + m.emissive_texname;
-        m_Material.EmissionMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.EmissionMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
 	if (m.roughness_texname.size()) {//5
 		std::string Path = filePath + m.roughness_texname;
-        m_Material.RoughnessMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.RoughnessMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
 	if (m.metallic_texname.size()) {//6
 		std::string Path = filePath + m.metallic_texname;
-        m_Material.MetallicMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.MetallicMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
 	if (m.normal_texname.size()) {//7
 		std::string Path = filePath + m.normal_texname;
-        m_Material.NormalMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.NormalMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
 	if (m.alpha_texname.size()) { //15
 		std::string Path = filePath + m.alpha_texname;
-        m_Material.AlphaMapIndex = sceneManager.AddTexture(Path.c_str());
+        m_Material.AlphaMapIndex = g_SceneManager.AddTexture(Path.c_str());
 	}
+	g_SceneManager.AddMaterial(m_Material);
 }
 PBRMaterial::~PBRMaterial()
 {
