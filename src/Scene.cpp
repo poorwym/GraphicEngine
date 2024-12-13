@@ -93,7 +93,7 @@ void Scene::ResetVAO()
     m_VAO->Unbind();
 }
 Scene::Scene(int n)
-	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n),numVertices(2), numIndices(2)
+	:m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n),numVertices(2), numIndices(2)
 {
 }
 
@@ -112,7 +112,6 @@ static void StaticUpdate(float deltaTime) {
 }
 void Scene::Update(float deltaTime)
 {
-	m_DirLight->Update(deltaTime);
 	StaticUpdate(deltaTime);
 	for (auto& pair : m_SceneNodes)
 	{
@@ -126,17 +125,12 @@ void Scene::AddNode(SceneNode* node)
 	m_SceneNodes[node->GetName()] = node;
 }
 
-void Scene::SetDirectionalLight(DirectionalLight* dirLight)
-{
-	m_DirLight = dirLight;
-}
-
 void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
 	shader.Bind();
-	m_DirLight->Bind(shader, globalTransform);
 	shader.SetUniform1i("numPointLights", g_PointLightID.size());
-	shader.SetUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
+    shader.SetUniform1i("numSpotLights", g_SpotLightID.size());
+    shader.SetUniform1i("numDirectionalLights", g_DirectionalLightList.size());
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
 		node->BindLight(shader, globalTransform);
@@ -150,49 +144,20 @@ void Scene::RenderDepthMap(Shader& shader) const
 	renderer.Draw(*m_VAO, *m_IBO, nullptr, shader, glm::mat4(1.0f));
 }
 
-void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
-{
-	UpdateVertices();
-	UpdateVBO();
-	depthShader->Bind();
-	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
-	depthShader->SetUniformMat4f("SpaceMatrix", lightSpaceMatrix);
-	m_DirLight->m_ShadowMapFBO->Bind();
-	RenderDepthMap(*depthShader);
-	depthShader->Unbind();
-	m_DirLight->m_ShadowMapFBO->Unbind();
-	//bind shadowMap
-	m_DirLight->m_ShadowMapFBO->BindTexture(31);
-
-	int count = 0;
-	for(auto& pair: g_PointLightList)
-	{
-		PointLight* pointlight = pair.second;
-		std::vector<glm::mat4> shadowMatrices = pointlight->ComputePointLightShadowMatrices(NEAR_PLANE, FAR_PLANE);
-		pointlight->m_CubeShadowMapFBO->Bind();
-		cubeDepthShader->Bind();
-		cubeDepthShader->SetUniform1f("farPlane", FAR_PLANE);
-		cubeDepthShader->SetUniformVec3f("lightPos", pointlight->GetLightPos());
-		for (unsigned int i = 0; i < 6; ++i) {
-			cubeDepthShader->SetUniformMat4f("ShadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
-			pointlight->m_CubeShadowMapFBO->BindFace(i);
-			glClear(GL_DEPTH_BUFFER_BIT);
-			RenderDepthMap(*cubeDepthShader);
-		}
-		cubeDepthShader->Unbind();
-		pointlight->m_CubeShadowMapFBO->Unbind();
-		pointlight->m_CubeShadowMapFBO->BindTexture(27 + count);
-		count++;
-	}
+void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader){
+	return;
 }
 
 void Scene::BatchRender(Shader& shader, Camera& camera)
 {
+	if (engineState.needUpdate) {
+        UpdateVertices();
+		UpdateVBO();
+	}
 	BatchBindTextures(shader);
 	BindLight(shader, glm::mat4(1.0f));
 	Renderer render;
-	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
-	render.Draw(*m_VAO, *m_IBO, &camera, shader, glm::mat4(1.0f), &lightSpaceMatrix);
+	render.Draw(*m_VAO, *m_IBO, &camera, shader, glm::mat4(1.0f));
 	g_TextureArray->Unbind();
 }
 
@@ -234,20 +199,6 @@ void Scene::OnImGuiTree()
 {
 	if (ImGui::TreeNode("Scene"))
 	{
-		if (ImGui::Button("DirectionalLight"))
-		{
-			ImGui::OpenPopup("DirectionalLightController");
-		}
-		if (ImGui::BeginPopup("DirectionalLightController"))
-		{
-			directionalLightController.OnImGuiRender();
-			if (ImGui::Button("Close"))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
 		for (auto& pair : m_SceneNodes) {
 			pair.second->OnImGuiTree();
 		}

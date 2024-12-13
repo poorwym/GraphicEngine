@@ -33,3 +33,15 @@ public:
 	void Update(float deltaTime) override;
 	void SelectedLight(Light* light) override;
 };
+
+class SpotLightController : public LightController {
+private:
+	SpotLight* m_SelectedLight;
+public:
+	SpotLightController();
+	SpotLightController(SpotLight* selectedLight);
+	void OnImGuiRender() override;
+	void OnImGuiRender(SpotLight* selectedLight);
+	void Update(float deltaTime) override;
+	void SelectedLight(Light* light) override;
+};

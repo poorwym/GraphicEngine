@@ -10,7 +10,8 @@ class Skybox
 public:
     Skybox(const std::vector<std::string>& faces);
     ~Skybox();
-
+    void Bind(unsigned int slot);
+    void Unbind();
     void Draw(Camera& camera);
 
 private:

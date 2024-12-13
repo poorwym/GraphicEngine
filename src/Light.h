@@ -99,6 +99,7 @@ public:
     std::string GetType() const override { return "SpotLight"; };
 
     inline glm::vec3 GetLightDir() const { return m_LightDir; };
+    inline glm::vec3 GetLightPos() const { return m_LightPos; };
     inline float GetCutOff() const { return m_CutOff; };
     inline float GetOuterCutOff() const { return m_OuterCutOff; };
     inline float GetConstant() const { return m_Constant; };

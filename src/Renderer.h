@@ -21,7 +21,7 @@ bool GLLogCall(const char* function, const char* file, int line);
 class Renderer
 {
 public:
-    void Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model, const glm::mat4* lightSpaceMatrix = nullptr) const;
+    void Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model) const;
     void Draw(const VertexArray& va, const IndexBuffer& ib, Shader& shader) const;
     void Clear() const;
 };

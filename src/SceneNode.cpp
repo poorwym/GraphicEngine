@@ -18,9 +18,17 @@ void SceneNode::RemoveChild(SceneNode* child)
 void SceneNode::BindLight(Shader& shader, glm::mat4 globalTranform)
 {
     glm::mat4 m_GlobalTransform = globalTranform * m_LocalTransform;
+
     if(m_PointLight){
         m_PointLight->Bind(shader, m_GlobalTransform);
     }
+    if (m_DirectionalLight) {
+        m_DirectionalLight->Bind(shader, m_GlobalTransform);
+    }
+    if (m_SpotLight) {
+        m_SpotLight->Bind(shader, m_GlobalTransform);
+    }
+
     for (auto& pair : m_Children) {
         pair.second->BindLight(shader, m_GlobalTransform);
     }
@@ -79,6 +87,10 @@ void SceneNode::Update(float deltaTime)
         m_Entity->Update(deltaTime);
     if(m_PointLight)
         m_PointLight->Update(deltaTime);
+    if(m_SpotLight)
+        m_SpotLight->Update(deltaTime);
+    if(m_DirectionalLight)
+        m_DirectionalLight->Update(deltaTime);
     for (auto& pair : m_Children)
     {
         pair.second->Update(deltaTime);
@@ -89,14 +101,15 @@ void SceneNode::OnImGuiTree()
 {
     if (ImGui::TreeNode(m_Name.c_str()))
     {
-
+        // 选择当前节点
         if (ImGui::Button("Selected the Node"))
         {
             ImGui::OpenPopup(m_Name.c_str());
         }
         if (ImGui::BeginPopup(m_Name.c_str()))
         {
-            g_SceneNodeControllerList[m_Name]->OnImGuiRender();
+            SceneNodeController controller(this);
+            controller.OnImGuiRender();
             if (ImGui::Button("Close"))
             {
                 ImGui::CloseCurrentPopup();
@@ -110,8 +123,9 @@ void SceneNode::OnImGuiTree()
                 ImGui::OpenPopup(m_PointLight->GetName().c_str());
             }
             if (ImGui::BeginPopup(m_PointLight->GetName().c_str()))
-            {
-                g_LightControllerList[m_PointLight->GetName()]->OnImGuiRender();
+            {   
+                PointLightController controller(m_PointLight);
+                controller.OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();
@@ -127,7 +141,42 @@ void SceneNode::OnImGuiTree()
             }
             if (ImGui::BeginPopup(m_Entity->GetName().c_str()))
             {
-                g_EntityControllerList[m_Entity->GetName()]->OnImGuiRender();
+                EntityController controller(m_Entity);
+                controller.OnImGuiRender();
+                if (ImGui::Button("Close"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+        //展示所有平行光
+        if (m_DirectionalLight) {
+            if (ImGui::Button("Directional Light"))
+            {
+                ImGui::OpenPopup("Directional Light");
+            }
+            if (ImGui::BeginPopup("Directional Light"))
+            {
+                DirectionalLightController controller(m_DirectionalLight);
+                controller.OnImGuiRender();
+                if (ImGui::Button("Close"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+        //展示所有聚光灯
+        if (m_SpotLight) {
+            if (ImGui::Button("Spot Light"))
+            {
+                ImGui::OpenPopup("Spot Light");
+            }
+            if (ImGui::BeginPopup("Spot Light"))
+            {
+                static SpotLightController controller(m_SpotLight);
+                controller.OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();
