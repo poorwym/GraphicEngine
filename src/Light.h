@@ -74,3 +74,46 @@ public:
     void Update(float deltaTime) override;
     std::vector<glm::mat4> ComputePointLightShadowMatrices(float nearPlane, float farPlane);
 };
+
+class SpotLight : public Light {
+private:
+    glm::vec3 m_LightDir;          // 聚光灯方向
+    glm::vec3 m_LightPos;           // 聚光灯位置
+    float m_CutOff;                // 内锥角（cosine of the angle）
+    float m_OuterCutOff;           // 外锥角（cosine of the angle）
+    // 衰减参数
+    float m_Constant;   // 常数衰减
+    float m_Linear;     // 线性衰减
+    float m_Quadratic;  // 二次方衰减
+public:
+    DepthMapFBO* m_ShadowMapFBO;  // 如果需要聚光灯阴影映射
+    SpotLight(const std::string& name, glm::vec3 color, float intensity,
+        glm::vec3 lightPos, glm::vec3 lightDir,
+        float cutOff, float outerCutOff);
+    SpotLight(const std::string& name, glm::vec3 color, float intensity,
+        glm::vec3 lightPos, glm::vec3 lightDir,
+        glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular,
+        float constant, float linear, float quadratic,
+        float cutOff, float outerCutOff);
+
+    std::string GetType() const override { return "SpotLight"; };
+
+    inline glm::vec3 GetLightDir() const { return m_LightDir; };
+    inline float GetCutOff() const { return m_CutOff; };
+    inline float GetOuterCutOff() const { return m_OuterCutOff; };
+    inline float GetConstant() const { return m_Constant; };
+    inline float GetLinear() const { return m_Linear; };
+    inline float GetQuadratic() const { return m_Quadratic; };
+
+    void SetLightDir(glm::vec3 lightDir);
+    void SetCutOff(float cutOff);
+    void SetOuterCutOff(float outerCutOff);
+    void SetConstant(float constant);
+    void SetLinear(float linear);
+    void SetQuadratic(float quadratic);
+
+    void Bind(Shader& shader, glm::mat4 globalTransform) override;
+    void Update(float deltaTime) override;
+
+    glm::mat4 ComputeLightSpaceMatrix(glm::vec3 sceneCenter);
+};

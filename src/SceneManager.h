@@ -20,14 +20,16 @@ public:
 	int AddTexture(const char* fileName);
 };
 
-extern std::map<std::string, Entity*> entityList;
-extern std::map<std::string, SceneNode*> sceneNodeList;
-extern std::map<std::string, LightController*> lightControllerList;
-extern std::map<std::string, EntityController*> entityControllerList;
-extern std::map<std::string, SceneNodeController*> sceneNodeControllerList;
-extern std::map<std::string, PointLight*> pointLightList;
-extern std::map<PointLight*, unsigned int> pointLightID;
-extern std::vector<Texture*> textureList;
-extern std::map<unsigned int, int> textureSlots;
+extern std::map<std::string, Entity*> g_EntityList;
+extern std::map<std::string, SceneNode*> g_SceneNodeList;
+extern std::map<std::string, LightController*> g_LightControllerList;
+extern std::map<std::string, EntityController*> g_EntityControllerList;
+extern std::map<std::string, SceneNodeController*> g_SceneNodeControllerList;
+extern std::map<std::string, PointLight*> g_PointLightList;
+extern std::map<PointLight*, unsigned int> g_PointLightID;
+extern std::vector<Texture*> g_TextureList;
+extern std::map<unsigned int, int> g_TextureSlots;
+extern std::map<std::string, SpotLight*> g_SpotLightList;
+extern std::map<SpotLight*, unsigned int> g_SpotLightID;
 
-extern TextureArray* textureArray;
+extern TextureArray* g_TextureArray;

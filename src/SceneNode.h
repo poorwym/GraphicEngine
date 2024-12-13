@@ -20,10 +20,16 @@ private:
     glm::vec3 m_Rotation;
     Entity* m_Entity;
     PointLight* m_PointLight;
+    DirectionalLight* m_DirectionalLight;
+    SpotLight* m_SpotLight;
     SceneNode* m_Parent;
 public:
+    SceneNode(std::string name, void* ptr, SceneNode* parent);
     SceneNode(std::string name, Entity* entity, SceneNode* parent);
     SceneNode(std::string name, PointLight* entity, SceneNode* parent);
+    SceneNode(std::string name, DirectionalLight* directionalLight, SceneNode* parent);
+    SceneNode(std::string name, SpotLight* spotLight, SceneNode* parent);
+
     ~SceneNode();
     glm::mat4 GetLocalTransform() const;          // 获取局部变换矩阵
     glm::mat4 GetGlobalTransform() const;         // 获取全局变换矩阵

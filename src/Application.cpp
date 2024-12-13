@@ -39,10 +39,10 @@
 #include "TriangleSubdivider.h"
 #include "EngineState.h"
 
-extern TextureManager textureManager;
+extern TextureManager g_TextureManager;
 
 EngineState engineState;
-SceneManager sceneManager(nullptr);
+SceneManager g_SceneManager(nullptr);
 DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -146,18 +146,18 @@ int main(void)
     ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
     RealTimeRender(window);
 }
-static void LoadModel(SceneManager& sceneManager) {
-    textureArray = new TextureArray(1024, 1024, 2048);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
-    //MeshComponent* meshComponent3 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+static void LoadModel(SceneManager& g_SceneManager) {
+    g_TextureArray = new TextureArray(1024, 1024, 64);
+    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
+    //MeshComponent* meshComponent3 = resourceManager.Load("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    sceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
+    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
+    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
-    sceneManager.AddPointLight(pointLight, "node2", nullptr);
-    //sceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
-    //sceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
+    g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
+    //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
+    //g_SceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
 }
 static void InitModel() {
 
@@ -184,15 +184,15 @@ void RealTimeRender(GLFWwindow* window) {
     cameraController = new CameraController(&camera, window);
 
     Scene* scene = new Scene(10);
-    sceneManager = SceneManager(scene);
-    LoadModel(sceneManager);
+    g_SceneManager = SceneManager(scene);
+    LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
 
     int sampleRate = 0;
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.shader");
-    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
-    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.shader");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
+    Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
+    Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.glsl");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     //这段真的非常非常重要，忘记绑定了。
     //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
@@ -240,7 +240,7 @@ void RealTimeRender(GLFWwindow* window) {
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
         mainShader->Bind();
-        mainShader->SetUniform1i("numPointLights", pointLightID.size());
+        mainShader->SetUniform1i("numPointLights", g_PointLightID.size());
         mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
         mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
@@ -291,8 +291,8 @@ void RealTimeRender(GLFWwindow* window) {
 }
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
-     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.shader");
-     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.shader");
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
+     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -332,7 +332,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              // 进行division
              triangleSubdivider.SubdivideTriangle(triangle, n, dividedTriangles);
              // 调整高度
-             CPUTexture* heightTexture = textureManager.GetTexture(v1.material.HeightMap);
+             CPUTexture* heightTexture = g_TextureManager.GetTexture(v1.material.HeightMap);
              float bumpMutiplier = v1.material.BumpMutiplier;
              for (Triangle& triangle : dividedTriangles) {
                  triangleSubdivider.AdjustHeight(triangle, heightTexture, bumpMutiplier);
@@ -484,7 +484,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/screen.shader");
+    Shader* screenShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/screen.glsl");
     colorFBO.BindTexture(0);
     colorFBO.BindDepthTexture(1);
     screenShader->Bind();
@@ -500,7 +500,7 @@ static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera) {
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/FOD.glsl");
     finalFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         colorFBO.BindTexture(0);
@@ -522,7 +522,7 @@ static ColorFBO PostRender(ColorFBO& colorFBO, DepthMapFBO& depthFBO, Camera& ca
     static Quad screenQuad;
     ColorFBO finalFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RayTracing/FOD.shader");
+    Shader* FODshader = resourceManager.Load<Shader>("res/shaders/RayTracing/FOD.glsl");
     finalFBO.Bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     colorFBO.BindTexture(0);

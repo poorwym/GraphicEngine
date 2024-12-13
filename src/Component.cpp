@@ -54,7 +54,7 @@ void MeshComponent::Update(float deltaTime)
 std::vector<Vertex>* MeshComponent::GetVertices(const glm::mat4& globalTransform)
 {
     //glm::mat4 m_GlobalTransform = globalTransform * m_LocalTransform;
-    static ComputeShader* computeShader = new ComputeShader("res/shaders/ComputeShaders/ModelTransform.shader");
+    static ComputeShader* computeShader = new ComputeShader("res/shaders/ComputeShaders/ModelTransform.glsl");
     m_NumVertices = m_Vertices.size();
     m_TransformedVertices.resize(m_NumVertices);
     // 创建顶点SSBO并上传数据

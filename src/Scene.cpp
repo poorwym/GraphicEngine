@@ -13,7 +13,7 @@ extern DirectionalLightController directionalLightController;
 static void BatchBindTextures(Shader& shader) {
 	shader.Bind();
 	shader.SetUniform1i("textures", 0);
-	textureArray->Bind();
+	g_TextureArray->Bind();
 	shader.Unbind();
 }
 
@@ -44,7 +44,7 @@ void Scene::UpdateVertices()
 	for (int i = 0; i < batchVertices.size(); i++) {
 		std::vector<Vertex>& vertices = *batchVertices[i];
 		m_Vertices.insert(m_Vertices.end(), vertices.begin(), vertices.end());
-		if(m_Indices.size() != -1)
+		if(m_Indices.size() != numIndices)
 		{
 			std::vector<unsigned int>& indices = *batchIndices[i];
 			for (auto& index : indices) {
@@ -54,6 +54,7 @@ void Scene::UpdateVertices()
 		}
 	}
     numVertices = m_Vertices.size();
+	numIndices = m_Indices.size();
 	engineState.needUpdate = false;
 }
 void Scene::ResetVAO()
@@ -85,7 +86,7 @@ void Scene::ResetVAO()
     m_VAO->Unbind();
 }
 Scene::Scene(int n)
-	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n),numVertices(2)
+	:m_DirLight(nullptr),m_VAO(nullptr),m_VBO(nullptr),m_IBO(nullptr),m_TileQuad(n),numVertices(2), numIndices(2)
 {
 }
 
@@ -127,7 +128,7 @@ void Scene::BindLight(Shader& shader, glm::mat4 globalTransform)
 {
 	shader.Bind();
 	m_DirLight->Bind(shader, globalTransform);
-	shader.SetUniform1i("numPointLights", pointLightID.size());
+	shader.SetUniform1i("numPointLights", g_PointLightID.size());
 	shader.SetUniformMat4f("lightSpaceMatrix", m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f)));
 	for (auto& pair : m_SceneNodes) {
 		SceneNode* node = pair.second;
@@ -157,7 +158,7 @@ void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader)
 	m_DirLight->m_ShadowMapFBO->BindTexture(31);
 
 	int count = 0;
-	for(auto& pair: pointLightList)
+	for(auto& pair: g_PointLightList)
 	{
 		PointLight* pointlight = pair.second;
 		std::vector<glm::mat4> shadowMatrices = pointlight->ComputePointLightShadowMatrices(NEAR_PLANE, FAR_PLANE);
@@ -185,7 +186,7 @@ void Scene::BatchRender(Shader& shader, Camera& camera)
 	Renderer render;
 	glm::mat4 lightSpaceMatrix = m_DirLight->ComputeLightSpaceMatrix(glm::vec3(0.0f));
 	render.Draw(*m_VAO, *m_IBO, &camera, shader, glm::mat4(1.0f), &lightSpaceMatrix);
-	textureArray->Unbind();
+	g_TextureArray->Unbind();
 }
 
 void Scene::RayTracingRender(Shader& shader, Camera& camera)
@@ -206,7 +207,7 @@ void Scene::RayTracingRender(Shader& shader, Camera& camera)
 	BindLight(shader, glm::mat4(1.0f));
 
     m_TileQuad.Render(shader);
-	textureArray->Unbind();
+	g_TextureArray->Unbind();
 }
 
 void Scene::Render(Shader& shader, Camera& camera)

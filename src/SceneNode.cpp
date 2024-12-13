@@ -96,7 +96,7 @@ void SceneNode::OnImGuiTree()
         }
         if (ImGui::BeginPopup(m_Name.c_str()))
         {
-            sceneNodeControllerList[m_Name]->OnImGuiRender();
+            g_SceneNodeControllerList[m_Name]->OnImGuiRender();
             if (ImGui::Button("Close"))
             {
                 ImGui::CloseCurrentPopup();
@@ -111,7 +111,7 @@ void SceneNode::OnImGuiTree()
             }
             if (ImGui::BeginPopup(m_PointLight->GetName().c_str()))
             {
-                lightControllerList[m_PointLight->GetName()]->OnImGuiRender();
+                g_LightControllerList[m_PointLight->GetName()]->OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();
@@ -127,7 +127,7 @@ void SceneNode::OnImGuiTree()
             }
             if (ImGui::BeginPopup(m_Entity->GetName().c_str()))
             {
-                entityControllerList[m_Entity->GetName()]->OnImGuiRender();
+                g_EntityControllerList[m_Entity->GetName()]->OnImGuiRender();
                 if (ImGui::Button("Close"))
                 {
                     ImGui::CloseCurrentPopup();
@@ -177,10 +177,22 @@ glm::mat4 SceneNode::GetGlobalTransform() const
     return m_Parent ? m_Parent->GetGlobalTransform() * GetLocalTransform() : GetLocalTransform();
 }
 
+SceneNode::SceneNode(std::string name, void* ptr, SceneNode* parent)
+    :m_LocalTransform(glm::mat4(1.0f)), m_Name(name), m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
+{
+    m_Entity = nullptr;
+    m_DirectionalLight = nullptr;
+    m_SpotLight = nullptr;
+    m_PointLight = nullptr;
+    m_Parent = parent;
+}
+
 SceneNode::SceneNode(std::string name, Entity* entity, SceneNode* parent)
     :m_LocalTransform(glm::mat4(1.0f)),m_Name(name),m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
 {
     m_Entity = entity;
+    m_DirectionalLight = nullptr;
+    m_SpotLight = nullptr;
     m_PointLight = nullptr;
     m_Parent = parent;
 }
@@ -189,10 +201,31 @@ SceneNode::SceneNode(std::string name, PointLight* light, SceneNode* parent)
     :m_LocalTransform(glm::mat4(1.0f)), m_Name(name), m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
 {
     m_Entity = nullptr;
+    m_DirectionalLight = nullptr;
+    m_SpotLight = nullptr;
     m_PointLight = light;
     m_Parent = parent;
 }
 
+SceneNode::SceneNode(std::string name, DirectionalLight* directionalLight, SceneNode* parent)
+    :m_LocalTransform(glm::mat4(1.0f)), m_Name(name), m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
+{
+    m_Entity = nullptr;
+    m_DirectionalLight = directionalLight;
+    m_SpotLight = nullptr;
+    m_PointLight = nullptr;
+    m_Parent = parent;
+}
+
+SceneNode::SceneNode(std::string name, SpotLight* spotLight, SceneNode* parent)
+    :m_LocalTransform(glm::mat4(1.0f)), m_Name(name), m_Position(glm::vec3(0.0f)), m_Rotation(glm::vec3(0.0f))
+{
+    m_Entity = nullptr;
+    m_DirectionalLight = nullptr;
+    m_SpotLight = spotLight;
+    m_PointLight = nullptr;
+    m_Parent = parent;
+}
 
 SceneNode::~SceneNode()
 {

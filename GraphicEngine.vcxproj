@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -117,13 +117,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;$(SolutionDir)Dependencies\FBXSDK\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);$(SolutionDir)Dependencies\FBXSDK\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -135,7 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)src;$(SolutionDir)src\vendor;$(SolutionDir)Dependencies\GLEW\include;$(SolutionDir)Dependencies\FBXSDK\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\x64\vc16\lib\;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\x64\vc16\lib\;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);$(SolutionDir)Dependencies\FBXSDK\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib;glew32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -159,13 +159,16 @@
     <ClCompile Include="src\EngineSymbol.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\EntityController.cpp" />
+    <ClCompile Include="src\FBXManager.cpp" />
     <ClCompile Include="src\Filter.cpp" />
     <ClCompile Include="src\FrameBuffer.cpp" />
+    <ClCompile Include="src\GLTFManager.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\OBJManager.cpp" />
     <ClCompile Include="src\Quad.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\ResourceManager.cpp" />
@@ -209,8 +212,10 @@
     <ClInclude Include="src\EngineSymbol.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\EntityController.h" />
+    <ClInclude Include="src\FBXManager.h" />
     <ClInclude Include="src\Filter.h" />
     <ClInclude Include="src\FrameBuffer.h" />
+    <ClInclude Include="src\GLTFManager.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Light.h" />
@@ -218,6 +223,7 @@
     <ClInclude Include="src\Macro.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\OBJManager.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\ResourceManager.h" />
     <ClInclude Include="src\Scene.h" />
@@ -242,7 +248,6 @@
     <ClInclude Include="src\vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="src\vendor\imgui\imstb_truetype.h" />
     <ClInclude Include="src\vendor\opencv2\opencv.hpp" />
-    <ClInclude Include="src\vendor\TinyOBJLoader\tiny_obj_loader.h" />
     <ClInclude Include="src\VertexArray.h" />
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
@@ -269,9 +274,6 @@
     <None Include="document\PBR.md" />
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
-    <None Include="res\shaders\ComputeShaders\ModelTransform.shader" />
-    <None Include="res\shaders\RayTracing\FOD.shader" />
-    <None Include="res\shaders\RealTimeRendering\layout.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

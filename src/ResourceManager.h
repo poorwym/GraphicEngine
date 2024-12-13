@@ -12,10 +12,14 @@ public:
     template<typename T>
     T* Load(const std::string& filePath);         // 从文件加载资源
     MeshComponent* LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate);
-    PBRMaterial* LoadPBRMaterial(const std::string& filePath);
+    //PBRMaterial* LoadPBRMaterial(FbxSurfaceMaterial* fbxMaterial, const std::string& filePath);
 
-    template<typename T>
-    void Unload(T* resource);                     // 卸载资源
+    // 加载FBX网格并返回MeshComponent
+    //static MeshComponent* LoadFBXMesh(FbxMesh* fbxMesh, const std::string& sceneName, const std::string& filePath);
+
+    // 加载FBX材质并返回PBRMaterial
+    //static PBRMaterial* LoadPBRMaterial(FbxSurfaceMaterial* fbxMaterial, const std::string& filePath);
+
 
     void SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height);
     cv::Mat SaveFBOToMat(ColorFBO& colorFBO, int width, int height);

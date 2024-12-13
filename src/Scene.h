@@ -18,7 +18,8 @@ private:
     std::vector<Vertex> m_Vertices;
     std::vector<unsigned int> m_Indices;
     void UpdateVBO();
-    int numVertices = 0;
+    int numVertices;
+    int numIndices;
     
     TileQuad m_TileQuad;
     

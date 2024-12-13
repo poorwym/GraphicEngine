@@ -4,11 +4,7 @@
 #include "Component.h"
 #include <GL/glew.h>
 #include <filesystem>
-
-#ifndef TINYOBJLOADER_IMPLEMENTATION
-#define TINYOBJLOADER_IMPLEMENTATION
-#endif 
-#include "TinyOBJLoader/tiny_obj_loader.h"
+#include "OBJManager.h"
 
 static void EnsureDirectoryExists(const std::string& directory) {
     std::filesystem::path dirPath(directory);
@@ -19,93 +15,8 @@ static void EnsureDirectoryExists(const std::string& directory) {
 
 MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate = 1)
 {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, (filePath + fileName).c_str(), filePath.c_str(), true)) {
-        std::cerr << "TinyOBJLoader Error: " << err << std::endl;
-        return nullptr;
-    }
-    std::cout << "shapes = " << shapes.size() << std::endl;
-    std::cout << "materials= " << materials.size() << std::endl;
-
-    // 加载所有材质
-    std::vector<PBRMaterial*> loadedMaterials;
-    for (const auto& mat : materials) {
-        PBRMaterial* pbrMat = new PBRMaterial(filePath, mat);
-        loadedMaterials.push_back(pbrMat);
-    }
-
-    std::map<int, std::vector<Vertex>> materialVerticesMap;
-    std::map<int, std::vector<unsigned int>> materialIndicesMap;
-
-    // 遍历每个形状
-    for (const auto& shape : shapes) {
-        size_t indexOffset = 0;
-        // 遍历每个面
-        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
-            size_t fv = shape.mesh.num_face_vertices[f];
-
-            int materialID = shape.mesh.material_ids[f];
-            if (materialID < 0 || materialID >= materials.size()) {
-                materialID = 0; // 使用默认材质
-            }
-
-            // 确保映射中存在该材质的条目
-            if (materialVerticesMap.find(materialID) == materialVerticesMap.end()) {
-                materialVerticesMap[materialID] = std::vector<Vertex>();
-                materialIndicesMap[materialID] = std::vector<unsigned int>();
-            }
-
-            // 遍历面中的每个顶点
-            for (size_t v = 0; v < fv; v++) {
-                tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
-                Vertex vertex = {};
-                vertex.Position = {
-                    attrib.vertices[3 * idx.vertex_index + 0],
-                    attrib.vertices[3 * idx.vertex_index + 1],
-                    attrib.vertices[3 * idx.vertex_index + 2],
-                    1.0f
-                };
-                if (idx.normal_index >= 0) {
-                    vertex.Normal = {
-                        attrib.normals[3 * idx.normal_index + 0],
-                        attrib.normals[3 * idx.normal_index + 1],
-                        attrib.normals[3 * idx.normal_index + 2],
-                        1.0f
-                    };
-                }
-                if (idx.texcoord_index >= 0) {
-                    vertex.TexCoords = {
-                        attrib.texcoords[2 * idx.texcoord_index + 0],
-                        attrib.texcoords[2 * idx.texcoord_index + 1],
-                        0.0f,
-                        0.0f
-                    };
-                }
-
-                // 添加顶点并更新索引
-                materialVerticesMap[materialID].push_back(vertex);
-                materialIndicesMap[materialID].push_back(materialVerticesMap[materialID].size() - 1);
-            }
-            indexOffset += fv;
-        }
-    }
-
-    // 创建 MeshComponent 并添加合并后的 Mesh
-    MeshComponent* meshComponent = new MeshComponent();
-    for (const auto& pair : materialVerticesMap) {
-        int materialID = pair.first;
-        std::vector<Vertex>& vertices = materialVerticesMap[materialID];
-        std::vector<unsigned int>& indices = materialIndicesMap[materialID];
-
-        Mesh* mesh = new Mesh(vertices, indices, loadedMaterials[materialID], scaleRate);
-        meshComponent->AddMesh(mesh);
-    }
-
-    return meshComponent;
+   OBJManager objManager;
+   return objManager.Load(filePath, fileName, scaleRate);
 }
 
 
@@ -269,3 +180,112 @@ ComputeShader* ResourceManager::Load<ComputeShader>(const std::string& filePath)
     ComputeShader* computeShader = new ComputeShader(filePath);
     return computeShader;
 }
+/*
+MeshComponent* ResourceManager::LoadFBXMesh(FbxMesh* fbxMesh, const std::string& sceneName, const std::string& filePath)
+{
+    // 获取顶点数量
+    int vertexCount = fbxMesh->GetControlPointsCount();
+    FbxVector4* controlPoints = fbxMesh->GetControlPoints();
+
+    // 获取面数量
+    int polygonCount = fbxMesh->GetPolygonCount();
+
+    // 准备存储顶点和索引
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    // 假设你正在遍历 FBX 模型的多边形和顶点
+    for (int i = 0; i < polygonCount; ++i) {
+        int verticesPerPolygon = fbxMesh->GetPolygonSize(i);
+        if (verticesPerPolygon != 3) {
+            // 仅处理三角形
+            continue;
+        }
+
+        for (int j = 0; j < verticesPerPolygon; ++j) {
+            int controlPointIndex = fbxMesh->GetPolygonVertex(i, j);
+            FbxVector4 fbxPosition = controlPoints[controlPointIndex];
+            Vertex vertex;
+            vertex.Position = glm::vec4(
+                static_cast<float>(fbxPosition[0]),
+                static_cast<float>(fbxPosition[1]),
+                static_cast<float>(fbxPosition[2]),
+                1.0f
+            );
+
+            // 获取法线
+            FbxVector4 fbxNormal;
+            bool normalExists = fbxMesh->GetPolygonVertexNormal(i, j, fbxNormal);
+            if (normalExists) {
+                vertex.Normal = glm::vec4(
+                    static_cast<float>(fbxNormal[0]),
+                    static_cast<float>(fbxNormal[1]),
+                    static_cast<float>(fbxNormal[2]),
+                    1.0f
+                );
+            }
+            else {
+                vertex.Normal = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            }
+
+            // 获取 UV 坐标
+            FbxVector2 fbxUV;
+            bool unmapped = false;
+            bool uvExists = fbxMesh->GetPolygonVertexUV(i, j, "UVSet1", fbxUV, unmapped);
+            if (uvExists && !unmapped) {
+                vertex.TexCoords = glm::vec4(
+                    static_cast<float>(fbxUV[0]),
+                    static_cast<float>(fbxUV[1]),
+                    0.0f,
+                    0.0f
+                );
+            }
+            else {
+                // 处理未映射的 UV 坐标
+                vertex.TexCoords = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+                if (unmapped) {
+                    // 例如，记录日志或分配默认 UV
+                    std::cerr << "Unmapped UV detected at polygon " << i << ", vertex " << j << std::endl;
+                }
+            }
+
+            // 添加顶点和索引
+            vertices.push_back(vertex);
+            indices.push_back(static_cast<unsigned int>(indices.size()));
+        }
+    }
+
+    // 创建MeshComponent
+    MeshComponent* meshComponent = new MeshComponent();
+
+    // 处理材质
+    int materialCount = fbxMesh->GetElementMaterialCount();
+    if (materialCount > 0) {
+        // 假设每个网格只有一个材质
+        FbxSurfaceMaterial* fbxMaterial = fbxMesh->GetNode()->GetMaterial(0);
+        if (fbxMaterial) {
+            PBRMaterial* pbrMaterial = LoadPBRMaterial(fbxMaterial, filePath);
+            if (pbrMaterial) {
+                // 创建Mesh并添加到MeshComponent
+                Mesh* mesh = new Mesh(vertices, indices, pbrMaterial, 1.0f);
+                meshComponent->AddMesh(mesh);
+            }
+        }
+    }
+    else {
+        // 如果没有材质，可以使用默认材质
+        PBRMaterial* defaultMaterial = new PBRMaterial();
+        Mesh* mesh = new Mesh(vertices, indices, defaultMaterial, 1.0f);
+        meshComponent->AddMesh(mesh);
+    }
+
+    return meshComponent;
+}
+
+// 加载FBX材质并返回PBRMaterial
+PBRMaterial* ResourceManager::LoadPBRMaterial(FbxSurfaceMaterial* fbxMaterial, const std::string& filePath)
+{
+    PBRMaterial* pbrMaterial = new PBRMaterial(filePath, fbxMaterial);
+    return pbrMaterial;
+}
+*/
