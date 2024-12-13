@@ -23,7 +23,10 @@ struct Triangle {
     glm::vec4 texCoords[3];
     glm::vec4 tangent[3];
     glm::vec4 bitangent[3];
-    Material material;
+    int materialIndex;
+    float padding1;
+    float padding2;
+    float padding3;
 };
 
 class Mesh {

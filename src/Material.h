@@ -34,6 +34,16 @@ struct Material {
     uint32_t HeightMap; //CPU�˵ĸ߶�ͼ
     float padding3;
     float padding4;
+    bool operator==(const Material& other) const
+    {
+        return AlbedoMapIndex == other.AlbedoMapIndex && NormalMapIndex == other.NormalMapIndex &&
+            MetallicMapIndex == other.MetallicMapIndex && RoughnessMapIndex == other.RoughnessMapIndex &&
+            AOMapIndex == other.AOMapIndex && EmissionMapIndex == other.EmissionMapIndex &&
+            AlphaMapIndex == other.AlphaMapIndex && HeightMapIndex == other.HeightMapIndex &&
+            Ambient == other.Ambient && Diffuse == other.Diffuse && Specular == other.Specular &&
+            Emission == other.Emission && Dissolve == other.Dissolve && Illum== other.Illum && OpticalDensity == other.OpticalDensity &&
+            SpecularExponent == other.SpecularExponent && HeightMap == other.HeightMap;
+    }
 };
 
 class PBRMaterial{

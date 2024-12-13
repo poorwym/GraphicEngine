@@ -2,8 +2,16 @@
 #include "Quad.h"
 #include "VertexBufferLayout.h"
 #include "Renderer.h"
-#include<vector>
+#include <vector>
 #include <iostream>
+#include "NGFX_Injection.h"
+#include "GLFW/glfw3.h"
+#include "NVIDIA_Nsight.h"
+#include <thread>
+#include <chrono>
+
+extern NsightGraphicsManager& g_NsightGraphicsManager;
+
 float quadVertices[] = {
         // positions        // texCoords
         -1.0f,  1.0f, 0.0f,  0.0f, 1.0f, // bottom left 
@@ -134,10 +142,20 @@ TileQuad::~TileQuad() {
     }
 }
 
-void TileQuad::Render(Shader& shader) {
+void TileQuad::Render(Shader& shader, GLFWwindow* window) {
     shader.Bind();
+    int count = 0;
+    float size = m_Quads.size();
     for (auto& quad : m_Quads) {
         quad->Render(shader);
+#ifdef _DEBUG
+        //g_NsightGraphicsManager.CaptureFrame();
+        //GLCall(glfwSwapBuffers(window));
+        GLCall(glFinish());
+#endif
+        if(count % 100 == 0)
+            std::cout << "Rendered " << static_cast<float>(count)/size * 100 << " %" << std::endl;
+        count++;
     }
     shader.Unbind();
 }

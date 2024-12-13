@@ -38,6 +38,9 @@
 #include "TextureManager.h"
 #include "TriangleSubdivider.h"
 #include "EngineState.h"
+#include "Octree.h"
+#include "NGFX_Injection.h"
+#include "NVIDIA_Nsight.h"
 
 extern TextureManager g_TextureManager;
 
@@ -53,7 +56,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -78,9 +81,37 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
+extern NsightGraphicsManager& g_NsightGraphicsManager;
+
+// 定义调试回调函数
+void APIENTRY OpenGLDebugCallback(GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam) {
+    // 过滤不重要的消息
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+
+    std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
+
+    // 根据错误类型和严重性决定是否捕获帧
+    if (severity == GL_DEBUG_SEVERITY_HIGH) {
+        // 获取 NsightGraphicsManager 单例
+        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+        if (!nsightManager.CaptureFrame()) {
+            std::cerr << "Failed to capture frame on GPU error." << std::endl;
+        }
+    }
+}
 
 int main(void)
 {    
+    if (!g_NsightGraphicsManager.Initialize()) {
+        std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
+        return -1;
+    }
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -113,6 +144,16 @@ int main(void)
     if (err != GLEW_OK) {
         std::cout << "GLEW initialization failed: " << glewGetErrorString(err) << std::endl;
         return -1; // 或者其他错误处理方式
+    }
+
+    // 设置 OpenGL 调试回调
+    int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // 同步回调
+        glDebugMessageCallback(OpenGLDebugCallback, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
 
     // 获取 OpenGL 版本信息
@@ -268,16 +309,10 @@ void RealTimeRender(GLFWwindow* window) {
         //update
         scene->Update(deltaTime);
 
-        ImGui::Begin("Update");
-        if (ImGui::Button("Update")) {
-            scene->UpdateVertices();
-        }
-        ImGui::End();
-
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
         if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate);
+            RayTracing(camera, scene, sampleRate, window);
         }
         ImGui::End();
 
@@ -290,7 +325,7 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
@@ -307,6 +342,14 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
          depthShader->Unbind();
      }
      std::cout << "Depth Render Complete!" << std::endl;
+
+     scene->FreeVAO();
+     std::cout << "VAO freed!" << std::endl;
+
+     std::cout << "Material SSBO Initializing..." << std::endl;
+     ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
+     int numMaterials = g_MaterialList.size();
+     std::cout << "Material SSBO Created!" << std::endl;
 
      ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
      std::vector<Triangle> triangles;
@@ -325,35 +368,22 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              Vertex v3 = vertices->at(idx3);
              // 创建三角形
              Triangle triangle = triangleSubdivider.CreateTriangle(v1, v2, v3);
-             /*
-             std::vector<Triangle> dividedTriangles;
-             float length = glm::distance(v1.Position, v2.Position);
-             int n = (int)(length / MAX_TRIANGLE_EDGE_LENGTH);
-             // 进行division
-             triangleSubdivider.SubdivideTriangle(triangle, n, dividedTriangles);
-             // 调整高度
-             CPUTexture* heightTexture = g_TextureManager.GetTexture(v1.material.HeightMap);
-             float bumpMutiplier = v1.material.BumpMutiplier;
-             for (Triangle& triangle : dividedTriangles) {
-                 triangleSubdivider.AdjustHeight(triangle, heightTexture, bumpMutiplier);
-             }
-             
-             triangles.insert(triangles.end(), dividedTriangles.begin(), dividedTriangles.end());
-             */
              triangles.push_back(triangle);
          }
      }
-     ShaderStorageBuffer* trianglesSSBO = new ShaderStorageBuffer(triangles.data(), triangles.size() * sizeof(Triangle), 0);
+     ShaderStorageBuffer trianglesSSBO(triangles.data(), triangles.size() * sizeof(Triangle), 1);
      int numTriangles = triangles.size();
      std::cout << "numTriangles: " << numTriangles << std::endl;
 
-     std::cout << "Creating BVHTree..." << std::endl;
-     BVHTree tree(triangles);
-     std::cout << "BVHTree Created" << std::endl;
 
-     ShaderStorageBuffer* BVHTreeSSBO = new ShaderStorageBuffer(tree.nodes.data(), tree.nodes.size() * sizeof(BVHNode), 1);
-     ShaderStorageBuffer* triangleIndexSSBO = new ShaderStorageBuffer(tree.triangleIndices.data(), tree.triangleIndices.size() * sizeof(int), 2);
+     std::cout << "Creating BVH Tree..." << std::endl;
+     BVHTree BVHTree(triangles);
+     std::cout << "BVH Tree Created" << std::endl;
 
+     ShaderStorageBuffer BVHssbo(BVHTree.nodes.data(), BVHTree.nodes.size() * sizeof(BVHNode), 2);
+     ShaderStorageBuffer triangleIndexBVHSSBO(BVHTree.triangleIndices.data(), BVHTree.triangleIndices.size() * sizeof(int), 3);
+
+     
      GLint64 maxSSBOSize = 0;
      //错误检查
      {
@@ -369,23 +399,25 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              return;
          }
      }
+
      mainShader->Bind();
      depthMapFBO.BindTexture(0);
      mainShader->SetUniform1i("depthMap", 0);
      mainShader->SetUniform1i("numTriangles", numTriangles);
+     mainShader->SetUniform1i("numMaterials", numMaterials);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
      for (int i = 0; i <= sampleRate; i++) {
          std::cout << "Render Mat " << i << std::endl;
          //Bind ssbo
-         trianglesSSBO->Bind();
-         BVHTreeSSBO->Bind();
-         triangleIndexSSBO->Bind();
+         trianglesSSBO.Bind();
+         BVHssbo.Bind();
+         triangleIndexBVHSSBO.Bind();
          //render
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         scene->RayTracingRender(*mainShader, camera);
+         scene->RayTracingRender(*mainShader, camera, window);
          colorFBO.Unbind();
          ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
          cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -404,9 +436,9 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
              continue;
          }
          matArray.push_back(mat);
-         trianglesSSBO->Unbind();
-         BVHTreeSSBO->Unbind();
-         triangleIndexSSBO->Unbind();
+         BVHssbo.Unbind();
+         triangleIndexBVHSSBO.Unbind();
+         trianglesSSBO.Unbind();
          std::cout << "Render Completed" << std::endl;
      }
 
@@ -478,8 +510,9 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate) {
      resourceManager.SaveMatToPNG(finalPicture, "final.png", WINDOW_WIDTH, WINDOW_HEIGHT);
      std::cout << "Final image saved as final.png" << std::endl;
 
-     // 释放资源
-     delete trianglesSSBO;
+     scene->ResetVAO();
+     std::cout << "VAO reset!" << std::endl;
+
 }
 static void RenderFBOtoScreen(ColorFBO& colorFBO) {
     Quad screenQuad;

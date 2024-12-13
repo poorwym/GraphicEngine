@@ -26,6 +26,7 @@ private:
 public:
     Scene(int n);
     void UpdateVertices();
+    void FreeVAO();
     void ResetVAO();
     void load(const std::string& filePath);   // 加载场景
     void save(const std::string& filePath);   // 保存场景
@@ -36,7 +37,7 @@ public:
     void RenderDepthMap(Shader& shader) const;
     void RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader);
     void BatchRender(Shader& shader, Camera& camera);
-    void RayTracingRender(Shader& shader, Camera& camera);
+    void RayTracingRender(Shader& shader, Camera& camera, GLFWwindow* window);
     void Render(Shader& shader,Camera& camera);
     void RemoveNode(SceneNode* node);        // 删除实体
     void OnImGuiTree();

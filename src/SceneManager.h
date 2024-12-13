@@ -18,6 +18,8 @@ public:
 	void AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent);
 	void AddTexture(Texture* texture);
 	int AddTexture(const char* fileName);
+	void AddMaterial(Material& material);
+	int GetMaterialIndex(Material& material);
 };
 
 extern std::map<std::string, Entity*> g_EntityList;
@@ -33,3 +35,4 @@ extern std::map<std::string, SpotLight*> g_SpotLightList;
 extern std::map<SpotLight*, unsigned int> g_SpotLightID;
 
 extern TextureArray* g_TextureArray;
+extern std::vector<Material> g_MaterialList;

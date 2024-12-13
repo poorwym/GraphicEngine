@@ -13,6 +13,7 @@ OBJManager::~OBJManager()
 }
 
 extern SceneManager g_SceneManager;
+extern std::vector<Material> g_MaterialList;
 
 MeshComponent* OBJManager::Load(const std::string& filePath, const std::string fileName, float scaleRate)
 {
@@ -148,5 +149,6 @@ PBRMaterial* OBJManager::ProcessMaterial(const std::string& filePath, const tiny
         std::string Path = filePath + m.alpha_texname;
         m_Material.AlphaMapIndex = g_SceneManager.AddTexture(Path.c_str());
     }
+    g_MaterialList.push_back(m_Material);
     return new PBRMaterial(m_Material);
 }

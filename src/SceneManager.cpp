@@ -11,6 +11,8 @@ std::map<std::string, SpotLight*> g_SpotLightList;
 std::map<SpotLight*, unsigned int> g_SpotLightID;
 std::vector<Texture*> g_TextureList;
 std::map<unsigned int, int> g_TextureSlots;
+std::map<std::string, int> g_TextureIndex;
+std::vector<Material> g_MaterialList;
 
 bool needUpdate = false;
 
@@ -86,16 +88,31 @@ void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, S
     g_SceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
 }
 
-void SceneManager::AddTexture(Texture* texture)
+void SceneManager::AddTexture(Texture* texture)//discard
 {
     g_TextureList.push_back(texture);
     if(g_TextureSlots.find(texture->GetTextureID()) == g_TextureSlots.end())  g_TextureSlots[texture->GetTextureID()] = g_TextureSlots.size();
 }
 
-int SceneManager::AddTexture(const char* path)
+int SceneManager::AddTexture(const char* path) // ·µ»ØÎÆÀíIndex
 {
-    static int counter = 0;
-    g_TextureArray->AddTexture(path);
-    counter++;
-    return counter - 1;
+    if (g_TextureIndex.find(path) == g_TextureIndex.end()) { // Î´¼ÓÔØ
+        g_TextureArray->AddTexture(path);
+        g_TextureIndex[path] = g_TextureIndex.size();
+    }
+    return g_TextureIndex[path];
+}
+
+void SceneManager::AddMaterial(Material& material)
+{
+    g_MaterialList.push_back(material);
+}
+
+int SceneManager::GetMaterialIndex(Material& material)
+{
+    for (int i = 0; i <= g_MaterialList.size(); ++i) {
+        if (material == g_MaterialList[i]) {
+            return i;
+        }
+    }
 }

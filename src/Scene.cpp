@@ -8,6 +8,7 @@
 #include "Quad.h"
 #include "EngineState.h"
 
+
 extern DirectionalLightController directionalLightController;
 
 static void BatchBindTextures(Shader& shader) {
@@ -56,6 +57,12 @@ void Scene::UpdateVertices()
     numVertices = m_Vertices.size();
 	numIndices = m_Indices.size();
 	engineState.needUpdate = false;
+}
+void Scene::FreeVAO()
+{
+	delete m_VAO;
+	delete m_VBO;
+	delete m_IBO;
 }
 void Scene::ResetVAO()
 {
@@ -189,7 +196,7 @@ void Scene::BatchRender(Shader& shader, Camera& camera)
 	g_TextureArray->Unbind();
 }
 
-void Scene::RayTracingRender(Shader& shader, Camera& camera)
+void Scene::RayTracingRender(Shader& shader, Camera& camera, GLFWwindow* window)
 {
 	BatchBindTextures(shader);
 
@@ -206,7 +213,7 @@ void Scene::RayTracingRender(Shader& shader, Camera& camera)
 
 	BindLight(shader, glm::mat4(1.0f));
 
-    m_TileQuad.Render(shader);
+    m_TileQuad.Render(shader, window);
 	g_TextureArray->Unbind();
 }
 
