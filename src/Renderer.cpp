@@ -24,7 +24,7 @@ bool GLLogCall(const char* function, const char* file, int line) {//打印错误信息
     return true;
 }
 
-void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model, const glm::mat4* lightSpaceMatrix) const
+void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* camera, Shader& shader, const glm::mat4& model) const
 {
     va.Bind(); // 绑定 VAO
     ib.Bind(); // 绑定索引缓冲
@@ -48,12 +48,6 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Camera* 
 
     // 始终设置模型矩阵
     shader.SetUniformMat4f("u_Model", model);
-
-    // 如果有光空间矩阵，设置它
-    if (lightSpaceMatrix)
-    {
-        shader.SetUniformMat4f("lightSpaceMatrix", *lightSpaceMatrix);
-    }
 
     // 绘制图元
     GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));// 绘制三角形

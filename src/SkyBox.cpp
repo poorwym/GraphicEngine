@@ -78,6 +78,17 @@ Skybox::~Skybox()
     GLCall(glDeleteTextures(1, &cubemapTexture));
 }
 
+void Skybox::Bind(unsigned int slot)
+{
+    GLCall(glActiveTexture(GL_TEXTURE0 + slot));
+    GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture));
+}
+
+void Skybox::Unbind()
+{
+    GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+}
+
 void Skybox::Draw(Camera& camera)
 {
     // 更改视图矩阵，使天空盒不受摄像机位置影响

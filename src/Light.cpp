@@ -38,10 +38,11 @@ void Light::SetLightSpecular(glm::vec3 lightSpecular)
 }
 void DirectionalLight::Bind(Shader& shader, glm::mat4 globalTransform)
 {
-	shader.SetUniformVec3f("directionalLight.lightDir", m_LightDir);
-	shader.SetUniformVec3f("directionalLight.lightAmbient", m_LightAmbient);
-	shader.SetUniformVec3f("directionalLight.lightDiffuse", m_LightDiffuse);
-	shader.SetUniformVec3f("directionalLight.lightSpecular", m_LightSpecular);
+	std::string number = std::to_string(g_DirectionalLightID[this]);
+	shader.SetUniformVec3f("directionalLights["+number+"].lightDir", m_LightDir);
+	shader.SetUniformVec3f("directionalLights["+number+"].lightAmbient", m_LightAmbient);
+	shader.SetUniformVec3f("directionalLights["+number+"].lightDiffuse", m_LightDiffuse);
+	shader.SetUniformVec3f("directionalLights["+number+"].lightSpecular", m_LightSpecular);
 }
 
 void DirectionalLight::Update(float deltaTime)
@@ -277,8 +278,6 @@ void SpotLight::Bind(Shader& shader, glm::mat4 globalTransform)
 // 更新光源属性
 void SpotLight::Update(float deltaTime)
 {
-	// 可以在这里实现动态光源的更新逻辑，例如闪烁、移动等
-	// 这里简单地保持与 PointLight 类似的更新
 	m_LightAmbient = m_Intensity * m_AmbientColor;
 	m_LightDiffuse = m_Intensity * m_DiffuseColor;
 	m_LightSpecular = m_Intensity * m_SpecularColor;

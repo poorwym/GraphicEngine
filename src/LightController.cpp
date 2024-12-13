@@ -100,3 +100,43 @@ void PointLightController::SelectedLight(Light* light)
 {
 	m_SelectedLight = static_cast<PointLight*>(light);
 }
+
+SpotLightController::SpotLightController()
+	:LightController(nullptr)
+{
+}
+
+SpotLightController::SpotLightController(SpotLight* selectedLight)
+	:LightController(selectedLight)
+{
+    m_SelectedLight = static_cast<SpotLight*>(selectedLight);
+}
+
+void SpotLightController::OnImGuiRender()
+{
+    SpotLight* selectedLight = static_cast<SpotLight*>(m_SelectedLight);
+    this->OnImGuiRender(m_SelectedLight);
+}
+
+void SpotLightController::OnImGuiRender(SpotLight* selectedLight)
+{
+    ImGui::Text("Spot Light");
+    static glm::vec3 color = selectedLight->GetLightColor();
+    ImGui::ColorEdit3("Light Color", (float*)&color);
+    selectedLight->SetLightColor(glm::vec3(color));
+    static float intensity = selectedLight->GetLightIntensity();
+    ImGui::SliderFloat("Intensity", &intensity, 0.0f, 3.0f);
+    selectedLight->SetLightIntensity(intensity);
+    static glm::vec3 Position = selectedLight->GetLightPos();
+    ImGui::SliderFloat3("Position", (float*)&Position, -1.0f, 1.0f);
+}
+
+void SpotLightController::Update(float deltaTime)
+{
+
+}
+
+void SpotLightController::SelectedLight(Light* light)
+{
+    m_SelectedLight = static_cast<SpotLight*>(light);
+}

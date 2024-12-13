@@ -16,7 +16,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-#include "SkyBox.h"
+#include "Skybox.h"
 
 
 #include "Camera.h"
@@ -46,7 +46,6 @@ extern TextureManager g_TextureManager;
 
 EngineState engineState;
 SceneManager g_SceneManager(nullptr);
-DirectionalLightController directionalLightController;
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
@@ -56,7 +55,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& Skybox);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -194,15 +193,15 @@ static void LoadModel(SceneManager& g_SceneManager) {
     //MeshComponent* meshComponent3 = resourceManager.Load("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2237/", "OBJ_2237.obj", 1.0f);
-    //g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
+    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
+    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     //PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     //g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
     //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
     //g_SceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
 
-    SceneNode* node1 = resourceManager.LodeGLTF("res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);
-    g_SceneManager.AddSceneNode(node1, nullptr);
+    //SceneNode* node1 = resourceManager.LodeGLTF("res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);
+    //g_SceneManager.AddSceneNode(node1, nullptr);
 }
 static void InitModel() {
 
@@ -248,17 +247,16 @@ void RealTimeRender(GLFWwindow* window) {
 
 
     DirectionalLight* light = new DirectionalLight("Directional Light", _DARKGREY, 3.0f, glm::vec3(1.0f));
-    scene->SetDirectionalLight(light);
-    directionalLightController = DirectionalLightController(light);
+    g_SceneManager.AddDirectionalLight(light, "node2", nullptr);
     //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     std::vector<std::string> faces
     {
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg",
-        "res/skybox/star.jpg"
+        "res/Skybox/star.jpg",
+        "res/Skybox/star.jpg",
+        "res/Skybox/star.jpg",
+        "res/Skybox/star.jpg",
+        "res/Skybox/star.jpg",
+        "res/Skybox/star.jpg"
     };
     // 创建天空盒实例
     Skybox skybox(faces);
@@ -284,14 +282,11 @@ void RealTimeRender(GLFWwindow* window) {
         scene->OnImGuiTree();
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
+
         mainShader->Bind();
-        mainShader->SetUniform1i("numPointLights", g_PointLightID.size());
         mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
         mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
-
-        ViewPortInit(SHADOW_WIDTH, SHADOW_HEIGHT);
-        scene->RenderShadowMap(depthShader, cubeDepthShader);
 
         //render
         ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -299,24 +294,21 @@ void RealTimeRender(GLFWwindow* window) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         skybox.Draw(camera);
         mainShader->Bind();
-        mainShader->SetUniform1i("ShadowMap", 31);
-        for (int i = 0; i < 4; i++)
-        {
-            mainShader->SetUniform1i("PointShadowMap[" + std::to_string(i) + "]", 27 + i);
-        }
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
         colorFBO.Unbind();
+
         //post render
         ColorFBO t = PostRender(colorFBO, camera);
         RenderFBOtoScreen(t);
+
         //update
         scene->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
         if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate, window);
+            RayTracing(camera, scene, sampleRate, window, skybox);
         }
         ImGui::End();
 
@@ -329,7 +321,7 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window) {
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
@@ -407,6 +399,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      mainShader->Bind();
      depthMapFBO.BindTexture(0);
      mainShader->SetUniform1i("depthMap", 0);
+     mainShader->SetUniform1i("skybox", 1);
      mainShader->SetUniform1i("numTriangles", numTriangles);
      mainShader->SetUniform1i("numMaterials", numMaterials);
      mainShader->Unbind();
@@ -418,6 +411,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          trianglesSSBO.Bind();
          BVHssbo.Bind();
          triangleIndexBVHSSBO.Bind();
+         skybox.Bind(1);
          //render
          colorFBO.Bind();
          GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -443,6 +437,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          BVHssbo.Unbind();
          triangleIndexBVHSSBO.Unbind();
          trianglesSSBO.Unbind();
+         skybox.Unbind();
          std::cout << "Render Completed" << std::endl;
      }
 

@@ -149,6 +149,10 @@ PBRMaterial* OBJManager::ProcessMaterial(const std::string& filePath, const tiny
         std::string Path = filePath + m.alpha_texname;
         m_Material.AlphaMapIndex = g_SceneManager.AddTexture(Path.c_str());
     }
+    if (m.unknown_parameter.find("map_ao") != m.unknown_parameter.end()){
+        std::string Path = filePath + m.unknown_parameter.at("map_ao");
+        m_Material.AOMapIndex = g_SceneManager.AddTexture(Path.c_str());
+    }
     g_MaterialList.push_back(m_Material);
     return new PBRMaterial(m_Material);
 }

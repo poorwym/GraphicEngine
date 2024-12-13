@@ -72,28 +72,33 @@ SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scal
     // 获取变换矩阵
     glm::mat4 localTransform = GetTransform(node);
 
-    // 创建 Entity
-    Entity* entity = new Entity(nodeName);
-    // 提取位置、旋转和缩放
-    glm::vec3 position, rotation, scale;
-    // 解矩阵为 TRS
-    position = glm::vec3(localTransform[3]);
-    rotation = glm::vec3(0.0f);
-    scale = glm::vec3(1.0f);
-
-    entity->SetPosition(position);
-    entity->SetRotation(rotation);
-    entity->SetScale(scale);
+    
 
     // 创建 SceneNode
-    SceneNode* sceneNode = new SceneNode(nodeName, entity, parent);
+    SceneNode* sceneNode = nullptr;
 
     // 如果节点有网格，处理网格
     if (node.mesh >= 0) {
+        // 创建 Entity
+        Entity* entity = new Entity(nodeName + "Entity");
+        // 提取位置、旋转和缩放
+        glm::vec3 position, rotation, scale;
+        // 解矩阵为 TRS
+        position = glm::vec3(localTransform[3]);
+        rotation = glm::vec3(0.0f);
+        scale = glm::vec3(1.0f);
+
+        entity->SetPosition(position);
+        entity->SetRotation(rotation);
+        entity->SetScale(scale);
         MeshComponent* meshComponent = ProcessMesh(node.mesh, scaleRate, filePath);
         if (meshComponent) {
             entity->AddComponent(meshComponent);
         }
+        sceneNode = new SceneNode(nodeName, entity, parent);
+    }
+    else {
+        sceneNode = new SceneNode(nodeName, static_cast<void*>(nullptr), parent);
     }
 
     // 递归处理子节点
