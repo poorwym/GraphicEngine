@@ -8,20 +8,6 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Light.h"
-
-#ifndef TINYGLTF_IMPLEMENTATION
-#define TINYGLTF_IMPLEMENTATION
-#endif
-
-#ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#endif
-
-#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#endif
-
-
 #include "tinyglTF/tiny_gltf.h"
 #include "TextureManager.h"
 #include <string>
@@ -35,7 +21,7 @@ public:
     ~GLTFManager();
 
     // 加载 GLTF 文件并返回根节点
-    SceneNode* LoadGLTF(const std::string& filePath, const std::string& fileName, float scaleRate = 1.0f);
+    SceneNode* Load(const std::string& filePath, const std::string& fileName, float scaleRate = 1.0f);
 
 private:
     tinygltf::Model model;
@@ -48,8 +34,8 @@ private:
 
     // 辅助函数
     bool LoadModel(const std::string& filePath, const std::string& fileName);
-    SceneNode* ProcessNode(int nodeIndex, SceneNode* parent, float scaleRate);
-    MeshComponent* ProcessMesh(int meshIndex, float scaleRate);
+    SceneNode * ProcessNode(int nodeIndex, SceneNode* parent, float scaleRate, const std::string& filePath);
+    MeshComponent * ProcessMesh(int meshIndex, float scaleRate, const std::string& filePath);
     PBRMaterial* ProcessMaterial(int materialIndex, const std::string& filePath);
     glm::mat4 GetTransform(const tinygltf::Node& node);
 };

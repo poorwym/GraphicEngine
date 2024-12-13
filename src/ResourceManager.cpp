@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <filesystem>
 #include "OBJManager.h"
+#include "GLTFManager.h"
 
 static void EnsureDirectoryExists(const std::string& directory) {
     std::filesystem::path dirPath(directory);
@@ -19,6 +20,11 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
    return objManager.Load(filePath, fileName, scaleRate);
 }
 
+SceneNode* ResourceManager::LodeGLTF(const std::string& filePath, const std::string& fileName, float scaleRate)
+{
+    GLTFManager gltfManager;
+    return gltfManager.Load(filePath, fileName, scaleRate);
+}
 
 void ResourceManager::SaveFBOToPNG(ColorFBO& colorFBO, const std::string& filename, int width, int height)
 {

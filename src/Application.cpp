@@ -192,13 +192,17 @@ static void LoadModel(SceneManager& g_SceneManager) {
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
     //MeshComponent* meshComponent3 = resourceManager.Load("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
-    PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
-    g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2237/", "OBJ_2237.obj", 1.0f);
+    //g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
+    //PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
+    //g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
     //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
     //g_SceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
+
+    SceneNode* node1 = resourceManager.LodeGLTF("res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);
+    g_SceneManager.AddSceneNode(node1, nullptr);
 }
 static void InitModel() {
 

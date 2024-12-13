@@ -3,6 +3,7 @@
 #include "LightController.h"
 #include "EntityController.h"
 #include "SceneNodeController.h"
+#include "SceneNode.h"
 #include <string>
 #include "TextureArray.h"
 
@@ -16,6 +17,7 @@ public:
 	~SceneManager();
 	void AddEntity(MeshComponent* meshComponent, const char* entityName, const char* sceneNodeName, SceneNode* parent);
 	void AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent);
+	void AddSceneNode(SceneNode* node, SceneNode* parent);
 	void AddTexture(Texture* texture);
 	int AddTexture(const char* fileName);
 	void AddMaterial(Material& material);

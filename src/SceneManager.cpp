@@ -73,8 +73,8 @@ void SceneManager::AddEntity(MeshComponent* meshComponent, const char* entityNam
     // 使用 std::string 作为键
     g_EntityList[std::string(entityName)] = entity;
     g_SceneNodeList[std::string(sceneNodeName)] = node;
-    g_EntityControllerList[std::string(entityName)] = new EntityController(entity);
-    g_SceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+    //g_EntityControllerList[std::string(entityName)] = new EntityController(entity);
+    //g_SceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
 }
 
 void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, SceneNode* parent)
@@ -84,8 +84,14 @@ void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, S
     g_PointLightList[light->GetName()] = light;
     g_PointLightID[light] = g_PointLightList.size() - 1;
     PointLightController* pointLightController = new PointLightController(light);
-    g_LightControllerList[light->GetName()] = pointLightController;
-    g_SceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+    //g_LightControllerList[light->GetName()] = pointLightController;
+    //g_SceneNodeControllerList[std::string(sceneNodeName)] = new SceneNodeController(node);
+}
+
+void SceneManager::AddSceneNode(SceneNode* node, SceneNode* parent)
+{
+    parent ? parent->AddChild(node) : m_Scene->AddNode(node);
+    g_SceneNodeList[node->GetName()] = node;
 }
 
 void SceneManager::AddTexture(Texture* texture)//discard

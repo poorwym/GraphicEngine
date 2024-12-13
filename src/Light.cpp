@@ -260,7 +260,7 @@ void SpotLight::Bind(Shader& shader, glm::mat4 globalTransform)
 	glm::vec3 position = glm::vec3(globalTransform * glm::vec4(m_LightPos, 1.0f));
 	glm::vec3 direction = glm::normalize(glm::vec3(globalTransform * glm::vec4(m_LightDir, 0.0f)));
 
-	std::string number = std::to_string(g_SpotLightID[this]); // 假设有一个全局映射 SpotLight 实例到 ID
+	std::string number = std::to_string(g_SpotLightID[this]);
 	shader.SetUniformVec3f("spotLights[" + number + "].lightPos", position);
 	shader.SetUniformVec3f("spotLights[" + number + "].lightDir", direction);
 	shader.SetUniformVec3f("spotLights[" + number + "].lightAmbient", m_LightAmbient);

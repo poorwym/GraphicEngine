@@ -1,4 +1,15 @@
-// GLTFManager.cpp
+#ifndef TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_IMPLEMENTATION
+#endif
+
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#endif
+
+#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
+
 #include "GLTFManager.h"
 #include <iostream>
 #include "SceneManager.h"
@@ -11,7 +22,7 @@ GLTFManager::GLTFManager() {}
 GLTFManager::~GLTFManager() {}
 
 // LoadGLTF: 加载 GLTF 文件并返回根节点
-SceneNode* GLTFManager::LoadGLTF(const std::string& filePath, const std::string& fileName, float scaleRate) {
+SceneNode* GLTFManager::Load(const std::string& filePath, const std::string& fileName, float scaleRate) {
     if (!LoadModel(filePath, fileName)) {
         std::cerr << "Failed to load GLTF model: " << fileName << std::endl;
         return nullptr;
@@ -22,7 +33,10 @@ SceneNode* GLTFManager::LoadGLTF(const std::string& filePath, const std::string&
     // 遍历所有场景（通常只有一个）
     for (const auto& scene : model.scenes) {
         for (const auto& nodeIndex : scene.nodes) {
-            ProcessNode(nodeIndex, root, scaleRate);
+            std::cout << "Node name: " << scene.nodes[nodeIndex] << std::endl;
+            //ProcessNode(nodeIndex, root, scaleRate, filePath);
+            SceneNode* sceneNode = ProcessNode(scene.nodes[nodeIndex], root, scaleRate, filePath);
+            root->AddChild(sceneNode);
         }
     }
 
@@ -51,7 +65,7 @@ bool GLTFManager::LoadModel(const std::string& filePath, const std::string& file
 }
 
 // ProcessNode: 递归处理 GLTF 的节点，并保持树状结构
-SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scaleRate) {
+SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scaleRate, const std::string& filePath) {
     const tinygltf::Node& node = model.nodes[nodeIndex];
     std::string nodeName = node.name.empty() ? "Unnamed_Node_" + std::to_string(nodeIndex) : node.name;
 
@@ -76,7 +90,7 @@ SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scal
 
     // 如果节点有网格，处理网格
     if (node.mesh >= 0) {
-        MeshComponent* meshComponent = ProcessMesh(node.mesh, scaleRate);
+        MeshComponent* meshComponent = ProcessMesh(node.mesh, scaleRate, filePath);
         if (meshComponent) {
             entity->AddComponent(meshComponent);
         }
@@ -84,15 +98,49 @@ SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scal
 
     // 递归处理子节点
     for (const auto& childIndex : node.children) {
-        ProcessNode(childIndex, sceneNode, scaleRate);
+        SceneNode* childNode = ProcessNode(childIndex, sceneNode, scaleRate, filePath);
+        sceneNode->AddChild(childNode);
     }
 
     return sceneNode;
 }
+// Helper function to convert TRIANGLE_STRIP to TRIANGLES
+static std::vector<unsigned int> ConvertTriangleStripToTriangles(const std::vector<unsigned int>& stripIndices) {
+    std::vector<unsigned int> triangles;
+    if (stripIndices.size() < 3) return triangles;
 
-// ProcessMesh: 将 GLTF 网格转换为引擎的 MeshComponent 和 Mesh
-MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate) {
-    if (meshIndex < 0 || meshIndex >= model.meshes.size()) {
+    for (size_t i = 0; i + 2 < stripIndices.size(); ++i) {
+        if (i % 2 == 0) {
+            // Even index: (v0, v1, v2)
+            triangles.push_back(stripIndices[i]);
+            triangles.push_back(stripIndices[i + 1]);
+            triangles.push_back(stripIndices[i + 2]);
+        }
+        else {
+            // Odd index: (v1, v0, v2) to maintain consistent winding
+            triangles.push_back(stripIndices[i + 1]);
+            triangles.push_back(stripIndices[i]);
+            triangles.push_back(stripIndices[i + 2]);
+        }
+    }
+    return triangles;
+}
+
+// Helper function to convert TRIANGLE_FAN to TRIANGLES
+static std::vector<unsigned int> ConvertTriangleFanToTriangles(const std::vector<unsigned int>& fanIndices) {
+    std::vector<unsigned int> triangles;
+    if (fanIndices.size() < 3) return triangles;
+
+    for (size_t i = 1; i + 1 < fanIndices.size(); ++i) {
+        triangles.push_back(fanIndices[0]);
+        triangles.push_back(fanIndices[i]);
+        triangles.push_back(fanIndices[i + 1]);
+    }
+    return triangles;
+}
+
+MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate, const std::string& filePath) {
+    if (meshIndex < 0 || meshIndex >= static_cast<int>(model.meshes.size())) {
         std::cerr << "Invalid mesh index: " << meshIndex << std::endl;
         return nullptr;
     }
@@ -100,73 +148,181 @@ MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate) {
     const tinygltf::Mesh& mesh = model.meshes[meshIndex];
     MeshComponent* meshComponent = new MeshComponent();
 
+    // 遍历 primitive
     for (const auto& primitive : mesh.primitives) {
-        // 仅处理三角形网格
-        if (primitive.mode != TINYGLTF_MODE_TRIANGLES) continue;
+        // 检查模式
+        if (primitive.mode != TINYGLTF_MODE_TRIANGLES &&
+            primitive.mode != TINYGLTF_MODE_TRIANGLE_STRIP &&
+            primitive.mode != TINYGLTF_MODE_TRIANGLE_FAN) {
+            continue; // 不支持的模式跳过
+        }
 
-        // 获取顶点属性
-        if (primitive.attributes.find("POSITION") == primitive.attributes.end()) {
+        // 检查 POSITION attribute
+        auto posIt = primitive.attributes.find("POSITION");
+        if (posIt == primitive.attributes.end()) {
             std::cerr << "Mesh primitive missing POSITION attribute." << std::endl;
             continue;
         }
 
-        const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes.find("POSITION")->second];
-        const tinygltf::Accessor& normAccessor = (primitive.attributes.find("NORMAL") != primitive.attributes.end()) ?
-            model.accessors[primitive.attributes.find("NORMAL")->second] :
-            tinygltf::Accessor();
-        const tinygltf::Accessor& texAccessor = (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) ?
-            model.accessors[primitive.attributes.find("TEXCOORD_0")->second] :
-            tinygltf::Accessor();
+        int posAccessorIndex = posIt->second;
+        if (posAccessorIndex < 0 || posAccessorIndex >= static_cast<int>(model.accessors.size())) {
+            std::cerr << "Invalid POSITION accessor index: " << posAccessorIndex << std::endl;
+            continue;
+        }
+        const tinygltf::Accessor& posAccessor = model.accessors[posAccessorIndex];
+
+        // 检查 NORMAL attribute（可选）
+        int normAccessorIndex = -1;
+        auto normIt = primitive.attributes.find("NORMAL");
+        if (normIt != primitive.attributes.end()) {
+            normAccessorIndex = normIt->second;
+            if (normAccessorIndex < 0 || normAccessorIndex >= static_cast<int>(model.accessors.size())) {
+                std::cerr << "Invalid NORMAL accessor index: " << normAccessorIndex << std::endl;
+                continue;
+            }
+        }
+        const tinygltf::Accessor normAccessor = (normAccessorIndex >= 0) ? model.accessors[normAccessorIndex] : tinygltf::Accessor();
+
+        // 检查 TEXCOORD_0 attribute（可选）
+        int texAccessorIndex = -1;
+        auto texIt = primitive.attributes.find("TEXCOORD_0");
+        if (texIt != primitive.attributes.end()) {
+            texAccessorIndex = texIt->second;
+            if (texAccessorIndex < 0 || texAccessorIndex >= static_cast<int>(model.accessors.size())) {
+                std::cerr << "Invalid TEXCOORD_0 accessor index: " << texAccessorIndex << std::endl;
+                continue;
+            }
+        }
+        const tinygltf::Accessor texAccessor = (texAccessorIndex >= 0) ? model.accessors[texAccessorIndex] : tinygltf::Accessor();
+
+        // 检查 indicesAccessor
+        if (primitive.indices < 0 || primitive.indices >= static_cast<int>(model.accessors.size())) {
+            std::cerr << "Invalid indices accessor index: " << primitive.indices << std::endl;
+            continue;
+        }
         const tinygltf::Accessor& indicesAccessor = model.accessors[primitive.indices];
 
-        // 获取缓冲区视图
+        // 检查各个 accessor 的 bufferView 范围
+        if (posAccessor.bufferView < 0 || posAccessor.bufferView >= static_cast<int>(model.bufferViews.size())) {
+            std::cerr << "posAccessor.bufferView out of range." << std::endl;
+            continue;
+        }
+
+        if (normAccessorIndex >= 0 && (normAccessor.bufferView < 0 || normAccessor.bufferView >= static_cast<int>(model.bufferViews.size()))) {
+            std::cerr << "normAccessor.bufferView out of range." << std::endl;
+            continue;
+        }
+
+        if (texAccessorIndex >= 0 && (texAccessor.bufferView < 0 || texAccessor.bufferView >= static_cast<int>(model.bufferViews.size()))) {
+            std::cerr << "texAccessor.bufferView out of range." << std::endl;
+            continue;
+        }
+
+        if (indicesAccessor.bufferView < 0 || indicesAccessor.bufferView >= static_cast<int>(model.bufferViews.size())) {
+            std::cerr << "indicesAccessor.bufferView out of range." << std::endl;
+            continue;
+        }
+
+        // 获取 BufferView
         const tinygltf::BufferView& posView = model.bufferViews[posAccessor.bufferView];
-        const tinygltf::BufferView& normView = (normAccessor.bufferView >= 0 && normAccessor.bufferView < model.bufferViews.size()) ?
-            model.bufferViews[normAccessor.bufferView] :
-            tinygltf::BufferView();
-        const tinygltf::BufferView& texView = (texAccessor.bufferView >= 0 && texAccessor.bufferView < model.bufferViews.size()) ?
-            model.bufferViews[texAccessor.bufferView] :
-            tinygltf::BufferView();
+        const tinygltf::BufferView& normView = (normAccessorIndex >= 0) ? model.bufferViews[normAccessor.bufferView] : tinygltf::BufferView();
+        const tinygltf::BufferView& texView = (texAccessorIndex >= 0) ? model.bufferViews[texAccessor.bufferView] : tinygltf::BufferView();
         const tinygltf::BufferView& indicesView = model.bufferViews[indicesAccessor.bufferView];
 
-        // 获取缓冲区
+        // 检查 bufferView 的 buffer 范围
+        if (posView.buffer < 0 || posView.buffer >= static_cast<int>(model.buffers.size())) {
+            std::cerr << "posView.buffer out of range." << std::endl;
+            continue;
+        }
+        if (normAccessorIndex >= 0 && (normView.buffer < 0 || normView.buffer >= static_cast<int>(model.buffers.size()))) {
+            std::cerr << "normView.buffer out of range." << std::endl;
+            continue;
+        }
+        if (texAccessorIndex >= 0 && (texView.buffer < 0 || texView.buffer >= static_cast<int>(model.buffers.size()))) {
+            std::cerr << "texView.buffer out of range." << std::endl;
+            continue;
+        }
+        if (indicesView.buffer < 0 || indicesView.buffer >= static_cast<int>(model.buffers.size())) {
+            std::cerr << "indicesView.buffer out of range." << std::endl;
+            continue;
+        }
+
+        // 获取 Buffer
         const tinygltf::Buffer& posBuffer = model.buffers[posView.buffer];
-        const tinygltf::Buffer& normBuffer = (normAccessor.bufferView >= 0 && normAccessor.bufferView < model.buffers.size()) ?
-            model.buffers[normView.buffer] :
-            tinygltf::Buffer();
-        const tinygltf::Buffer& texBuffer = (texAccessor.bufferView >= 0 && texAccessor.bufferView < model.buffers.size()) ?
-            model.buffers[texView.buffer] :
-            tinygltf::Buffer();
+        const tinygltf::Buffer& normBuffer = (normAccessorIndex >= 0) ? model.buffers[normView.buffer] : tinygltf::Buffer();
+        const tinygltf::Buffer& texBuffer = (texAccessorIndex >= 0) ? model.buffers[texView.buffer] : tinygltf::Buffer();
         const tinygltf::Buffer& indicesBuffer = model.buffers[indicesView.buffer];
+
+        // 检查数据大小避免越界
+        size_t posStride = (posAccessor.ByteStride(posView) > 0) ? posAccessor.ByteStride(posView) : (3 * sizeof(float));
+        size_t posDataSizeNeeded = posView.byteOffset + posAccessor.byteOffset + posAccessor.count * posStride;
+        if (posDataSizeNeeded > posBuffer.data.size()) {
+            std::cerr << "Position data out of range in buffer." << std::endl;
+            continue;
+        }
+
+        size_t normStride = 0;
+        size_t normDataSizeNeeded = 0;
+        if (normAccessorIndex >= 0) {
+            normStride = (normAccessor.ByteStride(normView) > 0) ? normAccessor.ByteStride(normView) : (3 * sizeof(float));
+            normDataSizeNeeded = normView.byteOffset + normAccessor.byteOffset + normAccessor.count * normStride;
+            if (normDataSizeNeeded > normBuffer.data.size()) {
+                std::cerr << "Normal data out of range in buffer." << std::endl;
+                continue;
+            }
+        }
+
+        size_t texStride = 0;
+        size_t texDataSizeNeeded = 0;
+        if (texAccessorIndex >= 0) {
+            texStride = (texAccessor.ByteStride(texView) > 0) ? texAccessor.ByteStride(texView) : (2 * sizeof(float));
+            texDataSizeNeeded = texView.byteOffset + texAccessor.byteOffset + texAccessor.count * texStride;
+            if (texDataSizeNeeded > texBuffer.data.size()) {
+                std::cerr << "Texture coord data out of range in buffer." << std::endl;
+                continue;
+            }
+        }
+
+        size_t indexComponentSize = (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) ? sizeof(unsigned short) : sizeof(unsigned int);
+        size_t indexDataSizeNeeded = indicesView.byteOffset + indicesAccessor.byteOffset + indicesAccessor.count * indexComponentSize;
+        if (indexDataSizeNeeded > indicesBuffer.data.size()) {
+            std::cerr << "Index data out of range in buffer." << std::endl;
+            continue;
+        }
 
         // 提取顶点数据
         std::vector<Vertex> vertices;
         vertices.reserve(posAccessor.count);
         for (size_t v = 0; v < posAccessor.count; v++) {
             Vertex vertex;
-            // 位置
-            const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posView.byteOffset + posAccessor.byteOffset + v * sizeof(float) * 3]);
-            vertex.Position = glm::vec4(pos[0] * scaleRate, pos[1] * scaleRate, pos[2] * scaleRate, 1.0f);
+            // position
+            {
+                size_t posOffset = posView.byteOffset + posAccessor.byteOffset + v * posStride;
+                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posOffset]);
+                vertex.Position = glm::vec4(pos[0] * scaleRate, pos[1] * scaleRate, pos[2] * scaleRate, 1.0f);
+            }
 
-            // 法线（如果有）
-            if (normAccessor.bufferView >= 0 && normAccessor.bufferView < model.accessors.size()) {
-                const float* norm = reinterpret_cast<const float*>(&normBuffer.data[normView.byteOffset + normAccessor.byteOffset + v * sizeof(float) * 3]);
+            // normal
+            if (normAccessorIndex >= 0) {
+                size_t normOffset = normView.byteOffset + normAccessor.byteOffset + v * normStride;
+                const float* norm = reinterpret_cast<const float*>(&normBuffer.data[normOffset]);
                 vertex.Normal = glm::vec4(norm[0], norm[1], norm[2], 0.0f);
             }
             else {
-                vertex.Normal = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+                vertex.Normal = glm::vec4(0.0f);
             }
 
-            // UV（如果有）
-            if (texAccessor.bufferView >= 0 && texAccessor.bufferView < model.accessors.size()) {
-                const float* tex = reinterpret_cast<const float*>(&texBuffer.data[texView.byteOffset + texAccessor.byteOffset + v * sizeof(float) * 2]);
-                vertex.TexCoords = glm::vec4(tex[0], tex[1], 0.0f, 0.0f);
+            // texcoords
+            if (texAccessorIndex >= 0) {
+                size_t texOffset = texView.byteOffset + texAccessor.byteOffset + v * texStride;
+                const float* tex = reinterpret_cast<const float*>(&texBuffer.data[texOffset]);
+                vertex.TexCoords = glm::vec4(tex[0], 1.0f - tex[1], 0.0f, 0.0f);
             }
             else {
-                vertex.TexCoords = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+                vertex.TexCoords = glm::vec4(0.0f);
             }
 
-            // 初始化切线和副切线（可选，需进一步计算）
+            // tangent/bitangent 初始化为0
             vertex.Tangent = glm::vec4(0.0f);
             vertex.Bitangent = glm::vec4(0.0f);
 
@@ -174,34 +330,50 @@ MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate) {
         }
 
         // 提取索引数据
-        std::vector<unsigned int> indices;
-        indices.reserve(indicesAccessor.count);
+        std::vector<unsigned int> rawIndices;
+        rawIndices.reserve(indicesAccessor.count);
         for (size_t i = 0; i < indicesAccessor.count; i++) {
+            size_t byteOffset = indicesView.byteOffset + indicesAccessor.byteOffset + i * indexComponentSize;
             unsigned int index = 0;
-            size_t byteOffset = indicesView.byteOffset + indicesAccessor.byteOffset + i * (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? sizeof(unsigned short) : sizeof(unsigned int));
             if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                index = *((unsigned short*)(&indicesBuffer.data[byteOffset]));
+                index = static_cast<unsigned int>(*reinterpret_cast<const unsigned short*>(&indicesBuffer.data[byteOffset]));
             }
-            else { // TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT
-                index = *((unsigned int*)(&indicesBuffer.data[byteOffset]));
+            else {
+                index = *reinterpret_cast<const unsigned int*>(&indicesBuffer.data[byteOffset]);
             }
-            indices.push_back(index);
+            // 可选：检查 index 是否在 vertices 范围内（一般 glTF 保证正确性，这里可不做，或做日志）
+            rawIndices.push_back(index);
+        }
+
+        // 转换为三角形列表
+        std::vector<unsigned int> triangleIndices;
+        if (primitive.mode == TINYGLTF_MODE_TRIANGLES) {
+            triangleIndices = rawIndices;
+        }
+        else if (primitive.mode == TINYGLTF_MODE_TRIANGLE_STRIP) {
+            triangleIndices = ConvertTriangleStripToTriangles(rawIndices);
+        }
+        else if (primitive.mode == TINYGLTF_MODE_TRIANGLE_FAN) {
+            triangleIndices = ConvertTriangleFanToTriangles(rawIndices);
         }
 
         // 处理材质
         PBRMaterial* material = nullptr;
-        if (primitive.material >= 0 && primitive.material < model.materials.size()) {
-            material = ProcessMaterial(primitive.material, ""); // 替换为空字符串或实际纹理路径
+        if (primitive.material >= 0 && primitive.material < static_cast<int>(model.materials.size())) {
+            material = ProcessMaterial(primitive.material, filePath);
+        }
+        else if (primitive.material < 0 || primitive.material >= static_cast<int>(model.materials.size())) {
+            std::cerr << "Invalid material index: " << primitive.material << std::endl;
         }
 
         // 创建 Mesh 并添加到 MeshComponent
-        Mesh* mesh = new Mesh(vertices, indices, material, scaleRate);
-        meshComponent->AddMesh(mesh);
+        Mesh* m = new Mesh(vertices, triangleIndices, material, scaleRate);
+        meshComponent->AddMesh(m);
     }
 
+    std::cout << "Load GLTF Mesh " << meshIndex << std::endl;
     return meshComponent;
 }
-
 // Helper function to convert float array to glm::vec3
 static glm::vec3 ConvertToVec3(const float* v)
 {
@@ -330,22 +502,7 @@ PBRMaterial* GLTFManager::ProcessMaterial(int materialIndex, const std::string& 
         m_Material.SpecularExponent = 1.0f / static_cast<float>(m.pbrMetallicRoughness.roughnessFactor); // 简化示例
     }
 
-    // 11. 高度贴图 (HeightMap) - GLTF 标准不支持，需使用扩展
-    // 如果有自定义扩展或特定需求，可在此处理
-
-    // 12. 设置其他默认或从 GLTF 获取的属性
-    // 根据需要扩展
-
-    // 13. Debug输出材质信息
-    std::cout << "Material loaded: " << std::endl;
-    std::cout << "  AlbedoMapIndex: " << m_Material.AlbedoMapIndex << std::endl;
-    std::cout << "  NormalMapIndex: " << m_Material.NormalMapIndex << std::endl;
-    std::cout << "  MetallicMapIndex: " << m_Material.MetallicMapIndex << std::endl;
-    std::cout << "  RoughnessMapIndex: " << m_Material.RoughnessMapIndex << std::endl;
-    std::cout << "  EmissionMapIndex: " << m_Material.EmissionMapIndex << std::endl;
-    std::cout << "  AlphaMapIndex: " << m_Material.AlphaMapIndex << std::endl;
-    std::cout << "  Dissolve: " << m_Material.Dissolve << std::endl;
-    std::cout << "  SpecularExponent: " << m_Material.SpecularExponent << std::endl;
+    g_MaterialList.push_back(m_Material);
 }
 static glm::vec3 quatToEuler(const glm::vec4& q) {
     glm::vec3 euler;
@@ -395,6 +552,5 @@ glm::mat4 GLTFManager::GetTransform(const tinygltf::Node& node) {
             transform = glm::scale(transform, glm::vec3(node.scale[0], node.scale[1], node.scale[2]));
         }
     }
-
     return transform;
 }
