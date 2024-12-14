@@ -65,7 +65,7 @@ void SceneNode::SetRotation(glm::vec3 rotation)
 {
     m_Rotation = rotation;
 }
-extern EngineState engineState;
+extern EngineState g_EngineState;
 
 void SceneNode::Update(float deltaTime)
 {
@@ -81,7 +81,7 @@ void SceneNode::Update(float deltaTime)
     m_LocalTransform = transform;
     if (m_LocalTransform != m_PreviousTransform) {
         m_PreviousTransform = m_LocalTransform;
-        engineState.needUpdate = true;
+        g_EngineState.needUpdate = true;
     }
     if(m_Entity)
         m_Entity->Update(deltaTime);

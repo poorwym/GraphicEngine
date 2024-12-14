@@ -1,7 +1,7 @@
 #include "Entity.h"
 #include "EngineState.h"
 
-extern EngineState engineState;
+extern EngineState g_EngineState;
 
 Entity::Entity(std::string name)
 	:m_Position(glm::vec3(0.0f)),m_Rotation(glm::vec3(0.0f)), m_Scale(glm::vec3(1.0f)),m_Name(name),m_LocalTransform(glm::mat4(1.0f))
@@ -101,7 +101,7 @@ void Entity::Update(float deltaTime)
 
 	if (m_LocalTransform != m_PreviousTransform) {
         m_PreviousTransform = m_LocalTransform;
-		engineState.needUpdate = true;
+		g_EngineState.needUpdate = true;
 	}
 
 	// 更新组件

@@ -13,7 +13,7 @@ public:
     template<typename T>
     T* Load(const std::string& filePath);         // 从文件加载资源
     MeshComponent* LoadOBJ(const std::string& filePath, const std::string fileName, float scaleRate);
-    SceneNode* LodeGLTF(const std::string& filePath, const std::string& fileName, float scaleRate = 1.0f);
+    SceneNode* LoadGLTF(const std::string& filePath, const std::string& fileName, float scaleRate = 1.0f);
     //PBRMaterial* LoadPBRMaterial(FbxSurfaceMaterial* fbxMaterial, const std::string& filePath);
 
     // 加载FBX网格并返回MeshComponent

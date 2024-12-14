@@ -79,5 +79,6 @@ vec3 CookTorranceBRDF(vec3 N, vec3 V, vec3 L, vec3 F0, float roughness);
 // 获取材质的镜面指数
 float GetSpecularExponent(int hitIndex);
 
-// Octree 相交测试
+// 获取天空盒颜色
+vec3 GetSky(vec3 dir);
 

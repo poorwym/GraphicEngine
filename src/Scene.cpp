@@ -23,11 +23,11 @@ void Scene::UpdateVBO() {
 	m_VBO->setData(m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));
     m_VBO->Unbind();
 }
-extern EngineState engineState;
+extern EngineState g_EngineState;
 
 void Scene::UpdateVertices()
 {
-	if (!engineState.needUpdate) {
+	if (!g_EngineState.needUpdate) {
 		return;
 	}
 	int offsets = 0;
@@ -42,21 +42,22 @@ void Scene::UpdateVertices()
 	}
 	m_Vertices.clear();
 	m_Vertices.reserve(numVertices);
+	m_Indices.clear();
+    m_Indices.reserve(numIndices);
 	for (int i = 0; i < batchVertices.size(); i++) {
 		std::vector<Vertex>& vertices = *batchVertices[i];
 		m_Vertices.insert(m_Vertices.end(), vertices.begin(), vertices.end());
-		if(m_Indices.size() != numIndices)
-		{
+		//这暂时先这样
 			std::vector<unsigned int>& indices = *batchIndices[i];
 			for (auto& index : indices) {
 				m_Indices.push_back(index + offsets);
 			}
 			offsets += vertices.size();
-		}
+
 	}
     numVertices = m_Vertices.size();
 	numIndices = m_Indices.size();
-	engineState.needUpdate = false;
+	g_EngineState.needUpdate = false;
 }
 void Scene::FreeVAO()
 {
