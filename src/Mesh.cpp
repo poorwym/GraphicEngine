@@ -9,7 +9,7 @@ static void scale(std::vector<Vertex>& vertices, float scaleRate) {
     }
 }
 // 重写后的 CalcTangent 函数
-static void CalcTangent(std::vector<Vertex>& vertices) {
+static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
     if (vertices.empty()) {
         std::cerr << "CalcTangent: Vertex list is empty." << std::endl;
         return;
@@ -22,15 +22,15 @@ static void CalcTangent(std::vector<Vertex>& vertices) {
     }
 
     // 确保顶点数量是 3 的倍数
-    if (vertices.size() % 3 != 0) {
+    if (indices.size() % 3 != 0) {
         std::cerr << "CalcTangent: Vertex count is not a multiple of 3." << std::endl;
         return;
     }
 
-    for (size_t i = 0; i < vertices.size(); i += 3) {
-        Vertex& v0 = vertices[i];
-        Vertex& v1 = vertices[i + 1];
-        Vertex& v2 = vertices[i + 2];
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices.at(indices[i]);
+        Vertex& v1 = vertices.at(indices[i + 1]);
+        Vertex& v2 = vertices.at(indices[i + 2]);
 
         // 提取 Position 和 TexCoords
         glm::vec3 pos1 = glm::vec3(v0.Position);
@@ -126,7 +126,7 @@ Mesh::Mesh(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indic
 {
     scale(vertices, scaleRate);
     BindTexture(vertices, m_PBRMaterial);
-    CalcTangent(vertices);
+    CalcTangent(vertices, indices);
     m_Vertices = vertices;
     m_Indices = indices;
 }

@@ -41,10 +41,11 @@
 #include "Octree.h"
 #include "NGFX_Injection.h"
 #include "NVIDIA_Nsight.h"
+#include "ModelManager.h"
 
 extern TextureManager g_TextureManager;
 
-EngineState engineState;
+EngineState g_EngineState;
 SceneManager g_SceneManager(nullptr);
 
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
@@ -184,24 +185,12 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
     ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
-    RealTimeRender(window);
+    while (true)
+    {
+        RealTimeRender(window);
+    }
 }
 static void LoadModel(SceneManager& g_SceneManager) {
-    g_TextureArray = new TextureArray(1024, 1024, 64);
-    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
-    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
-    //MeshComponent* meshComponent3 = resourceManager.Load("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
-    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
-    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
-    //PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
-    //g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
-    //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
-    //g_SceneManager.AddEntity(meshComponent3, "Pumpkin2", "node3", nullptr);
-
-    //SceneNode* node1 = resourceManager.LodeGLTF("res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);
-    //g_SceneManager.AddSceneNode(node1, nullptr);
 }
 static void InitModel() {
 
@@ -228,7 +217,9 @@ void RealTimeRender(GLFWwindow* window) {
     cameraController = new CameraController(&camera, window);
 
     Scene* scene = new Scene(10);
+    ModelManager modelManager(scene);
     g_SceneManager = SceneManager(scene);
+    g_TextureArray = new TextureArray(1024, 1024, 64);
     LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
@@ -279,6 +270,7 @@ void RealTimeRender(GLFWwindow* window) {
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
+        modelManager.OnImGuiRender();
         scene->OnImGuiTree();
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
@@ -322,7 +314,7 @@ void RealTimeRender(GLFWwindow* window) {
 }
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox) {
-     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
+    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);

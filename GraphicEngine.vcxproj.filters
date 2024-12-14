@@ -144,6 +144,18 @@
     <ClCompile Include="src\NVIDIA_Nsight.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\FBXManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GLTFManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OBJManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModelManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
@@ -254,9 +266,6 @@
     <ClInclude Include="src\FrameBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\SubMesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\SkyBox.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -324,6 +333,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\NVIDIA_Nsight.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FBXManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GLTFManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OBJManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ModelManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

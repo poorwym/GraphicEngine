@@ -33,9 +33,9 @@ SceneNode* GLTFManager::Load(const std::string& filePath, const std::string& fil
     // 遍历所有场景（通常只有一个）
     for (const auto& scene : model.scenes) {
         for (const auto& nodeIndex : scene.nodes) {
-            std::cout << "Node name: " << scene.nodes[nodeIndex] << std::endl;
+            std::cout << "Node name: " << nodeIndex << std::endl;
             //ProcessNode(nodeIndex, root, scaleRate, filePath);
-            SceneNode* sceneNode = ProcessNode(scene.nodes[nodeIndex], root, scaleRate, filePath);
+            SceneNode* sceneNode = ProcessNode(nodeIndex, root, scaleRate, filePath);
             root->AddChild(sceneNode);
         }
     }
@@ -80,7 +80,7 @@ SceneNode* GLTFManager::ProcessNode(int nodeIndex, SceneNode* parent, float scal
     // 如果节点有网格，处理网格
     if (node.mesh >= 0) {
         // 创建 Entity
-        Entity* entity = new Entity(nodeName + "Entity");
+        Entity* entity = new Entity(nodeName + " Entity");
         // 提取位置、旋转和缩放
         glm::vec3 position, rotation, scale;
         // 解矩阵为 TRS
@@ -311,7 +311,7 @@ MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate, const st
             if (normAccessorIndex >= 0) {
                 size_t normOffset = normView.byteOffset + normAccessor.byteOffset + v * normStride;
                 const float* norm = reinterpret_cast<const float*>(&normBuffer.data[normOffset]);
-                vertex.Normal = glm::vec4(norm[0], norm[1], norm[2], 0.0f);
+                vertex.Normal = glm::vec4(norm[0], norm[1], norm[2], 1.0f);
             }
             else {
                 vertex.Normal = glm::vec4(0.0f);
@@ -321,7 +321,7 @@ MeshComponent* GLTFManager::ProcessMesh(int meshIndex, float scaleRate, const st
             if (texAccessorIndex >= 0) {
                 size_t texOffset = texView.byteOffset + texAccessor.byteOffset + v * texStride;
                 const float* tex = reinterpret_cast<const float*>(&texBuffer.data[texOffset]);
-                vertex.TexCoords = glm::vec4(tex[0], 1.0f - tex[1], 0.0f, 0.0f);
+                vertex.TexCoords = glm::vec4(tex[0], 1 - tex[1], 0.0f, 0.0f);
             }
             else {
                 vertex.TexCoords = glm::vec4(0.0f);
@@ -508,7 +508,9 @@ PBRMaterial* GLTFManager::ProcessMaterial(int materialIndex, const std::string& 
     }
 
     g_MaterialList.push_back(m_Material);
+    return new PBRMaterial(m_Material);
 }
+
 static glm::vec3 quatToEuler(const glm::vec4& q) {
     glm::vec3 euler;
 

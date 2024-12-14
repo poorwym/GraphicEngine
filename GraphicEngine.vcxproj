@@ -168,6 +168,7 @@
     <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\ModelManager.cpp" />
     <ClCompile Include="src\NVIDIA_Nsight.cpp" />
     <ClCompile Include="src\OBJManager.cpp" />
     <ClCompile Include="src\Octree.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="src\Macro.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\ModelManager.h" />
     <ClInclude Include="src\OBJManager.h" />
     <ClInclude Include="src\Octree.h" />
     <ClInclude Include="src\Renderer.h" />
@@ -237,7 +239,6 @@
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\ShaderStorageBuffer.h" />
     <ClInclude Include="src\SkyBox.h" />
-    <ClInclude Include="src\SubMesh.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\TextureArray.h" />
     <ClInclude Include="src\TextureManager.h" />

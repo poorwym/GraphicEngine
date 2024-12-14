@@ -20,7 +20,7 @@ MeshComponent* ResourceManager::LoadOBJ(const std::string& filePath, const std::
    return objManager.Load(filePath, fileName, scaleRate);
 }
 
-SceneNode* ResourceManager::LodeGLTF(const std::string& filePath, const std::string& fileName, float scaleRate)
+SceneNode* ResourceManager::LoadGLTF(const std::string& filePath, const std::string& fileName, float scaleRate)
 {
     GLTFManager gltfManager;
     return gltfManager.Load(filePath, fileName, scaleRate);
