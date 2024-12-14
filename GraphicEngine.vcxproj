@@ -237,7 +237,6 @@
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\ShaderStorageBuffer.h" />
     <ClInclude Include="src\SkyBox.h" />
-    <ClInclude Include="src\SubMesh.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\TextureArray.h" />
     <ClInclude Include="src\TextureManager.h" />

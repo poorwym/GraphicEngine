@@ -150,10 +150,8 @@ void Scene::RenderShadowMap(Shader* depthShader, Shader* cubeDepthShader){
 
 void Scene::BatchRender(Shader& shader, Camera& camera)
 {
-	if (engineState.needUpdate) {
-        UpdateVertices();
-		UpdateVBO();
-	}
+	UpdateVertices();
+	UpdateVBO();
 	BatchBindTextures(shader);
 	BindLight(shader, glm::mat4(1.0f));
 	Renderer render;
