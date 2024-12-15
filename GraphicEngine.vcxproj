@@ -123,8 +123,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib;;NGFX_Injection.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\opencv\build\x64\vc16\lib;$(SolutionDir)Dependencies\GLEW\lib\Release\x64\;$(SolutionDir)Dependencies\GLFW\lib-vc2022\;$(SolutionDir)Dependencies\GLEW\bin\Release\x64\;%(AdditionalLibraryDirectories);C:\Program Files\NVIDIA Corporation\Nsight Graphics 2024.3.0\SDKs\NsightGraphicsSDK\0.8.0\lib\x64;D:\GraphicProject\GLEW\lib\Release\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32.lib;opencv_world4100d.lib;User32.lib;Gdi32.lib;Shell32.lib;Opengl32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

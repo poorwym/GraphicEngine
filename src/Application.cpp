@@ -17,6 +17,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "Skybox.h"
+#include "Particle.h"
 
 
 #include "Camera.h"
@@ -39,8 +40,8 @@
 #include "TriangleSubdivider.h"
 #include "EngineState.h"
 #include "Octree.h"
-#include "NGFX_Injection.h"
-#include "NVIDIA_Nsight.h"
+//#include "NGFX_Injection.h"
+//#include "NVIDIA_Nsight.h"
 
 extern TextureManager g_TextureManager;
 
@@ -80,7 +81,7 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
-extern NsightGraphicsManager& g_NsightGraphicsManager;
+//extern NsightGraphicsManager& g_NsightGraphicsManager;
 
 // 定义调试回调函数
 void APIENTRY OpenGLDebugCallback(GLenum source,
@@ -96,21 +97,21 @@ void APIENTRY OpenGLDebugCallback(GLenum source,
     std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
 
     // 根据错误类型和严重性决定是否捕获帧
-    if (severity == GL_DEBUG_SEVERITY_HIGH) {
-        // 获取 NsightGraphicsManager 单例
-        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
-        if (!nsightManager.CaptureFrame()) {
-            std::cerr << "Failed to capture frame on GPU error." << std::endl;
-        }
-    }
+    //if (severity == GL_DEBUG_SEVERITY_HIGH) {
+    //    // 获取 NsightGraphicsManager 单例
+    //    NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+    //    if (!nsightManager.CaptureFrame()) {
+    //        std::cerr << "Failed to capture frame on GPU error." << std::endl;
+    //    }
+    //}
 }
 
 int main(void)
 {    
-    if (!g_NsightGraphicsManager.Initialize()) {
+    /*if (!g_NsightGraphicsManager.Initialize()) {
         std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
         return -1;
-    }
+    }*/
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -188,13 +189,13 @@ int main(void)
 }
 static void LoadModel(SceneManager& g_SceneManager) {
     g_TextureArray = new TextureArray(1024, 1024, 64);
-    //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
+    //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
     //MeshComponent* meshComponent3 = resourceManager.Load("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     //MeshComponent* meshComponent1 = resourceManager.Load("res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
-    g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
+    /*MeshComponent* meshComponent1 = resourceManager.LoadOBJ("res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);*/
+    //g_SceneManager.AddEntity(meshComponent1, "tree", "node1", nullptr);
     //PointLight* pointLight = new PointLight("PointLight", _WHITE, 2.288, glm::vec3(0.294f, 0.264f, 3.023f));
     //g_SceneManager.AddPointLight(pointLight, "node2", nullptr);
     //g_SceneManager.AddEntity(meshComponent2, "Pumpkin1", "node4", nullptr);
@@ -261,6 +262,11 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    //创建火焰粒子
+    Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(10, particleShader, 10.0, 1.0);
+
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -292,11 +298,22 @@ void RealTimeRender(GLFWwindow* window) {
         ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         colorFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        skybox.Draw(camera);
+        //skybox.Draw(camera);
         mainShader->Bind();
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
+        glm::mat4 projection = camera.GetProjectionMatrix();
+        glm::mat4 view = camera.GetViewMatrix();
+        particleShader->Bind();
+        particleShader->SetUniformMat4f("Model", glm::mat4(1.0));
+        particleShader->SetUniformMat4f("View", view);
+        particleShader->SetUniformMat4f("Projection", projection);
+        particleShader->Unbind();
+        flameParticles->Render();
         colorFBO.Unbind();
+
+        /*glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);*/
 
         //post render
         ColorFBO t = PostRender(colorFBO, camera);
