@@ -4,100 +4,107 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <random>
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
+#include "VertexBufferLayout.h"
+#include "ShaderStorageBuffer.h"
 #include "Shader.h"
+#include "ComputeShader.h"
+#include "Renderer.h"
 
-float frandom() {
-	return (float)rand() / (float)RAND_MAX;
-}
+// [0.0, 1.0] 随机数
+float frandom();
+// [-1.0, 1.0] 随机数
+float sfrandom();
 
-float sfrandom() {
-	return frandom() * 2.0 - 1.0;
-}
+// 初始化每个粒子的IBO
+IndexBuffer* CreateElementArrayBufferObject(int numParticles);
 
-GLuint CreateElementArrayBufferObject(int numParticles) {
-	unsigned int *indexes = new unsigned int[numParticles * 6];
-	unsigned int* temp = indexes;
-	for (size_t i = 0; i < numParticles; i++) {
-		unsigned int index = unsigned int(i << 2);
-		*temp++ = index;
-		*temp++ = index + 1;
-		*temp++ = index + 2;
-		*temp++ = index;
-		*temp++ = index + 2;
-		*temp++ = index + 3;
-	}
-	GLuint ibo;
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numParticles * 6, indexes, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	return ibo;
-}
-
-struct Particle {
+struct ParticleVertex {
 	glm::vec4 position;
-	/*glm::vec3 velocity;
+	glm::vec2 texcoord;
+	float factor;
+};
+
+struct alignas(16) Particle {
+	// 粒子位置
+	glm::vec4 position;
+	// 粒子发射器位置
+	glm::vec4 emitter_position;
+	// 粒子中心点扩散的顶点位置（如果可以用点精灵绑定2D纹理就不需要了，效果会更好）
+	glm::vec4 vertex[4];
+	// 粒子速度
+	glm::vec4 velocity;
+	// 粒子当前年龄
 	float life;
-	float age;*/
+	// 粒子寿命
+	float maxLife;
+	// 粒子年龄衰减因子，用于控制粒子大小和透明度
+	float factor;
 };
 
 class ParticleSystem {
 protected:
-	GLuint particleBuffer;
-	GLuint particleIBO;
+	// SSBO
+	ShaderStorageBuffer* particleBuffer;
+	ShaderStorageBuffer* emitterBuffer;
+	VertexArray* particleVAO;
+	VertexArray* emitterVAO;
+	VertexBuffer* particleVBO;
+	VertexBuffer* emitterVBO;
+	IndexBuffer* particleIBO;
+	// SSBO绑定的结构体
 	std::vector<Particle> particles;
-	//GLuint computeShader;
+	std::vector<Particle> emitters;
+	// 粒子中心点扩散的顶点位置（如果可以用点精灵绑定2D纹理就不需要了，效果会更好）
+	std::vector<ParticleVertex> particleVertex;
+	std::vector<ParticleVertex> emitterVertex;
+	ComputeShader* computeShader;
 	Shader* renderProgram;
 	int numParticles;
 public:
-	ParticleSystem(int numParticles, Shader* renderProgram)
-		: numParticles(numParticles), renderProgram(renderProgram) {
+	ParticleSystem(int numParticles, Shader* renderProgram, ComputeShader* computeShader)
+		: numParticles(numParticles), renderProgram(renderProgram), computeShader(computeShader) {
 		particles.resize(numParticles);
-	}
-
-	virtual ~ParticleSystem() {
-		glDeleteBuffers(1, &particleBuffer);
+		emitters.resize(numParticles);
+		particleVAO = new VertexArray();
+		emitterVAO = new VertexArray();
+		particleVBO = new VertexBuffer(nullptr, numParticles * 4 * sizeof(ParticleVertex));
+		emitterVBO = new VertexBuffer(nullptr, numParticles * 4 * sizeof(ParticleVertex));
 	}
 
 	virtual void InitParticles() {}
 
-	virtual void Render() {
-		renderProgram->Bind();
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, particleBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, particleIBO);
-		glDrawElements(GL_TRIANGLES, numParticles * 6, GL_UNSIGNED_INT, 0);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		renderProgram->Unbind();
-	}
+	// 更新粒子状态
+	virtual void Update(float deltaTime) {}
+
+	// 绘制粒子
+	virtual void Render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
 };
 
 class FlameParticleSystem : public ParticleSystem
 {
 private:
+	// 影响粒子分布的因子
 	int n;
 	int adj_value;
-	float size;
-	float alpha;
+	// 粒子随机寿命范围
+	float max_life;
+	float min_life;
+	// 粒子随机速度范围
+	float max_velocity;
+	float min_velocity;
+	// 粒子寿命衰减范围，小于该半径的寿命更长（更靠近中心）
+	float radius;
 public:
-	FlameParticleSystem(int numParticles, Shader* renderProgram, int n, int adj_value)
-		: ParticleSystem(numParticles, renderProgram), n(n), adj_value(adj_value) {
+	FlameParticleSystem(int numParticles, Shader* renderProgram, ComputeShader* computeShader, int n, int adj_value, float max_life, float min_life, float max_velocity, float min_velocity, float radius)
+		: ParticleSystem(numParticles, renderProgram, computeShader), n(n), adj_value(adj_value), max_life(max_life), min_life(min_life), max_velocity(max_velocity), min_velocity(min_velocity), radius(radius) {
 		InitParticles();
 	}
 
-	void InitParticles() {
-		for (auto& p : particles) {
-			float x = 0.0f, z = 0.0f;
-			for (int i = 0; i < n; i++) {
-				x += (sfrandom() * adj_value);
-				z += (sfrandom() * adj_value);
-			}
-			p.position = glm::vec4(x, 0.0, z, 1.0);
-		}
-		glGenBuffers(1, &particleBuffer);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleBuffer);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, particles.size() * sizeof(Particle), particles.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		particleIBO = CreateElementArrayBufferObject(numParticles);
-	}
+	void InitParticles();
+
+	// 更新粒子状态
+	void Update(float deltaTime);
 };

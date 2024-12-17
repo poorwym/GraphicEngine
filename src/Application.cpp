@@ -263,9 +263,11 @@ void RealTimeRender(GLFWwindow* window) {
     Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    //创建火焰粒子
+    // 创建火焰粒子
     Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
-    FlameParticleSystem* flameParticles = new FlameParticleSystem(10, particleShader, 10.0, 1.0);
+    ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
+    // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(5000, particleShader, particleComputeShader, 10.0, 1.1, 1.7, 1.0, 6.0, 3.5, 4.0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -302,18 +304,15 @@ void RealTimeRender(GLFWwindow* window) {
         mainShader->Bind();
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
+        /*glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ZERO);*/
         glm::mat4 projection = camera.GetProjectionMatrix();
         glm::mat4 view = camera.GetViewMatrix();
-        particleShader->Bind();
-        particleShader->SetUniformMat4f("Model", glm::mat4(1.0));
-        particleShader->SetUniformMat4f("View", view);
-        particleShader->SetUniformMat4f("Projection", projection);
-        particleShader->Unbind();
-        flameParticles->Render();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(10.0, -2.0, 2.0));
+        model = glm::rotate(model, glm::radians(75.0f), glm::vec3(0.0, 1.0, 0.0));
+        flameParticles->Render(model, view, projection);
         colorFBO.Unbind();
-
-        /*glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);*/
 
         //post render
         ColorFBO t = PostRender(colorFBO, camera);
@@ -321,6 +320,7 @@ void RealTimeRender(GLFWwindow* window) {
 
         //update
         scene->Update(deltaTime);
+        flameParticles->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);

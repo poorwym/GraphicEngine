@@ -171,6 +171,7 @@
     <ClCompile Include="src\NVIDIA_Nsight.cpp" />
     <ClCompile Include="src\OBJManager.cpp" />
     <ClCompile Include="src\Octree.cpp" />
+    <ClCompile Include="src\Particle.cpp" />
     <ClCompile Include="src\Quad.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\ResourceManager.cpp" />
@@ -228,6 +229,7 @@
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\OBJManager.h" />
     <ClInclude Include="src\Octree.h" />
+    <ClInclude Include="src\Particle.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\ResourceManager.h" />
     <ClInclude Include="src\Scene.h" />
