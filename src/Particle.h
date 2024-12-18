@@ -74,6 +74,12 @@ public:
 
 	virtual void InitParticles() {}
 
+	virtual void InitParticlePosition(Particle& p) {}
+
+	virtual void InitParticleVelocity(Particle& p) {}
+
+	virtual void InitParticleLife(Particle& p) {}
+
 	// 更新粒子状态
 	virtual void Update(float deltaTime) {}
 
@@ -105,6 +111,12 @@ public:
 	}
 
 	void InitParticles();
+
+	void InitParticlePosition(Particle& p);
+
+	void InitParticleVelocity(Particle& p);
+
+	void InitParticleLife(Particle& p);
 
 	// 更新粒子状态
 	void Update(float deltaTime);

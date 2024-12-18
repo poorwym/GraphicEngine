@@ -31,32 +31,26 @@ void FlameParticleSystem::InitParticles() {
 	// 纹理
 	//texture1 = new Texture("res/Particles/flame.png");
 	// 初始化粒子状态
+	for (auto& e : emitters) {
+		// 初始化发射器位置
+		InitParticlePosition(e);
+		// 初始化发射器速度
+		InitParticleVelocity(e);
+		// 初始化发射器寿命
+		InitParticleLife(e);
+		// VAO数据
+		emitterVertex.push_back({ e.position, 1.0 });
+	}
 	for (auto& p : particles) {
 		// 初始化粒子位置
-		float x = 0.0f, z = 0.0f;
-		for (int i = 0; i < n; i++) {
-			x += (sfrandom() * adj_value);
-			z += (sfrandom() * adj_value);
-		}
-		if (abs(x) >= (4.0 * n / 5.0) * adj_value) x = sfrandom();
-		if (abs(z) >= (4.0 * n / 5.0) * adj_value) z = sfrandom();
-		p.emitter_position = glm::vec4(x, 0.0, z, 1.0);
-		p.position = p.emitter_position;
+		InitParticlePosition(p);
 		// 初始化粒子速度
-		float InitVeloc = (max_velocity - min_velocity) * frandom() + min_velocity;
-		p.velocity = glm::vec4(0.0, InitVeloc, 0.0, 0.0);
+		InitParticleVelocity(p);
 		// 初始化粒子寿命
-		float dist = sqrt(p.position.x * p.position.x + p.position.z * p.position.z);
-		float InitLife = (max_life - min_life) * frandom() + min_life;
-		if (dist >= radius) p.maxLife = InitLife * 0.6;
-		else p.maxLife = InitLife * 1.2;
-		p.life = p.maxLife;
+		InitParticleLife(p);
 		// VAO数据
 		particleVertex.push_back({ p.position, 1.0 });
-		emitterVertex.push_back({ p.position, 1.0 });
 	}
-	// 初始化发射器状态
-	std::memcpy(emitters.data(), particles.data(), sizeof(Particle) * numParticles);
 	// 初始化 SSBO
 	particleBuffer = new ShaderStorageBuffer(particles.data(), particles.size() * sizeof(Particle), 2);
 	emitterBuffer = new ShaderStorageBuffer(emitters.data(), emitters.size() * sizeof(Particle), 3);
@@ -77,6 +71,31 @@ void FlameParticleSystem::InitParticles() {
 	emitterVAO->Bind();
 	emitterVAO->AddBuffer(*emitterVBO, layout);
 	emitterVAO->Unbind();
+}
+
+void FlameParticleSystem::InitParticlePosition(Particle& p) {
+	float x = 0.0f, z = 0.0f;
+	for (int i = 0; i < n; i++) {
+		x += (sfrandom() * adj_value);
+		z += (sfrandom() * adj_value);
+	}
+	if (abs(x) >= (4.0 * n / 5.0) * adj_value) x = sfrandom();
+	if (abs(z) >= (4.0 * n / 5.0) * adj_value) z = sfrandom();
+	p.emitter_position = glm::vec4(x, 0.0, z, 1.0);
+	p.position = p.emitter_position;
+}
+
+void FlameParticleSystem::InitParticleVelocity(Particle& p) {
+	float InitVeloc = (max_velocity - min_velocity) * frandom() + min_velocity;
+	p.velocity = glm::vec4(0.0, InitVeloc, 0.0, 0.0);
+}
+
+void FlameParticleSystem::InitParticleLife(Particle& p) {
+	float dist = sqrt(p.position.x * p.position.x + p.position.z * p.position.z);
+	float InitLife = (max_life - min_life) * frandom() + min_life;
+	if (dist >= radius) p.maxLife = InitLife * 0.6;
+	else p.maxLife = InitLife * 1.2;
+	p.life = p.maxLife;
 }
 
 // 更新粒子状态 
