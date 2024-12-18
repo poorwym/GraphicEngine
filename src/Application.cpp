@@ -266,8 +266,8 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建火焰粒子
     Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
     ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
-    // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度
-    FlameParticleSystem* flameParticles = new FlameParticleSystem(4000, particleShader, particleComputeShader, 5.0, 1.0, 1.7, 1.0, 6.0, 3.5, 4.0);
+    // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度 寿命衰减半径
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(2000, particleShader, particleComputeShader, 5.0, 1.0, 1.5, 0.8, 5.0, 2.5, 2.5);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -304,8 +304,10 @@ void RealTimeRender(GLFWwindow* window) {
         mainShader->Bind();
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
-        /*glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ZERO);*/
+        glEnable(GL_POINT_SPRITE);
+        glEnable(GL_PROGRAM_POINT_SIZE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         glm::mat4 projection = camera.GetProjectionMatrix();
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);

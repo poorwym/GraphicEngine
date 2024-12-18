@@ -5,7 +5,6 @@ layout(local_size_x = 256) in;
 struct Particle {
 	vec4 position;
 	vec4 emitter_position;
-	vec4 vertex[4];
 	vec4 velocity;
 	float life;
 	float maxLife;
@@ -64,13 +63,6 @@ void main() {
 	// 更新 factor，影响粒子的大小和透明度
 	p.factor = 1.0 / ((p.life - p.maxLife / 2) * (p.life - p.maxLife / 2) + 1.0);
 	e.factor = 1.0 / ((e.life - e.maxLife / 2) * (e.life - e.maxLife / 2) + 1.0);
-
-	for (int i = 0; i < 4; i++) {
-		vec2 texcoord = vec2(((i - 1) & 2) >> 1, (i & 2) >> 1);
-		float spriteSize = 0.3 * p.factor;
-		p.vertex[i] = p.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 0.0);
-		e.vertex[i] = e.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 0.0);
-	}
 
 	particles[id] = p;
 	emitters[id] = e;

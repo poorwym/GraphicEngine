@@ -11,23 +11,6 @@ float sfrandom() {
 	return frandom() * 2.0 - 1.0;
 }
 
-// 初始化每个粒子的IBO（直接在中心点绑定纹理则不需要）
-IndexBuffer* CreateElementArrayBufferObject(int numParticles) {
-	unsigned int* indexes = new unsigned int[numParticles * 6];
-	unsigned int* temp = indexes;
-	for (size_t i = 0; i < numParticles; i++) {
-		unsigned int index = unsigned int(i << 2);
-		*temp++ = index;
-		*temp++ = index + 1;
-		*temp++ = index + 2;
-		*temp++ = index;
-		*temp++ = index + 2;
-		*temp++ = index + 3;
-	}
-	IndexBuffer* ibo = new IndexBuffer(indexes, numParticles * 6);
-	return ibo;
-}
-
 // 绘制粒子
 void ParticleSystem::Render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
 	renderProgram->Bind();
@@ -35,20 +18,18 @@ void ParticleSystem::Render(const glm::mat4& model, const glm::mat4& view, const
 	renderProgram->SetUniformMat4f("View", view);
 	renderProgram->SetUniformMat4f("Projection", projection);
 	emitterVAO->Bind();
-	particleIBO->Bind();
-	GLCall(glDrawElements(GL_TRIANGLES, numParticles * 6, GL_UNSIGNED_INT, 0));
+	GLCall(glDrawArrays(GL_POINTS, 0, numParticles));
 	emitterVAO->Unbind();
-	particleIBO->Unbind();
 
 	particleVAO->Bind();
-	particleIBO->Bind();
-	GLCall(glDrawElements(GL_TRIANGLES, numParticles * 6, GL_UNSIGNED_INT, 0));
+	GLCall(glDrawArrays(GL_POINTS, 0, numParticles));
 	particleVAO->Unbind();
-	particleIBO->Unbind();
 	renderProgram->Unbind();
 }
 
 void FlameParticleSystem::InitParticles() {
+	// 纹理
+	//texture1 = new Texture("res/Particles/flame.png");
 	// 初始化粒子状态
 	for (auto& p : particles) {
 		// 初始化粒子位置
@@ -57,26 +38,22 @@ void FlameParticleSystem::InitParticles() {
 			x += (sfrandom() * adj_value);
 			z += (sfrandom() * adj_value);
 		}
+		if (abs(x) >= (4.0 * n / 5.0) * adj_value) x = sfrandom();
+		if (abs(z) >= (4.0 * n / 5.0) * adj_value) z = sfrandom();
 		p.emitter_position = glm::vec4(x, 0.0, z, 1.0);
 		p.position = p.emitter_position;
-		//std::cout << p.position.x << " " << p.position.y << " " << p.position.z << " " << p.position.w << std::endl;
 		// 初始化粒子速度
 		float InitVeloc = (max_velocity - min_velocity) * frandom() + min_velocity;
 		p.velocity = glm::vec4(0.0, InitVeloc, 0.0, 0.0);
 		// 初始化粒子寿命
 		float dist = sqrt(p.position.x * p.position.x + p.position.z * p.position.z);
 		float InitLife = (max_life - min_life) * frandom() + min_life;
-		if (dist <= radius) p.maxLife = InitLife * 1.3;
-		else p.maxLife = InitLife;
+		if (dist >= radius) p.maxLife = InitLife * 0.6;
+		else p.maxLife = InitLife * 1.2;
 		p.life = p.maxLife;
-		// 初始化粒子顶点位置（绑定纹理则不需要）
-		for (int i = 0; i < 4; i++) {
-			glm::vec2 texcoord = glm::vec2(((i - 1) & 2) >> 1, (i & 2) >> 1);
-			float spriteSize = 0.3;
-			glm::vec4 vertex = p.position + glm::vec4(glm::vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 1.0);
-			particleVertex.push_back({ vertex, texcoord, 1.0 });
-			emitterVertex.push_back({ vertex, texcoord, 1.0 });
-		}
+		// VAO数据
+		particleVertex.push_back({ p.position, 1.0 });
+		emitterVertex.push_back({ p.position, 1.0 });
 	}
 	// 初始化发射器状态
 	std::memcpy(emitters.data(), particles.data(), sizeof(Particle) * numParticles);
@@ -86,7 +63,6 @@ void FlameParticleSystem::InitParticles() {
 	// 初始化 VAO VBO IBO
 	VertexBufferLayout layout;
 	layout.Push<float>(4); // position: vec4
-	layout.Push<float>(2); // texcoord: vec2
 	layout.Push<float>(1); // factor: float
 	particleVBO->Bind();
 	particleVBO->setData(particleVertex.data(), particleVertex.size() * sizeof(ParticleVertex));
@@ -101,12 +77,10 @@ void FlameParticleSystem::InitParticles() {
 	emitterVAO->Bind();
 	emitterVAO->AddBuffer(*emitterVBO, layout);
 	emitterVAO->Unbind();
-	particleIBO = CreateElementArrayBufferObject(numParticles);
 }
 
 // 更新粒子状态 
 void FlameParticleSystem::Update(float deltaTime) {
-	//std::cout << deltaTime << std::endl;
 	computeShader->Bind();
 	computeShader->SetUniform1f("deltaTime", deltaTime);
 	computeShader->SetUniform1f("max_velocity", max_velocity);
@@ -128,12 +102,8 @@ void FlameParticleSystem::Update(float deltaTime) {
 		particleBuffer->Unmap();
 	}
 	for (int i = 0; i < particles.size(); i++) {
-		// std::cout << "Particle: " << i << std::endl;
-		for (int j = 0; j < 4; j++) {
-			particleVertex[i * 4 + j].position = temp[i].vertex[j];
-			particleVertex[i * 4 + j].factor = temp[i].factor;
-			// std::cout << temp[i].vertex[j].x << " " << temp[i].vertex[j].y << " " << temp[i].vertex[j].z << " " << temp[i].vertex[j].w << std::endl;
-		}
+		particleVertex[i].position = temp[i].position;
+		particleVertex[i].factor = temp[i].factor;
 	}
 	particleVBO->Bind();
 	particleVBO->setData(particleVertex.data(), particleVertex.size() * sizeof(ParticleVertex));
@@ -145,10 +115,8 @@ void FlameParticleSystem::Update(float deltaTime) {
 		emitterBuffer->Unmap();
 	}
 	for (int i = 0; i < emitters.size(); i++) {
-		for (int j = 0; j < 4; j++) {
-			emitterVertex[i * 4 + j].position = temp[i].vertex[j];
-			emitterVertex[i * 4 + j].factor = temp[i].factor;
-		}
+		emitterVertex[i].position = temp[i].position;
+		emitterVertex[i].factor = temp[i].factor;
 	}
 	emitterVBO->Bind();
 	emitterVBO->setData(emitterVertex.data(), emitterVertex.size() * sizeof(ParticleVertex));

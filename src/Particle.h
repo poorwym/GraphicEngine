@@ -12,6 +12,7 @@
 #include "Shader.h"
 #include "ComputeShader.h"
 #include "Renderer.h"
+#include "Texture.h"
 
 // [0.0, 1.0] 随机数
 float frandom();
@@ -23,7 +24,6 @@ IndexBuffer* CreateElementArrayBufferObject(int numParticles);
 
 struct ParticleVertex {
 	glm::vec4 position;
-	glm::vec2 texcoord;
 	float factor;
 };
 
@@ -32,8 +32,6 @@ struct alignas(16) Particle {
 	glm::vec4 position;
 	// 粒子发射器位置
 	glm::vec4 emitter_position;
-	// 粒子中心点扩散的顶点位置（如果可以用点精灵绑定2D纹理就不需要了，效果会更好）
-	glm::vec4 vertex[4];
 	// 粒子速度
 	glm::vec4 velocity;
 	// 粒子当前年龄
@@ -97,6 +95,9 @@ private:
 	float min_velocity;
 	// 粒子寿命衰减范围，小于该半径的寿命更长（更靠近中心）
 	float radius;
+	// 点精灵纹理
+	Texture* texture1;
+
 public:
 	FlameParticleSystem(int numParticles, Shader* renderProgram, ComputeShader* computeShader, int n, int adj_value, float max_life, float min_life, float max_velocity, float min_velocity, float radius)
 		: ParticleSystem(numParticles, renderProgram, computeShader), n(n), adj_value(adj_value), max_life(max_life), min_life(min_life), max_velocity(max_velocity), min_velocity(min_velocity), radius(radius) {
