@@ -15,7 +15,7 @@ void main()
 {
 	VOUT_Factor = factor;
 	gl_Position = Projection * View * Model * aPos;
-	gl_PointSize = 20 * factor;
+	gl_PointSize = 50 * factor;
 }
 
 #shader fragment
@@ -29,13 +29,13 @@ out vec4 FragColor;
 
 void main()
 {
-	// vec4 texture_color = texture(texture1, gl_PointCoord);
-	// if (texture_color.r < 0.1) discard;
+	vec4 color = vec4(0.5, 0.3, 0.05, VOUT_Factor);
+	vec4 texture_color = texture(texture1, gl_PointCoord);
+	if (texture_color.r < 0.5) discard;
 	// FragColor = vec4(texture_color.rgb, VOUT_Factor);
-
-	vec4 color = vec4(1.0, 0.8, 0.05, VOUT_Factor);
-	vec2 temp = gl_PointCoord - vec2(0.5);
-	float f = dot(temp, temp);
-	if (f > 0.25) discard;
+	
+	//vec2 temp = gl_PointCoord - vec2(0.5);
+	//float f = dot(temp, temp);
+	//if (f > 0.25) discard;
 	FragColor = color;
 }

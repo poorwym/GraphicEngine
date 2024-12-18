@@ -267,7 +267,7 @@ void RealTimeRender(GLFWwindow* window) {
     Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
     ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
     // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度 寿命衰减半径
-    FlameParticleSystem* flameParticles = new FlameParticleSystem(2000, particleShader, particleComputeShader, 5.0, 1.0, 1.5, 0.8, 5.0, 2.5, 2.5);
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(4000, particleShader, particleComputeShader, 10.0, 1.0, 1.7, 0.8, 5.0, 2.5, 2.5);
 
     while (!glfwWindowShouldClose(window))
     {

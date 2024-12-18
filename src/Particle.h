@@ -19,8 +19,7 @@ float frandom();
 // [-1.0, 1.0] 随机数
 float sfrandom();
 
-// 初始化每个粒子的IBO
-IndexBuffer* CreateElementArrayBufferObject(int numParticles);
+GLuint LoadTexture(const std::string& path);
 
 struct ParticleVertex {
 	glm::vec4 position;
@@ -41,6 +40,8 @@ struct alignas(16) Particle {
 	// 粒子年龄衰减因子，用于控制粒子大小和透明度
 	float factor;
 };
+
+
 
 class ParticleSystem {
 protected:
@@ -68,8 +69,8 @@ public:
 		emitters.resize(numParticles);
 		particleVAO = new VertexArray();
 		emitterVAO = new VertexArray();
-		particleVBO = new VertexBuffer(nullptr, numParticles * 4 * sizeof(ParticleVertex));
-		emitterVBO = new VertexBuffer(nullptr, numParticles * 4 * sizeof(ParticleVertex));
+		particleVBO = new VertexBuffer(nullptr, numParticles * sizeof(ParticleVertex));
+		emitterVBO = new VertexBuffer(nullptr, numParticles * sizeof(ParticleVertex));
 	}
 
 	virtual void InitParticles() {}
@@ -84,7 +85,7 @@ public:
 	virtual void Update(float deltaTime) {}
 
 	// 绘制粒子
-	virtual void Render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
+	virtual void Render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {}
 };
 
 class FlameParticleSystem : public ParticleSystem
@@ -102,7 +103,7 @@ private:
 	// 粒子寿命衰减范围，小于该半径的寿命更长（更靠近中心）
 	float radius;
 	// 点精灵纹理
-	Texture* texture1;
+	GLuint texture1;
 
 public:
 	FlameParticleSystem(int numParticles, Shader* renderProgram, ComputeShader* computeShader, int n, int adj_value, float max_life, float min_life, float max_velocity, float min_velocity, float radius)
@@ -120,4 +121,7 @@ public:
 
 	// 更新粒子状态
 	void Update(float deltaTime);
+
+	// 绘制粒子
+	void Render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
 };

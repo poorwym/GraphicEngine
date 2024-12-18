@@ -62,7 +62,7 @@ void main() {
 
 	// 更新 factor，影响粒子的大小和透明度
 	p.factor = 1.0 / ((p.life - p.maxLife / 2) * (p.life - p.maxLife / 2) + 1.0);
-	e.factor = 1.0 / ((e.life - e.maxLife / 2) * (e.life - e.maxLife / 2) + 1.0);
+	e.factor = 1.0 / ((e.life - e.maxLife / 2) * (e.life - e.maxLife / 2) + 1.0) * 0.5;
 
 	particles[id] = p;
 	emitters[id] = e;
