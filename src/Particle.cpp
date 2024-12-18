@@ -59,6 +59,7 @@ void FlameParticleSystem::InitParticles() {
 		}
 		p.emitter_position = glm::vec4(x, 0.0, z, 1.0);
 		p.position = p.emitter_position;
+		//std::cout << p.position.x << " " << p.position.y << " " << p.position.z << " " << p.position.w << std::endl;
 		// 初始化粒子速度
 		float InitVeloc = (max_velocity - min_velocity) * frandom() + min_velocity;
 		p.velocity = glm::vec4(0.0, InitVeloc, 0.0, 0.0);
@@ -71,7 +72,7 @@ void FlameParticleSystem::InitParticles() {
 		// 初始化粒子顶点位置（绑定纹理则不需要）
 		for (int i = 0; i < 4; i++) {
 			glm::vec2 texcoord = glm::vec2(((i - 1) & 2) >> 1, (i & 2) >> 1);
-			float spriteSize = 0.5;
+			float spriteSize = 0.3;
 			glm::vec4 vertex = p.position + glm::vec4(glm::vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 1.0);
 			particleVertex.push_back({ vertex, texcoord, 1.0 });
 			emitterVertex.push_back({ vertex, texcoord, 1.0 });
@@ -80,8 +81,8 @@ void FlameParticleSystem::InitParticles() {
 	// 初始化发射器状态
 	std::memcpy(emitters.data(), particles.data(), sizeof(Particle) * numParticles);
 	// 初始化 SSBO
-	particleBuffer = new ShaderStorageBuffer(particles.data(), particles.size() * sizeof(Particle), 0);
-	emitterBuffer = new ShaderStorageBuffer(emitters.data(), emitters.size() * sizeof(Particle), 1);
+	particleBuffer = new ShaderStorageBuffer(particles.data(), particles.size() * sizeof(Particle), 2);
+	emitterBuffer = new ShaderStorageBuffer(emitters.data(), emitters.size() * sizeof(Particle), 3);
 	// 初始化 VAO VBO IBO
 	VertexBufferLayout layout;
 	layout.Push<float>(4); // position: vec4
@@ -105,6 +106,7 @@ void FlameParticleSystem::InitParticles() {
 
 // 更新粒子状态 
 void FlameParticleSystem::Update(float deltaTime) {
+	//std::cout << deltaTime << std::endl;
 	computeShader->Bind();
 	computeShader->SetUniform1f("deltaTime", deltaTime);
 	computeShader->SetUniform1f("max_velocity", max_velocity);
@@ -112,7 +114,7 @@ void FlameParticleSystem::Update(float deltaTime) {
 
 	particleBuffer->Bind();
 	emitterBuffer->Bind();
-	computeShader->Dispatch((numParticles + 511) / 512, 1, 1);
+	computeShader->Dispatch((numParticles + 255) / 256, 1, 1);
 	particleBuffer->Unbind();
 	emitterBuffer->Unbind();
 
@@ -126,9 +128,11 @@ void FlameParticleSystem::Update(float deltaTime) {
 		particleBuffer->Unmap();
 	}
 	for (int i = 0; i < particles.size(); i++) {
+		// std::cout << "Particle: " << i << std::endl;
 		for (int j = 0; j < 4; j++) {
 			particleVertex[i * 4 + j].position = temp[i].vertex[j];
 			particleVertex[i * 4 + j].factor = temp[i].factor;
+			// std::cout << temp[i].vertex[j].x << " " << temp[i].vertex[j].y << " " << temp[i].vertex[j].z << " " << temp[i].vertex[j].w << std::endl;
 		}
 	}
 	particleVBO->Bind();

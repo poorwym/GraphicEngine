@@ -267,7 +267,7 @@ void RealTimeRender(GLFWwindow* window) {
     Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
     ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
     // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度
-    FlameParticleSystem* flameParticles = new FlameParticleSystem(5000, particleShader, particleComputeShader, 10.0, 1.1, 1.7, 1.0, 6.0, 3.5, 4.0);
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(4000, particleShader, particleComputeShader, 5.0, 1.0, 1.7, 1.0, 6.0, 3.5, 4.0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -309,7 +309,7 @@ void RealTimeRender(GLFWwindow* window) {
         glm::mat4 projection = camera.GetProjectionMatrix();
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(10.0, -2.0, 2.0));
+        model = glm::translate(model, glm::vec3(0.0, -2.0, 2.0));
         model = glm::rotate(model, glm::radians(75.0f), glm::vec3(0.0, 1.0, 0.0));
         flameParticles->Render(model, view, projection);
         colorFBO.Unbind();

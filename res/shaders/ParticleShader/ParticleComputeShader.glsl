@@ -1,6 +1,6 @@
 #version 450 core
 
-layout(local_size_x = 512) in;
+layout(local_size_x = 256) in;
 
 struct Particle {
 	vec4 position;
@@ -12,11 +12,11 @@ struct Particle {
 	float factor;
 };
 
-layout(std430, binding = 0) buffer ParticleBuffer {
+layout(std430, binding = 2) buffer ParticleBuffer {
 	Particle particles[];
 };
 
-layout(std430, binding = 1) buffer EmitterBuffer {
+layout(std430, binding = 3) buffer EmitterBuffer {
 	Particle emitters[];
 };
 
@@ -67,9 +67,9 @@ void main() {
 
 	for (int i = 0; i < 4; i++) {
 		vec2 texcoord = vec2(((i - 1) & 2) >> 1, (i & 2) >> 1);
-		float spriteSize = 0.5 * p.factor;
-		p.vertex[i] = p.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 1.0);
-		e.vertex[i] = e.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 1.0);
+		float spriteSize = 0.3 * p.factor;
+		p.vertex[i] = p.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 0.0);
+		e.vertex[i] = e.position + vec4(vec2(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0) * spriteSize, 0.0, 0.0);
 	}
 
 	particles[id] = p;

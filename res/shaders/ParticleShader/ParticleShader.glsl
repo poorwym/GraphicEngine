@@ -33,5 +33,5 @@ void main()
 	float distance = length(VOUT_Texcoord * 2.0 - vec2(1.0)) * 3.0;
 	float alpha = exp(-distance * distance);
 	if (alpha < 0.15) discard;
-	FragColor = vec4(1.0f, 0.8f, 0.05f, VOUT_Factor);
+	FragColor = vec4(1.0f, 0.8f, 0.05f, 1.0f);
 }
