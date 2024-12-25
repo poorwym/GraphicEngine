@@ -1,12 +1,5 @@
 #include "SceneManager.h"
 
-std::map<std::string, PointLight*> g_PointLightList;
-std::map<PointLight*, unsigned int> g_PointLightID;
-std::map<std::string, SpotLight*> g_SpotLightList;
-std::map<SpotLight*, unsigned int> g_SpotLightID;
-std::map<std::string, DirectionalLight*> g_DirectionalLightList;
-std::map<DirectionalLight*, unsigned int> g_DirectionalLightID;
-
 std::vector<Texture*> g_TextureList;
 std::map<unsigned int, int> g_TextureSlots;
 std::map<std::string, int> g_TextureIndex;

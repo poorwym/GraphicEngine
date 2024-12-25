@@ -9,6 +9,7 @@ class Skybox
 {
 public:
     Skybox(const std::vector<std::string>& faces);
+    Skybox(std::string name);
     ~Skybox();
     void Bind(unsigned int slot);
     void Unbind();

@@ -4,6 +4,24 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+std::vector<std::string> BlueSkyBox = {
+    "res/Skybox/right.png",
+    "res/Skybox/left.png",
+    "res/Skybox/top.png",
+    "res/Skybox/bottom.png",
+    "res/Skybox/front.png",
+    "res/Skybox/back.png"
+};
+
+std::vector<std::string> StarSkyBox = {
+    "res/Skybox/star.jpg",
+    "res/Skybox/star.jpg",
+    "res/Skybox/star.jpg",
+    "res/Skybox/star.jpg",
+    "res/Skybox/star.jpg",
+    "res/Skybox/star.jpg"
+};
+
 // 立方体的顶点数据
 float skyboxVertices[] = {
     // positions          
@@ -71,6 +89,36 @@ Skybox::Skybox(const std::vector<std::string>& faces)
     skyboxShader.SetUniform1i("skybox", 0);
 }
 
+Skybox::Skybox(std::string name)
+    :skyboxShader("res/shaders/RealTimeRendering/skybox.glsl")
+{
+    // 加载立方体贴图
+    if (name == "BlueSky"){
+        cubemapTexture = loadCubemap(BlueSkyBox);
+    }
+    else if (name == "Star"){
+        cubemapTexture = loadCubemap(StarSkyBox);
+    }
+    else {
+        std::cout << "Skybox name error!" << std::endl;
+        cubemapTexture = loadCubemap(StarSkyBox);
+    }
+
+    // 设置立方体的VAO和VBO
+    GLCall(glGenVertexArrays(1, &skyboxVAO));
+    GLCall(glGenBuffers(1, &skyboxVBO));
+    GLCall(glBindVertexArray(skyboxVAO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW));
+    GLCall(glEnableVertexAttribArray(0));
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+    GLCall(glBindVertexArray(0));
+
+    // 配置着色器
+    skyboxShader.Bind();
+    skyboxShader.SetUniform1i("skybox", 0);
+}
+
 Skybox::~Skybox()
 {
     GLCall(glDeleteVertexArrays(1, &skyboxVAO));
@@ -118,7 +166,12 @@ unsigned int Skybox::loadCubemap(const std::vector<std::string>& faces)
     {
         cv::Mat image = cv::imread(faces[i]);
         if (image.empty()) {
-            std::cerr << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            std::cerr << "Cubemap texture failed to load at path( Empty ): " << faces[i] << std::endl;
+            continue;
+        }
+
+        if (image.rows != image.cols) {
+            std::cerr << "Cubemap texture failed to load at path( Cols != Rows ): " << faces[i] << std::endl;
             continue;
         }
 

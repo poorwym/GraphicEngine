@@ -166,6 +166,7 @@
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\LightController.cpp" />
+    <ClCompile Include="src\LightManager.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\MaterialManager.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\LightController.h" />
+    <ClInclude Include="src\LightManager.h" />
     <ClInclude Include="src\Macro.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\MaterialManager.h" />

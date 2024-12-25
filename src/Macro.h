@@ -16,3 +16,7 @@
 #define FAR_PLANE 150
 #define NEAR_PLANE 0.1
 
+
+#define MAX_POINT_LIGHTS 3 // 最大点光源数量
+#define MAX_DIRECTIONAL_LIGHTS 1 //最大方向光数量
+#define MAX_SPOT_LIGHTS 3 // 最大聚光灯数量

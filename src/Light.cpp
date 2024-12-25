@@ -103,9 +103,9 @@ PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity
 	m_LightAmbient = m_Intensity * color;
 	m_LightDiffuse = m_Intensity * color;
 	m_LightSpecular = m_Intensity * color;
-	m_Constant = 0.5f;
-	m_Linear = 1.0f;
-	m_Quadratic = 1.0f;
+	m_Constant = 1.0f;
+	m_Linear = 0.0f;
+	m_Quadratic = 0.0f;
 }
 
 PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular, float constant, float linear, float quadratic)

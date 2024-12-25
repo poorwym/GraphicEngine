@@ -1,6 +1,7 @@
 const float PI = 3.14159265359; // PI
 #define MAX_POINT_LIGHTS 3 // 最大点光源数量
 #define MAX_DIRECTIONAL_LIGHTS 1 // 最大平行光源数量
+#define MAX_SPOT_LIGHTS 3
 
 #define ALBEDO_MAP_INDEX 0
 #define NORMAL_MAP_INDEX 1

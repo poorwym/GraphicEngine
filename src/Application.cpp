@@ -44,9 +44,13 @@
 #include "NVIDIA_Nsight.h"
 #include "ModelManager.h"
 #include "MaterialManager.h"
+#include "LightManager.h"
+
+
 extern std::vector<Material> g_MaterialList;
 extern TextureManager g_TextureManager;
 extern MaterialManager g_MaterialManager;
+extern LightManager g_LightManager;
 
 EngineState g_EngineState;
 SceneManager g_SceneManager(nullptr);
@@ -245,21 +249,8 @@ void RealTimeRender(GLFWwindow* window) {
     mainShader->SetUniform1f("farPlane", far_plane);
     mainShader->SetUniform1i("ShadowMap", 31);
     mainShader->Unbind();
-
-
-    DirectionalLight* light = new DirectionalLight("Directional Light", _DARKGREY, 3.0f, glm::vec3(1.0f));
-    g_SceneManager.AddDirectionalLight(light, "node2", nullptr);
-    std::vector<std::string> faces
-    {
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg"
-    };
     // 创建天空盒实例
-    Skybox skybox(faces);
+    Skybox skybox("BlueSky");
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
     
     while (!glfwWindowShouldClose(window))
@@ -281,10 +272,13 @@ void RealTimeRender(GLFWwindow* window) {
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
+        // ImGui
         modelManager.OnImGuiRender();
         g_MaterialManager.OnImGuiRender();
+        g_LightManager.OnImGuiRender();
         scene->OnImGuiTree();
         cameraController->OnImGuiRender();
+
         cameraController->Update(deltaTime);
 
         mainShader->Bind();

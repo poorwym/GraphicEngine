@@ -56,7 +56,7 @@ void MaterialEditor::OnImGuiRender()
     ImGui::ColorEdit4("Diffuse", &t_Material.Diffuse.x);
     ImGui::ColorEdit4("Specular", &t_Material.Specular.x);
     ImGui::ColorEdit4("Emission", &t_Material.Emission.x);
-    ImGui::SliderFloat("Specular Exponent", &t_Material.SpecularExponent, 0.0f, 128.0f);
+    ImGui::SliderFloat("Specular Exponent", &t_Material.SpecularExponent, 0.0f, 1000.0f);
     ImGui::SliderFloat("Dissolve", &t_Material.Dissolve, 0.0f, 1.0f);
     ImGui::SliderFloat("Optical Density", &t_Material.OpticalDensity, 0.0f, 10.0f);
     ImGui::SliderFloat("Roughness", &t_Material.Roughness, 0.0f, 1.0f);
