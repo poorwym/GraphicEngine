@@ -227,7 +227,14 @@ void RealTimeRender(GLFWwindow* window) {
     InitModel();
     scene->ResetVAO();
 
-    std::cout << "sizeof Vertex:" << sizeof(Vertex) << std::endl;
+    std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
+    std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
+    std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
+    std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
+    std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
+    std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
+    std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
+    std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
 
     int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
@@ -255,10 +262,10 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
-
+    
     while (!glfwWindowShouldClose(window))
     {
+        ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
         /* Render here */
          // 获取当前帧的时间
         float currentFrame = glfwGetTime();

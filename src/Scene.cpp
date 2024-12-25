@@ -68,12 +68,13 @@ void Scene::FreeVAO()
 void Scene::ResetVAO()
 {
 	VertexBufferLayout layout;
-	layout.Push<float>(4); // Position: 3个浮点数
-	layout.Push<float>(4); // Normal: 3个浮点数
-	layout.Push<float>(4); // TexCoords: 2个浮点数
-	layout.Push<float>(4); // Tangent: 3个浮点数
-	layout.Push<float>(4); // Bitangent: 3个浮点数
-	layout.Push<float>(4); // MaterialIndex: 1个浮点数
+	layout.Push<float>(4); // Position: 4个浮点数
+	layout.Push<float>(4); // Normal: 4个浮点数
+	layout.Push<float>(4); // TexCoords: 4个浮点数
+	layout.Push<float>(4); // Tangent: 4个浮点数
+	layout.Push<float>(4); // Bitangent: 4个浮点数
+	layout.Push<float>(1); // MaterialIndex: 1个浮点数
+	layout.AddStride(3 * sizeof(float));
 
 	std::cout << "Stride: " << layout.GetStride() << std::endl;
 	UpdateVertices();

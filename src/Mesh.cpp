@@ -92,7 +92,7 @@ static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigne
 static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
     for (Vertex& vertex : vertices) {
         //vertex.material = material->GetMaterial();
-        vertex.MaterialIndex = glm::vec4(float(material->GetMaterialIndex()));
+        vertex.MaterialIndex = (float(material->GetMaterialIndex()));
     }
 }
 static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {

@@ -11,19 +11,20 @@ out VS_OUT {
     vec3 Tangent;
     vec3 Bitangent;
     flat int MaterialIndex;
+    flat int pad[7];
     mat3 TBN;
 } vs_out;
 
 void main()
 {
     gl_Position = u_MVP * a_Position;
-    vs_out.FragPos = vec3(a_Position); // 世界空间位置
+    vs_out.FragPos = a_Position.xyz; // 世界空间位置
     vs_out.Normal = a_Normal.xyz; //世界空间法线向量
     vs_out.TexCoords = a_TexCoords.xy;
     vs_out.Tangent = a_Tangent.xyz;
     vs_out.Bitangent = a_Bitangent.xyz;
     //vs_out.MaterialIndex = int(1);
-    vs_out.MaterialIndex = int(a_MaterialIndex.x);
+    vs_out.MaterialIndex = int(a_MaterialIndex);
 
     vec3 T = normalize(vec3(a_Tangent));
     vec3 B = normalize(vec3(a_Bitangent));
@@ -45,6 +46,7 @@ layout(std430, binding = 0) buffer MaterialBuffer {
     Material materials[];
 };
 
+
 #include "PBR.glsl"
 #include "material.glsl"
 
@@ -55,6 +57,7 @@ in VS_OUT {//顶点着色器输出
     vec3 Tangent;
     vec3 Bitangent;
     flat int MaterialIndex;
+    flat int pad[7];
     mat3 TBN;
 } fs_in;
 
@@ -62,10 +65,7 @@ void main()
 {
     vec3 finalColor = vec3(0.0);
     //计算颜色
-    FragColor = vec4(1.0);
-    return;
     vec3 ambient = GetAmbient(fs_in.MaterialIndex, fs_in.TexCoords);
-    return;
     vec3 diffuse = GetDiffuse(fs_in.MaterialIndex, fs_in.TexCoords);
     vec3 specular = GetSpecular(fs_in.MaterialIndex, fs_in.TexCoords);
     //计算法线
@@ -113,5 +113,4 @@ void main()
     if( abs(gl_FragCoord.z - focusDepth) <= 0.0){
         FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
-    
 }

@@ -32,7 +32,7 @@ Triangle TriangleSubdivider::CreateTriangle(Vertex& v1, Vertex& v2, Vertex& v3)
     triangle.bitangent[1] = v2.Bitangent;
     triangle.bitangent[2] = v3.Bitangent;
     
-    triangle.materialIndex = v1.MaterialIndex.x;
+    triangle.materialIndex = v1.MaterialIndex;
     return triangle;
 }
 
