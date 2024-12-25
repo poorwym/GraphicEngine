@@ -32,8 +32,8 @@ struct Material {
     //bump
     float BumpMutiplier;
     uint32_t HeightMap; //CPU�˵ĸ߶�ͼ
-    float padding3;
-    float padding4;
+    float Roughness;
+    float Metallic;
     bool operator==(const Material& other) const
     {
         return AlbedoMapIndex == other.AlbedoMapIndex && NormalMapIndex == other.NormalMapIndex &&
@@ -42,7 +42,7 @@ struct Material {
             AlphaMapIndex == other.AlphaMapIndex && HeightMapIndex == other.HeightMapIndex &&
             Ambient == other.Ambient && Diffuse == other.Diffuse && Specular == other.Specular &&
             Emission == other.Emission && Dissolve == other.Dissolve && Illum== other.Illum && OpticalDensity == other.OpticalDensity &&
-            SpecularExponent == other.SpecularExponent && HeightMap == other.HeightMap;
+            SpecularExponent == other.SpecularExponent && HeightMap == other.HeightMap && Roughness == other.Roughness && Metallic == other.Metallic;
     }
 };
 
@@ -64,7 +64,6 @@ public:
     inline float GetAlphaMapSlot()      const {return m_Material.AlphaMapIndex; };
     inline float GetHeightMapSlot()    const { return m_Material.HeightMapIndex; };
     inline const Material& GetMaterial() const { return m_Material; }
-    float GetMaterialIndex() const;
 };
 
 const Material default_material = {
@@ -87,6 +86,6 @@ const Material default_material = {
         0.0f, // SpecularExponent
         0.0f, // BumpMutiplier
         0,    // HeightMap
-        0.0f, // padding3
-        0.0f  // padding4
+        0.8f, // Roughness
+        0.2f  // Metallic
 };

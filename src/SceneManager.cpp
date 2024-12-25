@@ -10,7 +10,6 @@ std::map<DirectionalLight*, unsigned int> g_DirectionalLightID;
 std::vector<Texture*> g_TextureList;
 std::map<unsigned int, int> g_TextureSlots;
 std::map<std::string, int> g_TextureIndex;
-std::vector<Material> g_MaterialList;
 
 bool needUpdate = false;
 
@@ -77,18 +76,4 @@ int SceneManager::AddTexture(const char* path) // ∑µªÿŒ∆¿ÌIndex
         g_TextureIndex[path] = g_TextureIndex.size();
     }
     return g_TextureIndex[path];
-}
-
-void SceneManager::AddMaterial(Material& material)
-{
-    g_MaterialList.push_back(material);
-}
-
-int SceneManager::GetMaterialIndex(const Material& material)
-{
-    for (int i = 0; i <= g_MaterialList.size(); ++i) {
-        if (material == g_MaterialList[i]) {
-            return i;
-        }
-    }
 }

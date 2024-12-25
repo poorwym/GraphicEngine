@@ -69,7 +69,7 @@ float GetMetallic(int index, vec2 texCoord){
     {
         return GetTextureValue(index, texCoord, METALLIC_MAP_INDEX);
     }
-    return 0.0;
+    return materials[index].Metallic;
 }
 
 vec3 GetNormal(int index, vec2 texCoord){
@@ -85,7 +85,7 @@ float GetRoughness(int index, vec2 texCoord){
     {
         return GetTextureValue(index, texCoord, ROUGHNESS_MAP_INDEX);
     }
-    return 0.8;
+    return materials[index].Roughness;
 }
 float GetAlpha(int index, vec2 texCoord){
     if(materials[index].AlphaMapIndex != -1)

@@ -26,8 +26,9 @@ struct Material {
     float SpecularExponent;
     float BumpMutiplier;
     float padding2;
-    float padding3;
-    float padding4;
+    float Roughness;
+    float Metallic;
+
 };
 
 struct Triangle {
@@ -39,7 +40,7 @@ struct Triangle {
     int materialIndex;
     float padding1;
     float padding2;
-    float padding3;
+    float padding3;    
 };
 
 struct AABB {

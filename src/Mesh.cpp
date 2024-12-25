@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include "Texture.h"
 #include "depthMap.h"
+#include "MaterialManager.h"
 static void scale(std::vector<Vertex>& vertices, float scaleRate) {
     for (Vertex& vertex : vertices) {
         vertex.Position.x *= scaleRate;
@@ -89,10 +90,11 @@ static void CalcTangent(std::vector<Vertex>& vertices, const std::vector<unsigne
     }
 }
 
+extern MaterialManager g_MaterialManager;
+
 static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
     for (Vertex& vertex : vertices) {
-        //vertex.material = material->GetMaterial();
-        vertex.MaterialIndex = (float(material->GetMaterialIndex()));
+        vertex.MaterialIndex = (float(g_MaterialManager.GetMaterialIndex(material->GetMaterial())));
     }
 }
 static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {

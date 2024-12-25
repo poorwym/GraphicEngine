@@ -19,11 +19,6 @@ void PBRMaterial::SetMaterial(const Material& material)
     m_Material = material;
 }
 
-float PBRMaterial::GetMaterialIndex() const
-{
-    return g_SceneManager.GetMaterialIndex(m_Material);
-}
-
 PBRMaterial::~PBRMaterial()
 {
 }

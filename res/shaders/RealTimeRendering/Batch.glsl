@@ -109,6 +109,7 @@ void main()
         pointSpecular = pointSpecular * attenuation;
         finalColor += pointAmbient + pointDiffuse + pointSpecular;
     }
+    if(alpha < 0.1) discard;
     FragColor = vec4(finalColor, 1.0);
     if( abs(gl_FragCoord.z - focusDepth) <= 0.0){
         FragColor = vec4(1.0, 0.0, 0.0, 1.0);

@@ -3,6 +3,8 @@
 #endif
 #include "OBJManager.h"
 #include "SceneManager.h"
+#include "MaterialManager.h"
+extern MaterialManager g_MaterialManager;
 
 OBJManager::OBJManager()
 {
@@ -153,6 +155,6 @@ PBRMaterial* OBJManager::ProcessMaterial(const std::string& filePath, const tiny
         std::string Path = filePath + m.unknown_parameter.at("map_ao");
         m_Material.AOMapIndex = g_SceneManager.AddTexture(Path.c_str());
     }
-    g_MaterialList.push_back(m_Material);
+    g_MaterialManager.AddMaterial(m_Material, m.name);
     return new PBRMaterial(m_Material);
 }

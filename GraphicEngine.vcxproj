@@ -167,6 +167,7 @@
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\LightController.cpp" />
     <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\MaterialManager.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\ModelManager.cpp" />
     <ClCompile Include="src\NVIDIA_Nsight.cpp" />
@@ -227,6 +228,7 @@
     <ClInclude Include="src\LightController.h" />
     <ClInclude Include="src\Macro.h" />
     <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\MaterialManager.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\ModelManager.h" />
     <ClInclude Include="src\OBJManager.h" />

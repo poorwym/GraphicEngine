@@ -46,6 +46,6 @@ struct Material {
     float SpecularExponent;
     float BumpMutiplier;
     float padding2;
-    float padding3;
-    float padding4;
+    float Roughness;
+    float Metallic;
 };

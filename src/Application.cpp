@@ -43,8 +43,10 @@
 #include "NGFX_Injection.h"
 #include "NVIDIA_Nsight.h"
 #include "ModelManager.h"
-
+#include "MaterialManager.h"
+extern std::vector<Material> g_MaterialList;
 extern TextureManager g_TextureManager;
+extern MaterialManager g_MaterialManager;
 
 EngineState g_EngineState;
 SceneManager g_SceneManager(nullptr);
@@ -189,10 +191,7 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
     ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
-    while (true)
-    {
-        RealTimeRender(window);
-    }
+    RealTimeRender(window);
 }
 static void LoadModel(SceneManager& g_SceneManager) {
 }
@@ -283,13 +282,14 @@ void RealTimeRender(GLFWwindow* window) {
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
         modelManager.OnImGuiRender();
+        g_MaterialManager.OnImGuiRender();
         scene->OnImGuiTree();
         cameraController->OnImGuiRender();
         cameraController->Update(deltaTime);
 
         mainShader->Bind();
-        mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
-        mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
+            mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
+            mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
 
         //render
@@ -298,10 +298,10 @@ void RealTimeRender(GLFWwindow* window) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         skybox.Draw(camera);
         mainShader->Bind();
-        materialSSBO.Bind();
-        scene->BatchRender(*mainShader, camera);
-        materialSSBO.Unbind();
-        mainShader->Unbind();
+            materialSSBO.Bind();
+                scene->BatchRender(*mainShader, camera);
+            materialSSBO.Unbind();
+            mainShader->Unbind();
         colorFBO.Unbind();
 
         //post render
@@ -312,10 +312,16 @@ void RealTimeRender(GLFWwindow* window) {
         scene->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
-        ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
-        if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate, window, skybox);
-        }
+            ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
+            if (ImGui::Button("Render")) {
+                RayTracing(camera, scene, sampleRate, window, skybox);
+            }
+        ImGui::End();
+
+        ImGui::Begin("Quit");
+            if (ImGui::Button("Quit")) {
+                glfwSetWindowShouldClose(window, true);
+            }
         ImGui::End();
 
         ImGui::Render();
@@ -336,11 +342,11 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      std::cout << "Depth Rendering..." << std::endl;
      {
          depthShader->Bind();
-         depthMapFBO.Bind();
-         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-         depthShader->SetUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
-         scene->RenderDepthMap(*depthShader);
-         depthMapFBO.Unbind();
+             depthMapFBO.Bind();
+                 glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+                 depthShader->SetUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
+                 scene->RenderDepthMap(*depthShader);
+             depthMapFBO.Unbind();
          depthShader->Unbind();
      }
      std::cout << "Depth Render Complete!" << std::endl;
@@ -403,11 +409,11 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      }
 
      mainShader->Bind();
-     depthMapFBO.BindTexture(0);
-     mainShader->SetUniform1i("depthMap", 0);
-     mainShader->SetUniform1i("skybox", 1);
-     mainShader->SetUniform1i("numTriangles", numTriangles);
-     mainShader->SetUniform1i("numMaterials", numMaterials);
+         depthMapFBO.BindTexture(0);
+         mainShader->SetUniform1i("depthMap", 0);
+         mainShader->SetUniform1i("skybox", 1);
+         mainShader->SetUniform1i("numTriangles", numTriangles);
+         mainShader->SetUniform1i("numMaterials", numMaterials);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
@@ -417,29 +423,29 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          trianglesSSBO.Bind();
          BVHssbo.Bind();
          triangleIndexBVHSSBO.Bind();
-         skybox.Bind(1);
-         //render
-         colorFBO.Bind();
-         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         scene->RayTracingRender(*mainShader, camera, window);
-         colorFBO.Unbind();
-         ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
-         cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
-         // 确保图像是4通道的
-         if (mat.channels() == 1) {
-             cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
-         }
-         else if (mat.channels() == 3) {
-             cv::cvtColor(mat, mat, cv::COLOR_BGR2BGRA);
-         }
-         else if (mat.channels() == 4) {
-             std::cout << "mat" << i << " channels: " << mat.channels() << std::endl;
-         }
-         else {
-             std::cerr << "Unsupported number of channels: " << mat.channels() << ". Skipping this image." << std::endl;
-             continue;
-         }
-         matArray.push_back(mat);
+             skybox.Bind(1);
+             //render
+             colorFBO.Bind();
+                 GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+                 scene->RayTracingRender(*mainShader, camera, window);
+             colorFBO.Unbind();
+             ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
+             cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
+             // 确保图像是4通道的
+             if (mat.channels() == 1) {
+                 cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
+             }
+             else if (mat.channels() == 3) {
+                 cv::cvtColor(mat, mat, cv::COLOR_BGR2BGRA);
+             }
+             else if (mat.channels() == 4) {
+                 std::cout << "mat" << i << " channels: " << mat.channels() << std::endl;
+             }
+             else {
+                 std::cerr << "Unsupported number of channels: " << mat.channels() << ". Skipping this image." << std::endl;
+                 continue;
+             }
+             matArray.push_back(mat);
          BVHssbo.Unbind();
          triangleIndexBVHSSBO.Unbind();
          trianglesSSBO.Unbind();
