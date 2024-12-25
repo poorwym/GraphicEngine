@@ -84,7 +84,7 @@ void SceneManager::AddMaterial(Material& material)
     g_MaterialList.push_back(material);
 }
 
-int SceneManager::GetMaterialIndex(Material& material)
+int SceneManager::GetMaterialIndex(const Material& material)
 {
     for (int i = 0; i <= g_MaterialList.size(); ++i) {
         if (material == g_MaterialList[i]) {

@@ -1,0 +1,11 @@
+uniform sampler2DArray textures;
+uniform float farPlane;
+uniform vec3 Diffuse;
+uniform vec3 Emission;
+uniform DirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
+uniform int numDirectionalLights;
+uniform PointLight pointLights[MAX_POINT_LIGHTS];
+uniform int numPointLights;
+uniform vec3 viewPos;        
+uniform float focusDepth;
+uniform float focusRange;

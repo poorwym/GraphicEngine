@@ -73,16 +73,9 @@ void Scene::ResetVAO()
 	layout.Push<float>(4); // TexCoords: 2个浮点数
 	layout.Push<float>(4); // Tangent: 3个浮点数
 	layout.Push<float>(4); // Bitangent: 3个浮点数
-	layout.Push<float>(1); //textureSlot
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
+	layout.Push<float>(4); // MaterialIndex: 1个浮点数
 
-	layout.AddStride(24 * sizeof(float));
+	std::cout << "Stride: " << layout.GetStride() << std::endl;
 	UpdateVertices();
 	m_VAO = new VertexArray();
 	m_VBO = new VertexBuffer(nullptr, m_Vertices.size() * sizeof(Vertex));

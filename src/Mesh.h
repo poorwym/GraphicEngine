@@ -14,7 +14,7 @@ struct Vertex {
     glm::vec4 TexCoords;
     glm::vec4 Tangent;
     glm::vec4 Bitangent;
-    Material material;
+    glm::vec4 MaterialIndex;
 };
 
 struct Triangle {

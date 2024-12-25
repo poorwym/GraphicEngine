@@ -64,6 +64,7 @@ public:
     inline float GetAlphaMapSlot()      const {return m_Material.AlphaMapIndex; };
     inline float GetHeightMapSlot()    const { return m_Material.HeightMapIndex; };
     inline const Material& GetMaterial() const { return m_Material; }
+    float GetMaterialIndex() const;
 };
 
 const Material default_material = {

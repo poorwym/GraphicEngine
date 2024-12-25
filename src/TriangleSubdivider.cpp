@@ -32,7 +32,7 @@ Triangle TriangleSubdivider::CreateTriangle(Vertex& v1, Vertex& v2, Vertex& v3)
     triangle.bitangent[1] = v2.Bitangent;
     triangle.bitangent[2] = v3.Bitangent;
     
-    triangle.materialIndex = g_SceneManager.GetMaterialIndex(v1.material);
+    triangle.materialIndex = v1.MaterialIndex.x;
     return triangle;
 }
 
@@ -202,6 +202,6 @@ Vertex TriangleSubdivider::ComputeMidpoint(const Vertex& v1, const Vertex& v2) {
     midpoint.TexCoords = 0.5f * (v1.TexCoords + v2.TexCoords);
     midpoint.Tangent = glm::normalize(0.5f * (v1.Tangent + v2.Tangent));
     midpoint.Bitangent = glm::normalize(0.5f * (v1.Bitangent + v2.Bitangent));
-    midpoint.material = v1.material; // 假设材质相同
+    midpoint.MaterialIndex = v1.MaterialIndex; // 假设材质相同
     return midpoint;
 }

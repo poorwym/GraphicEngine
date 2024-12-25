@@ -6,6 +6,7 @@
 
 extern TextureManager g_TextureManager;
 extern SceneManager g_SceneManager;
+extern std::vector<Material> g_MaterialList;
 
 // 默认构造函数
 PBRMaterial::PBRMaterial()
@@ -16,6 +17,11 @@ PBRMaterial::PBRMaterial()
 void PBRMaterial::SetMaterial(const Material& material)
 {
     m_Material = material;
+}
+
+float PBRMaterial::GetMaterialIndex() const
+{
+    return g_SceneManager.GetMaterialIndex(m_Material);
 }
 
 PBRMaterial::~PBRMaterial()

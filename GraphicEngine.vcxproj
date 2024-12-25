@@ -283,6 +283,12 @@
     <None Include="document\光源的建议.md" />
     <None Include="document\已经写完的接口.md" />
     <None Include="res\shaders\ComputeShaders\ModelTransform.shader" />
+    <None Include="res\shaders\RealTimeRendering\Head.glsl" />
+    <None Include="res\shaders\RealTimeRendering\Macro.glsl" />
+    <None Include="res\shaders\RealTimeRendering\material.glsl" />
+    <None Include="res\shaders\RealTimeRendering\PBR.glsl" />
+    <None Include="res\shaders\RealTimeRendering\struct.glsl" />
+    <None Include="res\shaders\RealTimeRendering\uniform.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

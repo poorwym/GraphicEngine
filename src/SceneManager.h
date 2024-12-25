@@ -24,7 +24,7 @@ public:
 	void AddTexture(Texture* texture);
 	int AddTexture(const char* fileName);
 	void AddMaterial(Material& material);
-	int GetMaterialIndex(Material& material);
+	int GetMaterialIndex(const Material& material);
 };
 
 extern std::map<std::string, PointLight*> g_PointLightList;

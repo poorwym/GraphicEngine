@@ -96,23 +96,26 @@ void APIENTRY OpenGLDebugCallback(GLenum source,
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
 
     std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
-
+    /*
     // 根据错误类型和严重性决定是否捕获帧
-    //if (severity == GL_DEBUG_SEVERITY_HIGH) {
-    //    // 获取 NsightGraphicsManager 单例
-    //    NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
-    //    if (!nsightManager.CaptureFrame()) {
-    //        std::cerr << "Failed to capture frame on GPU error." << std::endl;
-    //    }
-    //}
+    if (severity == GL_DEBUG_SEVERITY_HIGH) {
+        // 获取 NsightGraphicsManager 单例
+        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+        if (!nsightManager.CaptureFrame()) {
+            std::cerr << "Failed to capture frame on GPU error." << std::endl;
+        }
+    }
+    */
 }
 
 int main(void)
 {    
-    /*if (!g_NsightGraphicsManager.Initialize()) {
+    /*
+    if (!g_NsightGraphicsManager.Initialize()) {
         std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
         return -1;
-    }*/
+    }
+    */
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -207,7 +210,6 @@ void RealTimeRender(GLFWwindow* window) {
     float height = WINDOW_HEIGHT;
     float aspect_ratio = width / height;
 
-
     // 定义视野角度（以弧度为单位）、近平面和远平面
     float fov = 30.0f; // 30度视野角
     float near_plane = NEAR_PLANE;
@@ -225,13 +227,14 @@ void RealTimeRender(GLFWwindow* window) {
     InitModel();
     scene->ResetVAO();
 
+    std::cout << "sizeof Vertex:" << sizeof(Vertex) << std::endl;
+
     int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.glsl");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    //这段真的非常非常重要，忘记绑定了。
-    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+
     mainShader->Bind();
     mainShader->SetUniform1f("farPlane", far_plane);
     mainShader->SetUniform1i("ShadowMap", 31);
@@ -240,7 +243,6 @@ void RealTimeRender(GLFWwindow* window) {
 
     DirectionalLight* light = new DirectionalLight("Directional Light", _DARKGREY, 3.0f, glm::vec3(1.0f));
     g_SceneManager.AddDirectionalLight(light, "node2", nullptr);
-    //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
     std::vector<std::string> faces
     {
         "res/Skybox/star.jpg",
@@ -253,12 +255,7 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    // 创建火焰粒子
-    Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
-    ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
-    // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度
-    FlameParticleSystem* flameParticles = new FlameParticleSystem(5000, particleShader, particleComputeShader, 10.0, 1.1, 1.7, 1.0, 6.0, 3.5, 4.0);
+    ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -292,18 +289,12 @@ void RealTimeRender(GLFWwindow* window) {
         ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         colorFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //skybox.Draw(camera);
+        skybox.Draw(camera);
         mainShader->Bind();
+        materialSSBO.Bind();
         scene->BatchRender(*mainShader, camera);
+        materialSSBO.Unbind();
         mainShader->Unbind();
-        /*glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ZERO);*/
-        glm::mat4 projection = camera.GetProjectionMatrix();
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(10.0, -2.0, 2.0));
-        model = glm::rotate(model, glm::radians(75.0f), glm::vec3(0.0, 1.0, 0.0));
-        flameParticles->Render(model, view, projection);
         colorFBO.Unbind();
 
         //post render
@@ -312,7 +303,6 @@ void RealTimeRender(GLFWwindow* window) {
 
         //update
         scene->Update(deltaTime);
-        flameParticles->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
@@ -331,7 +321,7 @@ void RealTimeRender(GLFWwindow* window) {
 }
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox) {
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
