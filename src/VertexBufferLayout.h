@@ -32,7 +32,7 @@ public:
 
     template<typename T>
     void Push(unsigned int count) {
-        static_assert(false);//编译时报错
+        //static_assert(false);//编译时报错
     }
 
     template<>

@@ -4,13 +4,13 @@
 #include "Renderer.h"
 #include <vector>
 #include <iostream>
-#include "NGFX_Injection.h"
+//#include "NGFX_Injection.h"
 #include "GLFW/glfw3.h"
-#include "NVIDIA_Nsight.h"
+//#include "NVIDIA_Nsight.h"
 #include <thread>
 #include <chrono>
 
-extern NsightGraphicsManager& g_NsightGraphicsManager;
+//extern NsightGraphicsManager& g_NsightGraphicsManager;
 
 float quadVertices[] = {
         // positions        // texCoords

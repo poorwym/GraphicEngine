@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NGFX_Injection.h"
+//#include "NGFX_Injection.h"
 #include <vector>
 #include <mutex>
 
@@ -25,14 +25,14 @@ private:
     NsightGraphicsManager& operator=(const NsightGraphicsManager&) = delete;
 
     // 存储枚举到的安装信息
-    std::vector<NGFX_Injection_InstallationInfo> installations_;
+    //std::vector<NGFX_Injection_InstallationInfo> installations_;
 
     // 存储枚举到的活动信息
-    std::vector<NGFX_Injection_Activity> activities_;
+    //std::vector<NGFX_Injection_Activity> activities_;
 
     // 选择的安装和活动
-    NGFX_Injection_InstallationInfo chosenInstallation_;
-    NGFX_Injection_Activity chosenActivity_;
+    //NGFX_Injection_InstallationInfo chosenInstallation_;
+    //NGFX_Injection_Activity chosenActivity_;
 
     // 注入状态
     bool isInjected_;

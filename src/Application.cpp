@@ -17,6 +17,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "Skybox.h"
+#include "Particle.h"
 
 
 #include "Camera.h"
@@ -81,7 +82,7 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
-extern NsightGraphicsManager& g_NsightGraphicsManager;
+//extern NsightGraphicsManager& g_NsightGraphicsManager;
 
 // 定义调试回调函数
 void APIENTRY OpenGLDebugCallback(GLenum source,
@@ -97,21 +98,21 @@ void APIENTRY OpenGLDebugCallback(GLenum source,
     std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
 
     // 根据错误类型和严重性决定是否捕获帧
-    if (severity == GL_DEBUG_SEVERITY_HIGH) {
-        // 获取 NsightGraphicsManager 单例
-        NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
-        if (!nsightManager.CaptureFrame()) {
-            std::cerr << "Failed to capture frame on GPU error." << std::endl;
-        }
-    }
+    //if (severity == GL_DEBUG_SEVERITY_HIGH) {
+    //    // 获取 NsightGraphicsManager 单例
+    //    NsightGraphicsManager& nsightManager = NsightGraphicsManager::GetInstance();
+    //    if (!nsightManager.CaptureFrame()) {
+    //        std::cerr << "Failed to capture frame on GPU error." << std::endl;
+    //    }
+    //}
 }
 
 int main(void)
 {    
-    if (!g_NsightGraphicsManager.Initialize()) {
+    /*if (!g_NsightGraphicsManager.Initialize()) {
         std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
         return -1;
-    }
+    }*/
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -252,6 +253,13 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox(faces);
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // 创建火焰粒子
+    Shader* particleShader = resourceManager.Load<Shader>("res/shaders/ParticleShader/ParticleShader.glsl");
+    ComputeShader* particleComputeShader = new ComputeShader("res/shaders/ParticleShader/ParticleComputeShader.glsl");
+    // 创建参数：数量 渲染程序(vs和fs) 计算着色器 两个影响初始位置分布的因子 最大和最小寿命 最大和最小速度
+    FlameParticleSystem* flameParticles = new FlameParticleSystem(5000, particleShader, particleComputeShader, 10.0, 1.1, 1.7, 1.0, 6.0, 3.5, 4.0);
+
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -284,10 +292,18 @@ void RealTimeRender(GLFWwindow* window) {
         ViewPortInit(WINDOW_WIDTH, WINDOW_HEIGHT);
         colorFBO.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        skybox.Draw(camera);
+        //skybox.Draw(camera);
         mainShader->Bind();
         scene->BatchRender(*mainShader, camera);
         mainShader->Unbind();
+        /*glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ZERO);*/
+        glm::mat4 projection = camera.GetProjectionMatrix();
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(10.0, -2.0, 2.0));
+        model = glm::rotate(model, glm::radians(75.0f), glm::vec3(0.0, 1.0, 0.0));
+        flameParticles->Render(model, view, projection);
         colorFBO.Unbind();
 
         //post render
@@ -296,6 +312,7 @@ void RealTimeRender(GLFWwindow* window) {
 
         //update
         scene->Update(deltaTime);
+        flameParticles->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
         ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);

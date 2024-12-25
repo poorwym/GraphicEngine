@@ -7,8 +7,8 @@
     x;\
     ASSERT(GLLogCall(#x, __FILE__, __LINE__))
 
-#define WINDOW_WIDTH 2560
-#define WINDOW_HEIGHT 1440
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
 #define SHADOW_WIDTH 1080
 #define SHADOW_HEIGHT 1080
