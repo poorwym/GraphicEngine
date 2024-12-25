@@ -31,8 +31,7 @@ void SceneManager::AddPointLight(PointLight* light, const char* sceneNodeName, S
 {
     SceneNode* node = new SceneNode(sceneNodeName, light, nullptr);
     parent ? parent->AddChild(node) : m_Scene->AddNode(node);
-    g_PointLightList[light->GetName()] = light;
-    g_PointLightID[light] = g_PointLightList.size() - 1;
+    
 }
 
 void SceneManager::AddSceneNode(SceneNode* node, SceneNode* parent)
@@ -44,16 +43,12 @@ void SceneManager::AddDirectionalLight(DirectionalLight* dirLight, const char* s
 {
     SceneNode* node = new SceneNode(sceneNodeName, dirLight, nullptr);
     parent ? parent->AddChild(node) : m_Scene->AddNode(node);
-    g_DirectionalLightList[dirLight->GetName()] = dirLight;
-    g_DirectionalLightID[dirLight] = g_DirectionalLightList.size() - 1;
 }
 
 void SceneManager::AddSpotLight(SpotLight* light, const char* sceneNodeName, SceneNode* parent)
 {
     SceneNode* node = new SceneNode(sceneNodeName, light, nullptr);
     parent ? parent->AddChild(node) : m_Scene->AddNode(node);
-    g_SpotLightList[light->GetName()] = light;
-    g_SpotLightID[light] = g_SpotLightList.size() - 1;
 }
 
 void SceneManager::AddTexture(Texture* texture)//discard

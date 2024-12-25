@@ -46,7 +46,7 @@ void LightManager::AddDirectionalLight()
 	int ID = g_DirectionalLightList.size();
 	std::string name = "Directional Light" + std::to_string(ID);
 	DirectionalLight* light = new DirectionalLight(name, _DARKGREY, 3.0f, glm::vec3(1.0f));
-	g_SceneManager.AddDirectionalLight(light, name.c_str(), nullptr);
+	g_SceneManager.AddDirectionalLight(light, (name + "node").c_str(), nullptr);
 }
 
 void LightManager::AddPointLight()
@@ -58,7 +58,7 @@ void LightManager::AddPointLight()
     int ID = g_PointLightList.size();
     std::string name = "Point Light" + std::to_string(ID);
     PointLight* light = new PointLight(name, _DARKGREY, 3.0f, glm::vec3(1.0f));
-    g_SceneManager.AddPointLight(light, name.c_str(), nullptr);
+    g_SceneManager.AddPointLight(light, (name + "node").c_str(), nullptr);
 }
 
 void LightManager::AddSpotLight()
@@ -70,7 +70,7 @@ void LightManager::AddSpotLight()
     int ID = g_SpotLightList.size();
     std::string name = "Spot Light" + std::to_string(ID);
     //SpotLight* light = new SpotLight(name, _DARKGREY, 3.0f, glm::vec3(1.0f));
-    //g_SceneManager.AddSpotLight(light, name.c_str(), nullptr);
+    //g_SceneManager.AddSpotLight(light, (name + "node").c_str(), nullptr);
 }
 
 LightManager g_LightManager;

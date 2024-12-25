@@ -1,6 +1,16 @@
 #include "Light.h"
 #include "SceneManager.h"
 #include "Macro.h"
+
+extern std::map<std::string, PointLight*> g_PointLightList;
+extern std::map<PointLight*, unsigned int> g_PointLightID;
+extern std::map<std::string, SpotLight*> g_SpotLightList;
+extern std::map<SpotLight*, unsigned int> g_SpotLightID;
+extern std::map<std::string, DirectionalLight*> g_DirectionalLightList;
+extern std::map<DirectionalLight*, unsigned int> g_DirectionalLightID;
+
+
+
 DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightDir, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular)
 	: Light(name, color, intensity), m_ShadowMapFBO(nullptr)
 {
@@ -15,11 +25,17 @@ DirectionalLight::DirectionalLight(const std::string& name, glm::vec3 color, flo
 {
 	m_LightDir = lightDir;
 	m_ShadowMapFBO = new DepthMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+	g_DirectionalLightList[name] = this;
+    g_DirectionalLightID[this] = g_DirectionalLightList.size() - 1;
 }
-/*uniform vec3 lightDir;       // 方向光方向
-uniform vec3 lightAmbient;   // 环境光强度
-uniform vec3 lightDiffuse;   // 漫反射光强度
-uniform vec3 lightSpecular;  // 镜面光强度*/
+
+DirectionalLight::~DirectionalLight()
+{
+    g_DirectionalLightList.erase(m_Name);
+    g_DirectionalLightID.erase(this);
+}
+
+
 void DirectionalLight::SetLightDir(glm::vec3 lightDir)
 {
 	m_LightDir = lightDir;
@@ -106,6 +122,8 @@ PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity
 	m_Constant = 1.0f;
 	m_Linear = 0.0f;
 	m_Quadratic = 0.0f;
+	g_PointLightList[name] = this;
+	g_PointLightID[this] = g_PointLightList.size() - 1;
 }
 
 PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity, glm::vec3 lightPos, glm::vec3 lightAmbient, glm::vec3 lightDiffuse, glm::vec3 lightSpecular, float constant, float linear, float quadratic)
@@ -119,6 +137,14 @@ PointLight::PointLight(const std::string& name, glm::vec3 color, float intensity
 	m_Constant = constant;
 	m_Linear = linear;
 	m_Quadratic = quadratic;
+	g_PointLightList[name] = this;
+	g_PointLightID[this] = g_PointLightList.size() - 1;
+}
+
+PointLight::~PointLight()
+{
+    g_PointLightList.erase(m_Name);
+    g_PointLightID.erase(this);
 }
 
 void PointLight::SetLightPos(glm::vec3 lightPos)
@@ -195,6 +221,9 @@ SpotLight::SpotLight(const std::string& name, glm::vec3 color, float intensity,
 
 	// 初始化阴影映射FBO（可选）
 	m_ShadowMapFBO = new DepthMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+
+    g_SpotLightList[name] = this;
+    g_SpotLightID[this] = g_SpotLightList.size() - 1;
 }
 
 SpotLight::SpotLight(const std::string& name, glm::vec3 color, float intensity,
@@ -219,6 +248,15 @@ SpotLight::SpotLight(const std::string& name, glm::vec3 color, float intensity,
 
 	// 初始化阴影映射FBO（可选）
 	m_ShadowMapFBO = new DepthMapFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
+
+    g_SpotLightList[name] = this;
+    g_SpotLightID[this] = g_SpotLightList.size() - 1;
+}
+
+SpotLight::~SpotLight()
+{
+    g_SpotLightList.erase(m_Name);
+    g_SpotLightID.erase(this);
 }
 
 // 设置和获取方向

@@ -47,13 +47,11 @@ void Scene::UpdateVertices()
 	for (int i = 0; i < batchVertices.size(); i++) {
 		std::vector<Vertex>& vertices = *batchVertices[i];
 		m_Vertices.insert(m_Vertices.end(), vertices.begin(), vertices.end());
-		//这暂时先这样
-			std::vector<unsigned int>& indices = *batchIndices[i];
-			for (auto& index : indices) {
-				m_Indices.push_back(index + offsets);
-			}
-			offsets += vertices.size();
-
+		std::vector<unsigned int>& indices = *batchIndices[i];
+		for (auto& index : indices) {
+			m_Indices.push_back(index + offsets);
+		}
+		offsets += vertices.size();
 	}
     numVertices = m_Vertices.size();
 	numIndices = m_Indices.size();
@@ -111,7 +109,16 @@ void Scene::Update(float deltaTime)
 	for (auto& pair : m_SceneNodes)
 	{
 		SceneNode* node = pair.second;
-		node->Update(deltaTime);
+		if (node->deleted) {
+            node->DeleteSelf();
+            g_EngineState.needUpdate = true;
+			m_SceneNodes.erase(node->GetName());
+			ResetVAO();
+			break;
+		}
+		else{
+			node->Update(deltaTime);
+		}
 	}
 }
 
