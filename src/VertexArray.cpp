@@ -22,6 +22,8 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 		const auto& element = elements[i];
 		GLCall(glEnableVertexAttribArray(i));//i表示启用顶点属性（！！非常重要一定要加，要不然黑屏）
 		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), (const void*)offset));//见熊掌记笔记
+		if(layout.GetStride() == 96 )
+		std::cout << "Attirbute " << i << ": " << " Stride: " << layout.GetStride() << " Offset: " << offset << std::endl;
 		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
 	}
 	vb.Unbind();

@@ -156,6 +156,9 @@
     <ClCompile Include="src\ModelManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\Particle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\vendor\imgui\imconfig.h">
@@ -347,6 +350,9 @@
     <ClInclude Include="src\ModelManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\Particle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="document\advice.md" />
@@ -368,5 +374,11 @@
     <None Include="Dependencies\GLEW\doc\wglew.html" />
     <None Include="Debug\glew32.dll" />
     <None Include="res\shaders\ComputeShaders\ModelTransform.shader" />
+    <None Include="res\shaders\RealTimeRendering\material.glsl" />
+    <None Include="res\shaders\RealTimeRendering\Head.glsl" />
+    <None Include="res\shaders\RealTimeRendering\PBR.glsl" />
+    <None Include="res\shaders\RealTimeRendering\struct.glsl" />
+    <None Include="res\shaders\RealTimeRendering\Macro.glsl" />
+    <None Include="res\shaders\RealTimeRendering\uniform.glsl" />
   </ItemGroup>
 </Project>

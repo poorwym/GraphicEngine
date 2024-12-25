@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include "NGFX_Injection.h"
 #include <vector>
 #include <mutex>
@@ -43,3 +43,4 @@ private:
     // 互斥锁，确保线程安全
     std::mutex mtx_;
 };
+*/

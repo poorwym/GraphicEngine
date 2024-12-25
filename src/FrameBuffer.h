@@ -12,9 +12,6 @@ public:
     void Bind() const;
     void Unbind() const;
 
-    virtual void BindTexture(unsigned int slot) const {};
-
-
 protected:
     unsigned int m_RendererID;
     unsigned int m_Width;
@@ -26,7 +23,7 @@ class DepthMapFBO : public FrameBuffer {
 public:
     DepthMapFBO(unsigned int width, unsigned int height);
     ~DepthMapFBO();
-    void BindTexture(unsigned int slot) const override;
+    void BindTexture(unsigned int slot) const;
 private:
     unsigned int m_TextureID;
 };
@@ -40,7 +37,7 @@ public:
     void BindFace(unsigned int face) const;
 
     // 绑定立方体贴图到着色器的指定纹理槽
-    void BindTexture(unsigned int slot) const override;
+    void BindTexture(unsigned int slot) const;
 
     // 获取立方体贴图ID
     unsigned int GetCubeMapTextureID() const { return m_TextureID; }
@@ -56,7 +53,7 @@ public:
     ~ColorFBO();
 
     // 绑定颜色纹理到指定纹理槽
-    void BindTexture(unsigned int slot) const override;
+    void BindTexture(unsigned int slot) const;
     void BindDepthTexture(unsigned int slot) const;
 
     // 获取颜色纹理ID

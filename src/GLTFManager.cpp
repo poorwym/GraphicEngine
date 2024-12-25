@@ -13,7 +13,8 @@
 #include "GLTFManager.h"
 #include <iostream>
 #include "SceneManager.h"
-
+#include "MaterialManager.h"
+extern MaterialManager g_MaterialManager;
 extern SceneManager g_SceneManager;
 // 构造函数
 GLTFManager::GLTFManager() {}
@@ -507,7 +508,7 @@ PBRMaterial* GLTFManager::ProcessMaterial(int materialIndex, const std::string& 
         m_Material.SpecularExponent = 1.0f / static_cast<float>(m.pbrMetallicRoughness.roughnessFactor); // 简化示例
     }
 
-    g_MaterialList.push_back(m_Material);
+    g_MaterialManager.AddMaterial(m_Material, m.name);
     return new PBRMaterial(m_Material);
 }
 

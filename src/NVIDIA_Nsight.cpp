@@ -1,7 +1,7 @@
 #include "NVIDIA_Nsight.h"
 #include <windows.h>
 #include <stdio.h>
-
+/*
 // 获取单例实例
 NsightGraphicsManager& NsightGraphicsManager::GetInstance() {
     static NsightGraphicsManager instance;
@@ -150,3 +150,4 @@ bool NsightGraphicsManager::CaptureFrame() {
     return true;
 }
 NsightGraphicsManager& g_NsightGraphicsManager = NsightGraphicsManager::GetInstance();
+*/

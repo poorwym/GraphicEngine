@@ -37,7 +37,10 @@ struct Vertex {
     vec4 TexCoords;
     vec4 Tangent;
     vec4 Bitangent;
-    Material material;
+    float MaterialIndex;
+    float padding1;
+    float padding2;
+    float padding3;
 };
 
 // 定义工作组大小
@@ -71,6 +74,6 @@ void main(){
         outputVertices[i].Bitangent = vec4(normalize(normalMatrix * inputVertices[i].Bitangent.xyz), 0.0);
 
         outputVertices[i].TexCoords =  inputVertices[i].TexCoords;
-        outputVertices[i].material =   inputVertices[i].material;
+        outputVertices[i].MaterialIndex =   inputVertices[i].MaterialIndex;
     }
 }

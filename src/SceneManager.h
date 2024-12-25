@@ -23,8 +23,6 @@ public:
 
 	void AddTexture(Texture* texture);
 	int AddTexture(const char* fileName);
-	void AddMaterial(Material& material);
-	int GetMaterialIndex(Material& material);
 };
 
 extern std::map<std::string, PointLight*> g_PointLightList;
@@ -37,4 +35,3 @@ extern std::map<std::string, DirectionalLight*> g_DirectionalLightList;
 extern std::map<DirectionalLight*, unsigned int> g_DirectionalLightID;
 
 extern TextureArray* g_TextureArray;
-extern std::vector<Material> g_MaterialList;

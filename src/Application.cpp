@@ -17,6 +17,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "Skybox.h"
+#include "Particle.h"
 
 
 #include "Camera.h"
@@ -42,8 +43,14 @@
 #include "NGFX_Injection.h"
 #include "NVIDIA_Nsight.h"
 #include "ModelManager.h"
+#include "MaterialManager.h"
+#include "LightManager.h"
 
+
+extern std::vector<Material> g_MaterialList;
 extern TextureManager g_TextureManager;
+extern MaterialManager g_MaterialManager;
+extern LightManager g_LightManager;
 
 EngineState g_EngineState;
 SceneManager g_SceneManager(nullptr);
@@ -81,7 +88,7 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (cameraController)
         cameraController->ProcessMouseScroll(static_cast<float>(yoffset));
 }
-extern NsightGraphicsManager& g_NsightGraphicsManager;
+//extern NsightGraphicsManager& g_NsightGraphicsManager;
 
 // 定义调试回调函数
 void APIENTRY OpenGLDebugCallback(GLenum source,
@@ -95,7 +102,7 @@ void APIENTRY OpenGLDebugCallback(GLenum source,
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
 
     std::cerr << "OpenGL Debug Message (" << id << "): " << message << std::endl;
-
+    /*
     // 根据错误类型和严重性决定是否捕获帧
     if (severity == GL_DEBUG_SEVERITY_HIGH) {
         // 获取 NsightGraphicsManager 单例
@@ -104,14 +111,17 @@ void APIENTRY OpenGLDebugCallback(GLenum source,
             std::cerr << "Failed to capture frame on GPU error." << std::endl;
         }
     }
+    */
 }
 
 int main(void)
 {    
+    /*
     if (!g_NsightGraphicsManager.Initialize()) {
         std::cout << "Nsight Graphics Manager initialization failed." << std::endl;
         return -1;
     }
+    */
     GLFWwindow* window;
     // 设置 OpenCV 日志级别为 ERROR，减少信息输出
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -185,10 +195,7 @@ int main(void)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130"); // 确保根据你的 OpenGL 版本修改
     ImGui::GetIO().FontGlobalScale = 1.5f; // 将字体放大到原来的1.5
-    while (true)
-    {
-        RealTimeRender(window);
-    }
+    RealTimeRender(window);
 }
 static void LoadModel(SceneManager& g_SceneManager) {
 }
@@ -205,7 +212,6 @@ void RealTimeRender(GLFWwindow* window) {
     float width = WINDOW_WIDTH;
     float height = WINDOW_HEIGHT;
     float aspect_ratio = width / height;
-
 
     // 定义视野角度（以弧度为单位）、近平面和远平面
     float fov = 30.0f; // 30度视野角
@@ -224,36 +230,32 @@ void RealTimeRender(GLFWwindow* window) {
     InitModel();
     scene->ResetVAO();
 
+    std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
+    std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
+    std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
+    std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
+    std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
+    std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
+    std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
+    std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
+
     int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
     Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
     Shader* cubeDepthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/cubeMapDepth.glsl");
     ColorFBO colorFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    //这段真的非常非常重要，忘记绑定了。
-    //sampler2D是一个unsigned int类型，值对应到Texture的slot 来自凌晨5：31的一条注释
+
     mainShader->Bind();
     mainShader->SetUniform1f("farPlane", far_plane);
     mainShader->SetUniform1i("ShadowMap", 31);
     mainShader->Unbind();
-
-
-    DirectionalLight* light = new DirectionalLight("Directional Light", _DARKGREY, 3.0f, glm::vec3(1.0f));
-    g_SceneManager.AddDirectionalLight(light, "node2", nullptr);
-    //FrameBuffer depthFBO(SHADOW_WIDTH, SHADOW_HEIGHT);
-    std::vector<std::string> faces
-    {
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg",
-        "res/Skybox/star.jpg"
-    };
     // 创建天空盒实例
-    Skybox skybox(faces);
+    Skybox skybox("BlueSky");
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+    
     while (!glfwWindowShouldClose(window))
     {
+        ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
         /* Render here */
          // 获取当前帧的时间
         float currentFrame = glfwGetTime();
@@ -270,14 +272,18 @@ void RealTimeRender(GLFWwindow* window) {
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
+        // ImGui
         modelManager.OnImGuiRender();
+        g_MaterialManager.OnImGuiRender();
+        g_LightManager.OnImGuiRender();
         scene->OnImGuiTree();
         cameraController->OnImGuiRender();
+
         cameraController->Update(deltaTime);
 
         mainShader->Bind();
-        mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
-        mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
+            mainShader->SetUniform1f("focusDepth", camera.GetFocusDepth());
+            mainShader->SetUniform1f("focusRange", camera.GetFocusRange());
         mainShader->Unbind();
 
         //render
@@ -286,8 +292,10 @@ void RealTimeRender(GLFWwindow* window) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         skybox.Draw(camera);
         mainShader->Bind();
-        scene->BatchRender(*mainShader, camera);
-        mainShader->Unbind();
+            materialSSBO.Bind();
+                scene->BatchRender(*mainShader, camera);
+            materialSSBO.Unbind();
+            mainShader->Unbind();
         colorFBO.Unbind();
 
         //post render
@@ -298,10 +306,16 @@ void RealTimeRender(GLFWwindow* window) {
         scene->Update(deltaTime);
 
         ImGui::Begin("RayTracing");
-        ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
-        if (ImGui::Button("Render")) {
-            RayTracing(camera, scene, sampleRate, window, skybox);
-        }
+            ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
+            if (ImGui::Button("Render")) {
+                RayTracing(camera, scene, sampleRate, window, skybox);
+            }
+        ImGui::End();
+
+        ImGui::Begin("Quit");
+            if (ImGui::Button("Quit")) {
+                glfwSetWindowShouldClose(window, true);
+            }
         ImGui::End();
 
         ImGui::Render();
@@ -314,7 +328,7 @@ void RealTimeRender(GLFWwindow* window) {
 }
 
 void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox) {
-    Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
+     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
      DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -322,11 +336,11 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      std::cout << "Depth Rendering..." << std::endl;
      {
          depthShader->Bind();
-         depthMapFBO.Bind();
-         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-         depthShader->SetUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
-         scene->RenderDepthMap(*depthShader);
-         depthMapFBO.Unbind();
+             depthMapFBO.Bind();
+                 glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+                 depthShader->SetUniformMat4f("SpaceMatrix", camera.GetProjectionMatrix() * camera.GetViewMatrix());
+                 scene->RenderDepthMap(*depthShader);
+             depthMapFBO.Unbind();
          depthShader->Unbind();
      }
      std::cout << "Depth Render Complete!" << std::endl;
@@ -389,11 +403,11 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      }
 
      mainShader->Bind();
-     depthMapFBO.BindTexture(0);
-     mainShader->SetUniform1i("depthMap", 0);
-     mainShader->SetUniform1i("skybox", 1);
-     mainShader->SetUniform1i("numTriangles", numTriangles);
-     mainShader->SetUniform1i("numMaterials", numMaterials);
+         depthMapFBO.BindTexture(0);
+         mainShader->SetUniform1i("depthMap", 0);
+         mainShader->SetUniform1i("skybox", 1);
+         mainShader->SetUniform1i("numTriangles", numTriangles);
+         mainShader->SetUniform1i("numMaterials", numMaterials);
      mainShader->Unbind();
 
      std::vector<cv::Mat> matArray;
@@ -403,29 +417,29 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          trianglesSSBO.Bind();
          BVHssbo.Bind();
          triangleIndexBVHSSBO.Bind();
-         skybox.Bind(1);
-         //render
-         colorFBO.Bind();
-         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-         scene->RayTracingRender(*mainShader, camera, window);
-         colorFBO.Unbind();
-         ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
-         cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
-         // 确保图像是4通道的
-         if (mat.channels() == 1) {
-             cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
-         }
-         else if (mat.channels() == 3) {
-             cv::cvtColor(mat, mat, cv::COLOR_BGR2BGRA);
-         }
-         else if (mat.channels() == 4) {
-             std::cout << "mat" << i << " channels: " << mat.channels() << std::endl;
-         }
-         else {
-             std::cerr << "Unsupported number of channels: " << mat.channels() << ". Skipping this image." << std::endl;
-             continue;
-         }
-         matArray.push_back(mat);
+             skybox.Bind(1);
+             //render
+             colorFBO.Bind();
+                 GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+                 scene->RayTracingRender(*mainShader, camera, window);
+             colorFBO.Unbind();
+             ColorFBO postRenderFBO = PostRender(colorFBO, depthMapFBO, camera);
+             cv::Mat mat = resourceManager.SaveFBOToMat(postRenderFBO, WINDOW_WIDTH, WINDOW_HEIGHT);
+             // 确保图像是4通道的
+             if (mat.channels() == 1) {
+                 cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGRA);
+             }
+             else if (mat.channels() == 3) {
+                 cv::cvtColor(mat, mat, cv::COLOR_BGR2BGRA);
+             }
+             else if (mat.channels() == 4) {
+                 std::cout << "mat" << i << " channels: " << mat.channels() << std::endl;
+             }
+             else {
+                 std::cerr << "Unsupported number of channels: " << mat.channels() << ". Skipping this image." << std::endl;
+                 continue;
+             }
+             matArray.push_back(mat);
          BVHssbo.Unbind();
          triangleIndexBVHSSBO.Unbind();
          trianglesSSBO.Unbind();

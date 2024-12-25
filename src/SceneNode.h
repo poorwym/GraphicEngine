@@ -23,7 +23,10 @@ private:
     DirectionalLight* m_DirectionalLight;
     SpotLight* m_SpotLight;
     SceneNode* m_Parent;
+
 public:
+    bool deleted = false;
+
     SceneNode(std::string name, void* ptr, SceneNode* parent);
     SceneNode(std::string name, Entity* entity, SceneNode* parent);
     SceneNode(std::string name, PointLight* entity, SceneNode* parent);
@@ -45,6 +48,7 @@ public:
     void SetRotation(glm::vec3 rotation);
     void Update(float deltaTime);
     void OnImGuiTree();
+    void DeleteSelf();
 
     std::vector<std::vector<Vertex>*> GetVertices(glm::mat4 globalTranform);
     std::vector<std::vector<unsigned int>*> GetIndices();

@@ -47,13 +47,11 @@ void Scene::UpdateVertices()
 	for (int i = 0; i < batchVertices.size(); i++) {
 		std::vector<Vertex>& vertices = *batchVertices[i];
 		m_Vertices.insert(m_Vertices.end(), vertices.begin(), vertices.end());
-		//这暂时先这样
-			std::vector<unsigned int>& indices = *batchIndices[i];
-			for (auto& index : indices) {
-				m_Indices.push_back(index + offsets);
-			}
-			offsets += vertices.size();
-
+		std::vector<unsigned int>& indices = *batchIndices[i];
+		for (auto& index : indices) {
+			m_Indices.push_back(index + offsets);
+		}
+		offsets += vertices.size();
 	}
     numVertices = m_Vertices.size();
 	numIndices = m_Indices.size();
@@ -68,21 +66,15 @@ void Scene::FreeVAO()
 void Scene::ResetVAO()
 {
 	VertexBufferLayout layout;
-	layout.Push<float>(4); // Position: 3个浮点数
-	layout.Push<float>(4); // Normal: 3个浮点数
-	layout.Push<float>(4); // TexCoords: 2个浮点数
-	layout.Push<float>(4); // Tangent: 3个浮点数
-	layout.Push<float>(4); // Bitangent: 3个浮点数
-	layout.Push<float>(1); //textureSlot
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
-	layout.Push<float>(1);
+	layout.Push<float>(4); // Position: 4个浮点数
+	layout.Push<float>(4); // Normal: 4个浮点数
+	layout.Push<float>(4); // TexCoords: 4个浮点数
+	layout.Push<float>(4); // Tangent: 4个浮点数
+	layout.Push<float>(4); // Bitangent: 4个浮点数
+	layout.Push<float>(1); // MaterialIndex: 1个浮点数
+	layout.AddStride(3 * sizeof(float));
 
-	layout.AddStride(24 * sizeof(float));
+	std::cout << "Stride: " << layout.GetStride() << std::endl;
 	UpdateVertices();
 	m_VAO = new VertexArray();
 	m_VBO = new VertexBuffer(nullptr, m_Vertices.size() * sizeof(Vertex));
@@ -117,7 +109,16 @@ void Scene::Update(float deltaTime)
 	for (auto& pair : m_SceneNodes)
 	{
 		SceneNode* node = pair.second;
-		node->Update(deltaTime);
+		if (node->deleted) {
+            node->DeleteSelf();
+            g_EngineState.needUpdate = true;
+			m_SceneNodes.erase(node->GetName());
+			ResetVAO();
+			break;
+		}
+		else{
+			node->Update(deltaTime);
+		}
 	}
 }
 

@@ -6,6 +6,7 @@
 
 extern TextureManager g_TextureManager;
 extern SceneManager g_SceneManager;
+extern std::vector<Material> g_MaterialList;
 
 // 默认构造函数
 PBRMaterial::PBRMaterial()

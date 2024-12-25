@@ -362,4 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 Dependencies/
-res/
+res/Obj
+res/skybox
+res/Textures

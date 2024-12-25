@@ -13,6 +13,7 @@ void SceneNode::AddChild(SceneNode* child)
 void SceneNode::RemoveChild(SceneNode* child)
 {
     m_Children[child->GetName()] = nullptr;
+    delete child;
 }
 
 void SceneNode::BindLight(Shader& shader, glm::mat4 globalTranform)
@@ -93,6 +94,10 @@ void SceneNode::Update(float deltaTime)
         m_DirectionalLight->Update(deltaTime);
     for (auto& pair : m_Children)
     {
+        if (pair.second->deleted) {
+            pair.second->DeleteSelf();
+            g_EngineState.needUpdate = true;
+        }
         pair.second->Update(deltaTime);
     }
 }
@@ -110,9 +115,9 @@ void SceneNode::OnImGuiTree()
         {
             SceneNodeController controller(this);
             controller.OnImGuiRender();
-            if (ImGui::Button("Close"))
+            if (ImGui::Button("Delete"))
             {
-                ImGui::CloseCurrentPopup();
+                deleted = true;
             }
             ImGui::EndPopup();
         }
@@ -189,6 +194,34 @@ void SceneNode::OnImGuiTree()
             pair.second->OnImGuiTree();
         }
         ImGui::TreePop();
+    }
+}
+
+void SceneNode::DeleteSelf()
+{
+    for (auto& pair : m_Children) {
+        pair.second->DeleteSelf();
+    }
+    
+    if (m_Entity) {
+        delete m_Entity;
+        m_Entity = nullptr;
+    }
+    if (m_PointLight) {
+        delete m_PointLight;
+        m_PointLight = nullptr;
+    }
+    if (m_SpotLight) {
+        delete m_SpotLight;
+        m_SpotLight = nullptr;
+    }
+    if (m_DirectionalLight) {
+        delete m_DirectionalLight;
+        m_DirectionalLight = nullptr;
+    }
+
+    if (m_Parent) {
+        m_Parent->RemoveChild(this);
     }
 }
 

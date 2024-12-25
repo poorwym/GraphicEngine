@@ -2,18 +2,15 @@
 vec3 GetTextureColor(int index, vec2 texCoords, int slot){
     if(slot== 0)//albedo
     {
-        if(materials[triangles[index].materialIndex].AlbedoMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AlbedoMapIndex)).rgb;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AlbedoMapIndex)).rgb;
     }
     else if(slot== 1)// normal
     {
-        if(materials[triangles[index].materialIndex].NormalMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].NormalMapIndex)).rgb;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].NormalMapIndex)).rgb;
     }
     else if(slot== 5)// emission
     {
-        if(materials[triangles[index].materialIndex].EmissionMapIndex != -1 )
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].EmissionMapIndex)).rgb;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].EmissionMapIndex)).rgb;
     }
     return vec3(0.0);
 }
@@ -21,25 +18,21 @@ vec3 GetTextureColor(int index, vec2 texCoords, int slot){
 float GetTextureValue(int index, vec2 texCoords, int slot){
     if( slot == 2)// metallic
     {
-        if(materials[triangles[index].materialIndex].MetallicMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].MetallicMapIndex)).r;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].MetallicMapIndex)).r;
     }
     else if( slot == 3)// roughness
     {
-        if(materials[triangles[index].materialIndex].RoughnessMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].RoughnessMapIndex)).r;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].RoughnessMapIndex)).r;
     }
     else if( slot == 4)// ao
     {
-        if(materials[triangles[index].materialIndex].AOMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AOMapIndex)).r;
+        return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AOMapIndex)).r;
     }
     else if( slot == 6)// alpha
     {
-        if(materials[triangles[index].materialIndex].AlphaMapIndex != -1 ) 
-            return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AlphaMapIndex)).r;
+         return texture(textures, vec3(texCoords, materials[triangles[index].materialIndex].AlphaMapIndex)).r;
     }
-    return -1.0;
+    return 0.0;
 }
 
 vec3 GetAmbient(int hitIndex, vec2 hitTexCoord){
@@ -87,7 +80,7 @@ float GetMetallic(int hitIndex, vec2 hitTexCoord){
     {
         return GetTextureValue(hitIndex, hitTexCoord, METALLIC_MAP_INDEX);
     }
-    return min(materials[triangles[hitIndex].materialIndex].SpecularExponent / 100, 1);
+    return materials[triangles[hitIndex].materialIndex].Metallic;
 }
 
 vec3 GetNormal(int hitIndex, vec2 hitTexCoord){
@@ -102,7 +95,7 @@ float GetRoughness(int hitIndex, vec2 hitTexCoord){
     {
         return GetTextureValue(hitIndex, hitTexCoord, ROUGHNESS_MAP_INDEX);
     }
-    return 0.8;
+    return materials[triangles[hitIndex].materialIndex].Roughness;
 }
 float GetAlpha(int hitIndex, vec2 hitTexCoord){
     if(materials[triangles[hitIndex].materialIndex].AlphaMapIndex != -1)
