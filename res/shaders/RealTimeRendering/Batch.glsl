@@ -64,6 +64,9 @@ in VS_OUT {//顶点着色器输出
 void main()
 {
     vec3 finalColor = vec3(0.0);
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+    vec3 viewDirTangent = fs_in.TBN * viewDir;
+
     //计算颜色
     vec3 ambient = GetAmbient(fs_in.MaterialIndex, fs_in.TexCoords);
     vec3 diffuse = GetDiffuse(fs_in.MaterialIndex, fs_in.TexCoords);
@@ -85,15 +88,13 @@ void main()
     float AO = GetAO(fs_in.MaterialIndex, fs_in.TexCoords);
     vec3 emission = GetEmission(fs_in.MaterialIndex, fs_in.TexCoords);
     float alpha = GetAlpha(fs_in.MaterialIndex, fs_in.TexCoords);
-
-    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
     
     for(int i = 0; i < numDirectionalLights; i++)
     {
         vec3 ambientColor = CalculateAmbientColor(ambient, directionalLights[i].lightAmbient, AO);
         vec3 diffuseColor = CalculateDiffuseColor(diffuse, directionalLights[i].lightDiffuse, directionalLights[i].lightDir, normal);
         vec3 specularColor = CalculateSpecularColor(specular, directionalLights[i].lightSpecular, directionalLights[i].lightDir, normal, viewDir, roughness, metallic);
-        finalColor += ambientColor + diffuseColor + specularColor + emission;
+        finalColor += ambientColor + diffuseColor + specularColor;
     }
     
     for(int i = 0; i < numPointLights; i++)
@@ -107,8 +108,9 @@ void main()
         pointAmbient = pointAmbient * attenuation;
         pointDiffuse = pointDiffuse * attenuation;
         pointSpecular = pointSpecular * attenuation;
-        finalColor += pointAmbient + pointDiffuse + pointSpecular;
+        finalColor += pointDiffuse + pointSpecular;
     }
+    finalColor = finalColor + emission;
     if(alpha < 0.1) discard;
     FragColor = vec4(finalColor, 1.0);
     if( abs(gl_FragCoord.z - focusDepth) <= 0.0){

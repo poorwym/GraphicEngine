@@ -50,7 +50,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             float illum = 4;
             float dissolve = GetDissolve(hitIndex);
             // 计算交点
-            vec3 hitPoint = ray.origin + ray.dir * t + normal * 0.0001;
+            vec3 hitPoint = ray.origin + ray.dir * t;
 
             if(alpha < 0.01){
                 ray.origin = hitPoint + ray.dir * 0.01;
@@ -119,7 +119,8 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             // 俄罗斯轮盘采样终止逻辑结束
 
             // 更新光线起点和方向
-            ray.origin = hitPoint + ray.dir * t + normal * 0.0001;
+            vec3 relectDir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
+            ray.origin = hitPoint + relectDir * 0.0001;
             ray.dir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
         }
         else
