@@ -4,6 +4,8 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "SceneManager.h"
 #include "EngineState.h"
+#include "ImGuiManager.h"
+extern ImGuiManager g_ImGuiManager;
 
 void SceneNode::AddChild(SceneNode* child)
 {
@@ -115,10 +117,12 @@ void SceneNode::OnImGuiTree()
         {
             SceneNodeController controller(this);
             controller.OnImGuiRender();
+            g_ImGuiManager.SetButtonStyle("red");
             if (ImGui::Button("Delete"))
             {
                 deleted = true;
             }
+            g_ImGuiManager.ResetButtonStyle();
             ImGui::EndPopup();
         }
         //展示所有点光源
@@ -131,10 +135,6 @@ void SceneNode::OnImGuiTree()
             {   
                 PointLightController controller(m_PointLight);
                 controller.OnImGuiRender();
-                if (ImGui::Button("Close"))
-                {
-                    ImGui::CloseCurrentPopup();
-                }
                 ImGui::EndPopup();
             }
         }
@@ -148,10 +148,6 @@ void SceneNode::OnImGuiTree()
             {
                 EntityController controller(m_Entity);
                 controller.OnImGuiRender();
-                if (ImGui::Button("Close"))
-                {
-                    ImGui::CloseCurrentPopup();
-                }
                 ImGui::EndPopup();
             }
         }
@@ -165,10 +161,6 @@ void SceneNode::OnImGuiTree()
             {
                 DirectionalLightController controller(m_DirectionalLight);
                 controller.OnImGuiRender();
-                if (ImGui::Button("Close"))
-                {
-                    ImGui::CloseCurrentPopup();
-                }
                 ImGui::EndPopup();
             }
         }
@@ -182,10 +174,6 @@ void SceneNode::OnImGuiTree()
             {
                 static SpotLightController controller(m_SpotLight);
                 controller.OnImGuiRender();
-                if (ImGui::Button("Close"))
-                {
-                    ImGui::CloseCurrentPopup();
-                }
                 ImGui::EndPopup();
             }
         }

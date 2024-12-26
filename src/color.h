@@ -7,6 +7,8 @@
 #define _WHITE glm::vec3(1.0f, 1.0f, 1.0f)
 #define _BLACK glm::vec3(0.0f, 0.0f, 0.0f)
 #define _RED glm::vec3(1.0f, 0.0f, 0.0f)
+#define _DARK_RED glm::vec3(0.5f, 0.0f, 0.0f)
+#define _BRIGHT_RED glm::vec3(1.0f, 0.5f, 0.5f)
 #define _GREEN glm::vec3(0.0f, 1.0f, 0.0f)
 #define _BLUE glm::vec3(0.0f, 0.0f, 1.0f)
 #define _YELLOW glm::vec3(1.0f, 1.0f, 0.0f)

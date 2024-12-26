@@ -17,6 +17,7 @@ ModelManager::ModelManager(Scene* scene)
     AddModel("OBJ", "res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
     AddModel("OBJ", "res/Obj/bust/", "bust.obj", 0.3f);
     AddModel("OBJ", "res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
+    AddModel("OBJ", "res/Obj/gandam/", "1.obj", 0.5f);
 
     // 添加之前所有的 GLTF 模型
     AddModel("GLTF", "res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);

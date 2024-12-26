@@ -94,9 +94,10 @@ extern MaterialManager g_MaterialManager;
 
 static void BindTexture(std::vector<Vertex>& vertices, PBRMaterial* material) {
     for (Vertex& vertex : vertices) {
-        vertex.MaterialIndex = (float(g_MaterialManager.GetMaterialIndex(material->GetMaterial())));
+        vertex.MaterialIndex = float(g_MaterialManager.GetMaterialIndex(material->GetMaterial()));
     }
 }
+
 static void CalcNormal(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
     for (size_t i = 0; i < indices.size(); i += 3) {
         Vertex& v0 = vertices[indices[i]];

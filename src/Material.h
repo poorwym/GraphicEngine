@@ -87,5 +87,5 @@ const Material default_material = {
         0.0f, // BumpMutiplier
         0,    // HeightMap
         0.8f, // Roughness
-        0.2f  // Metallic
+        0.0f  // Metallic
 };

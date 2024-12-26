@@ -3,6 +3,9 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include <vector>
+#include "EngineState.h"
+
+extern EngineState g_EngineState;
 std::vector<Material> g_MaterialList;
 std::map<std::string, int> g_MaterialName;
 
@@ -10,6 +13,7 @@ void MaterialManager::AddMaterial(Material& material, std::string name)
 {
     g_MaterialList.push_back(material);
     g_MaterialName[name] = g_MaterialList.size() - 1;
+    g_EngineState.MaterialUpdate = true;
 }
 
 void MaterialManager::SetMaterialName(Material& material, std::string name)
@@ -61,5 +65,8 @@ void MaterialEditor::OnImGuiRender()
     ImGui::SliderFloat("Optical Density", &t_Material.OpticalDensity, 0.0f, 10.0f);
     ImGui::SliderFloat("Roughness", &t_Material.Roughness, 0.0f, 1.0f);
     ImGui::SliderFloat("Metallic", &t_Material.Metallic, 0.0f, 1.0f);
-    m_Material = t_Material;
+    if (!(t_Material == m_Material)) {
+        g_EngineState.MaterialUpdate = true;
+        m_Material = t_Material;
+    }
 }

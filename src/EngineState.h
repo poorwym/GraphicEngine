@@ -6,5 +6,6 @@ public:
     EngineState();
     bool isRunning;
     bool needUpdate;
+    bool MaterialUpdate;
     bool symbolVisible;
 };

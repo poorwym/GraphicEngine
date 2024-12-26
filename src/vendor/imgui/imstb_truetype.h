@@ -19,7 +19,7 @@
 //        parse files
 //        extract glyph metrics
 //        extract glyph shapes
-//        render glyphs to one-channel bitmaps with antialiasing (box filter)
+//        render glyphs to one-channel bitmaps with antialiasing (box ApplyFilter)
 //        render glyphs to one-channel SDF bitmaps (signed-distance field/function)
 //
 //   Todo:
@@ -4146,7 +4146,7 @@ static float stbtt__oversample_shift(int oversample)
    if (!oversample)
       return 0.0f;
 
-   // The prefilter is a box filter of width "oversample",
+   // The prefilter is a box ApplyFilter of width "oversample",
    // which shifts phase by (oversample - 1)/2 pixels in
    // oversampled space. We want to shift in the opposite
    // direction to counter this.
