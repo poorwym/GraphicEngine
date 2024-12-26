@@ -81,10 +81,6 @@ vec3 GetNormal(int index, vec2 texCoord){
 }
 
 float GetRoughness(int index, vec2 texCoord){
-    if(materials[index].RoughnessMapIndex != -1)
-    {
-        return GetTextureValue(index, texCoord, ROUGHNESS_MAP_INDEX);
-    }
     return materials[index].Roughness;
 }
 float GetAlpha(int index, vec2 texCoord){

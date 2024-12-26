@@ -18,7 +18,7 @@ ModelManager::ModelManager(Scene* scene)
     AddModel("OBJ", "res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
     //AddModel("OBJ", "res/Obj/bust/", "bust.obj", 0.3f);
     AddModel("OBJ", "res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
-    AddModel("OBJ", "res/Obj/gandam/", "1.obj", 0.5f);
+    AddModel("OBJ", "res/Obj/gandam/", "2.obj", 0.5f);
     AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_02.obj", 0.5f);
     AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_04.obj", 0.5f);
     AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_05.obj", 0.5f);

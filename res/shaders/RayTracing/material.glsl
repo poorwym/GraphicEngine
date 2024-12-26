@@ -52,10 +52,6 @@ vec3 GetDiffuse(int hitIndex, vec2 hitTexCoord){
 }
 
 vec3 GetSpecular(int hitIndex, vec2 hitTexCoord){
-    if(materials[triangles[hitIndex].materialIndex].AlbedoMapIndex != -1)
-    {
-        return GetTextureColor(hitIndex, hitTexCoord, ALBEDO_MAP_INDEX);
-    }
     return materials[triangles[hitIndex].materialIndex].Specular.xyz;
 }
 

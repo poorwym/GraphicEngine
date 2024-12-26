@@ -20,7 +20,6 @@ vec3 CalculateReflectDirection(vec3 direction,vec3 normal, float specExp){
     vec3 localDir = vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta);
     vec3 newDir = normalize(u * localDir.x + v * localDir.y + w * localDir.z);
     return newDir;
-
 }
 
 vec4 TraceRay(Ray ray, vec3 throughput)
@@ -57,7 +56,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 continue;
             }
             // 计算方向光
-            vec3 viewDir = -normalize(ray.dir); // 从光线起点到交点的向量
+            vec3 viewDir = -normalize(ray.dir); // 从光线交点到起点的向量
             for(int i = 0; i < numDirectionalLights; ++i)
             {
                 vec3 ambientColor = CalculateAmbientColor(ambient, directionalLights[i].lightAmbient, AO);
@@ -93,7 +92,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             }
             vec3 N = normal;
             vec3 V = ray.dir;
-            vec3 L = reflect(-ray.dir, normal);
+            vec3 L = reflect( -ray.dir, normal);
             vec3 F0 = mix(vec3(0.04), specular, metallic);
             vec3 CookBrdf = CookTorranceBRDF(N, V, L, F0, roughness);
 
@@ -119,12 +118,13 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             // 俄罗斯轮盘采样终止逻辑结束
 
             // 更新光线起点和方向
-            vec3 relectDir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
-            ray.origin = hitPoint + relectDir * 0.0001;
-            ray.dir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
+            vec3 reflectDir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
+            ray.origin = hitPoint + reflectDir * 0.0001;
+            ray.dir = reflectDir;
         }
         else
         {
+            //radiance += vec4(GetSky(ray.dir), 1.0f);
             radiance += vec4(throughput * GetSky(ray.dir), 1.0f);
             break;
         }
