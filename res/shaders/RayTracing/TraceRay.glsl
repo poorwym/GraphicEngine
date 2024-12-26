@@ -70,7 +70,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                     specularColor = CalculateSpecularColor(specular, directionalLights[i].lightSpecular, directionalLights[i].lightDir, normal, viewDir, roughness, metallic);
                 }
                 float dirLightShadow = CalculateDirectionShadow(hitPoint, directionalLights[i].lightDir, normal);
-                radiance += vec4( throughput * ( emission + ambientColor + (1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
+                radiance += vec4( throughput * ((1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
             }
             // 计算点光源
             for(int i = 0; i < numPointLights; ++i){
@@ -90,6 +90,8 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 pointSpecular = pointSpecular * attenuation;
                 radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
+
+            radiance += vec4( throughput * emission, alpha);
             vec3 N = normal;
             vec3 V = -ray.dir;
             vec3 L = reflect(ray.dir, normal);
