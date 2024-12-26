@@ -45,6 +45,7 @@
 #include "ModelManager.h"
 #include "MaterialManager.h"
 #include "LightManager.h"
+#include "EngineSymbol.h"
 
 
 extern std::vector<Material> g_MaterialList;
@@ -208,6 +209,7 @@ static void InitCamera(Camera& camera) {
     camera.SetTarget(glm::vec3(20.102, 1.561, 3.356));
 }
 void RealTimeRender(GLFWwindow* window) {
+    EngineSymbol symbol;
     // 定义视口宽高
     float width = WINDOW_WIDTH;
     float height = WINDOW_HEIGHT;
@@ -300,6 +302,10 @@ void RealTimeRender(GLFWwindow* window) {
 
         //post render
         ColorFBO t = PostRender(colorFBO, camera);
+
+        t.Bind();
+        symbol.Render(camera, width, height);
+        t.Unbind();
         RenderFBOtoScreen(t);
 
         //update
