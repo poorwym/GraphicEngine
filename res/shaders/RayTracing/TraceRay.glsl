@@ -91,8 +91,8 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
             vec3 N = normal;
-            vec3 V = ray.dir;
-            vec3 L = reflect( -ray.dir, normal);
+            vec3 V = -ray.dir;
+            vec3 L = reflect(ray.dir, normal);
             vec3 F0 = mix(vec3(0.04), specular, metallic);
             vec3 CookBrdf = CookTorranceBRDF(N, V, L, F0, roughness);
 

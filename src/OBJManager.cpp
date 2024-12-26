@@ -33,8 +33,17 @@ MeshComponent* OBJManager::Load(const std::string& filePath, const std::string f
 
     // 加载所有材质
     std::vector<PBRMaterial*> loadedMaterials;
-    for (const auto& mat : materials) {
-        PBRMaterial* pbrMat = ProcessMaterial(filePath, mat);
+    if(!materials.empty())
+    {
+        for (const auto& mat : materials) {
+            PBRMaterial* pbrMat = ProcessMaterial(filePath, mat);
+            loadedMaterials.push_back(pbrMat);
+        }
+    }
+    else {
+        Material t = default_material;
+        PBRMaterial* pbrMat = new PBRMaterial();
+        g_MaterialManager.AddMaterial(t, "default");
         loadedMaterials.push_back(pbrMat);
     }
 
