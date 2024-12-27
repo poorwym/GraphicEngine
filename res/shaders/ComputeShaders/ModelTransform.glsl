@@ -14,12 +14,12 @@ struct Vertex {
 // 定义工作组大小
 layout(local_size_x = 512) in;
 
-// Shader Storage Buffer Object (SSBO) 绑定到位置 0
-layout(std430, binding = 0) buffer InputBuffer {
+// Shader Storage Buffer Object (SSBO) 绑定到位置 1
+layout(std430, binding = 1) buffer InputBuffer {
     Vertex inputVertices[];
 };
 
-layout(std430, binding = 1) buffer OutputBuffer {
+layout(std430, binding = 2) buffer OutputBuffer {
     Vertex outputVertices[];
 };
 

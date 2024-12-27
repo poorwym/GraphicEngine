@@ -58,8 +58,8 @@ std::vector<Vertex>* MeshComponent::GetVertices(const glm::mat4& globalTransform
     m_NumVertices = m_Vertices.size();
     m_TransformedVertices.resize(m_NumVertices);
     // 创建顶点SSBO并上传数据
-    m_InputSSBO = ShaderStorageBuffer(m_Vertices.data(), sizeof(Vertex) * m_NumVertices, 0);
-    m_OutputSSBO = ShaderStorageBuffer(m_TransformedVertices.data(), sizeof(Vertex) * m_NumVertices, 1);
+    m_InputSSBO = ShaderStorageBuffer(m_Vertices.data(), sizeof(Vertex) * m_NumVertices, 1);
+    m_OutputSSBO = ShaderStorageBuffer(m_TransformedVertices.data(), sizeof(Vertex) * m_NumVertices, 2);
     // 绑定顶点SSBO
     m_InputSSBO.Bind();
     m_OutputSSBO.Bind();
