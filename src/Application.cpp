@@ -52,7 +52,7 @@
 #include <Windows.h>
 
 
-extern std::vector<Material> g_MaterialList;
+extern std::vector<PBRMaterial> g_MaterialList;
 extern TextureManager g_TextureManager;
 extern MaterialManager g_MaterialManager;
 extern LightManager g_LightManager;
@@ -208,6 +208,15 @@ static void InitModel() {
 
 }
 
+static void SetMaterialSSBO(ShaderStorageBuffer& materialSSBO) {
+    static std::vector<Material> materials;
+    materials.clear();
+    for (auto& material : g_MaterialList) {
+        materials.push_back(material.GetMaterial());
+    }
+    materialSSBO = ShaderStorageBuffer(materials.data(), sizeof(Material) * materials.size(), 0);
+}
+
 static void InitCamera(Camera& camera) {
     camera.SetPosition(glm::vec3(25.293f, 2.000f, 4.469f));
     camera.SetTarget(glm::vec3(20.102, 1.561, 3.356));
@@ -237,15 +246,17 @@ void RealTimeRender(GLFWwindow* window) {
     LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
-
-    std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
-    std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
-    std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
-    std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
-    std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
-    std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
-    std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
-    std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
+    // 对齐调试
+    {
+        std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
+        std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
+        std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
+        std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
+        std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
+        std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
+        std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
+        std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
+    }
 
     int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
@@ -260,7 +271,7 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox("BlueSky");
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    ShaderStorageBuffer materialSSBO(nullptr, 1000, 0); // 创建一个 SSBO,支持100个材质
+    ShaderStorageBuffer materialSSBO(nullptr, 0, 0); // 创建一个 SSBO,支持100个材质
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -277,8 +288,7 @@ void RealTimeRender(GLFWwindow* window) {
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-        materialSSBO = ShaderStorageBuffer(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
-        GLCall(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+        SetMaterialSSBO(materialSSBO);
         // ImGui
         modelManager.OnImGuiRender();
         g_MaterialManager.OnImGuiRender();
@@ -334,7 +344,7 @@ void RealTimeRender(GLFWwindow* window) {
             static char name[256] = "test.png";
             ImGui::InputText("File Name", name, sizeof(name));
             if (ImGui::Button("Render")) {
-
+                ImGui::OpenPopup("RayTracing");
                 RayTracing(camera, scene, sampleRate, window, skybox, filter, name);
             }
         ImGui::End();
@@ -375,7 +385,8 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      std::cout << "VAO freed!" << std::endl;
 
      std::cout << "Material SSBO Initializing..." << std::endl;
-     ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
+     ShaderStorageBuffer materialSSBO(nullptr, g_MaterialList.size() * sizeof(Material), 0);
+     SetMaterialSSBO(materialSSBO);
      int numMaterials = g_MaterialList.size();
      std::cout << "Material SSBO Created!" << std::endl;
 

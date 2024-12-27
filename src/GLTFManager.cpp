@@ -507,9 +507,9 @@ PBRMaterial* GLTFManager::ProcessMaterial(int materialIndex, const std::string& 
     if (m.pbrMetallicRoughness.roughnessFactor > 0.0) {
         m_Material.SpecularExponent = 1.0f / static_cast<float>(m.pbrMetallicRoughness.roughnessFactor); // ¼ò»¯Ê¾Àý
     }
-
-    g_MaterialManager.AddMaterial(m_Material, m.name);
-    return new PBRMaterial(m_Material);
+    PBRMaterial* pbrMaterial = new PBRMaterial(m_Material, m.name);
+    g_MaterialManager.AddMaterial(*pbrMaterial);
+    return pbrMaterial;
 }
 
 static glm::vec3 quatToEuler(const glm::vec4& q) {

@@ -15,7 +15,7 @@ OBJManager::~OBJManager()
 }
 
 extern SceneManager g_SceneManager;
-extern std::vector<Material> g_MaterialList;
+extern std::vector<PBRMaterial> g_MaterialList;
 
 MeshComponent* OBJManager::Load(const std::string& filePath, const std::string fileName, float scaleRate)
 {
@@ -43,7 +43,7 @@ MeshComponent* OBJManager::Load(const std::string& filePath, const std::string f
     else {
         Material t = default_material;
         PBRMaterial* pbrMat = new PBRMaterial();
-        g_MaterialManager.AddMaterial(t, "default");
+        g_MaterialManager.AddMaterial(*pbrMat);
         loadedMaterials.push_back(pbrMat);
     }
 
@@ -164,6 +164,7 @@ PBRMaterial* OBJManager::ProcessMaterial(const std::string& filePath, const tiny
         std::string Path = filePath + m.unknown_parameter.at("map_ao");
         m_Material.AOMapIndex = g_SceneManager.AddTexture(Path.c_str());
     }
-    g_MaterialManager.AddMaterial(m_Material, m.name);
-    return new PBRMaterial(m_Material);
+    PBRMaterial* pbrMat = new PBRMaterial(m_Material, m.name);
+    g_MaterialManager.AddMaterial(*pbrMat);
+    return pbrMat;
 }
