@@ -1682,7 +1682,7 @@ static void ShowDemoWindowWidgets(ImGuiDemoWindowData* demo_data)
                     return 0;
                 }
 
-                // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i', otherwise return 1 (filter out)
+                // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i', otherwise return 1 (ApplyFilter out)
                 static int FilterImGuiLetters(ImGuiInputTextCallbackData* data)
                 {
                     if (data->EventChar < 256 && strchr("imgui", (char)data->EventChar))
@@ -2911,7 +2911,7 @@ static void ShowDemoWindowWidgets(ImGuiDemoWindowData* demo_data)
     IMGUI_DEMO_MARKER("Widgets/Text Filter");
     if (ImGui::TreeNode("Text Filter"))
     {
-        // Helper class to easy setup a text filter.
+        // Helper class to easy setup a text ApplyFilter.
         // You may want to implement a more feature-full filtering scheme in your own application.
         HelpMarker("Not a widget per-se, but ImGuiTextFilter is a helper to perform simple filtering on text strings.");
         static ImGuiTextFilter filter;
@@ -3613,7 +3613,7 @@ static void ShowDemoWindowMultiSelect(ImGuiDemoWindowData* demo_data)
                 }
 
                 // Interpolate in *user-visible order* AND only *over opened nodes*.
-                // If you have a sequential mapping tables (e.g. generated after a filter/search pass) this would be simpler.
+                // If you have a sequential mapping tables (e.g. generated after a ApplyFilter/search pass) this would be simpler.
                 // Here the tricks are that:
                 // - we store/maintain ExampleTreeNode::IndexInParent which allows implementing a linear iterator easily, without searches, without recursion.
                 //   this could be replaced by a search in parent, aka 'int index_in_parent = curr_node->Parent->Childs.find_index(curr_node)'
@@ -6826,7 +6826,7 @@ static void ShowDemoWindowTables()
         static bool outer_size_enabled = true;
         static bool show_headers = true;
         static bool show_wrapped_text = false;
-        //static ImGuiTextFilter filter;
+        //static ImGuiTextFilter ApplyFilter;
         //ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affect column sizing
         if (ImGui::TreeNode("Options"))
         {
@@ -6938,7 +6938,7 @@ static void ShowDemoWindowTables()
 
                 ImGui::DragInt("items_count", &items_count, 0.1f, 0, 9999);
                 ImGui::Combo("items_type (first column)", &contents_type, contents_type_names, IM_ARRAYSIZE(contents_type_names));
-                //filter.Draw("filter");
+                //ApplyFilter.Draw("ApplyFilter");
                 ImGui::TreePop();
             }
 
@@ -7022,7 +7022,7 @@ static void ShowDemoWindowTables()
 #endif
                 {
                     MyItem* item = &items[row_n];
-                    //if (!filter.PassFilter(item->Name))
+                    //if (!ApplyFilter.PassFilter(item->Name))
                     //    continue;
 
                     const bool item_is_selected = selection.contains(item->ID);
@@ -8437,10 +8437,10 @@ struct ExampleAppConsole
             // - That your items are evenly spaced (same height)
             // - That you have cheap random access to your elements (you can access them given their index,
             //   without processing all the ones before)
-            // You cannot this code as-is if a filter is active because it breaks the 'cheap random-access' property.
+            // You cannot this code as-is if a ApplyFilter is active because it breaks the 'cheap random-access' property.
             // We would need random-access on the post-filtered list.
             // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices
-            // or offsets of items that passed the filtering test, recomputing this array when user changes the filter,
+            // or offsets of items that passed the filtering test, recomputing this array when user changes the ApplyFilter,
             // and appending newly elements as they are inserted. This is left as a task to the user until we can manage
             // to improve this example code!
             // If your items are of variable height:
@@ -8738,9 +8738,9 @@ struct ExampleAppLog
             if (Filter.IsActive())
             {
                 // In this example we don't use the clipper when Filter is enabled.
-                // This is because we don't have random access to the result of our filter.
+                // This is because we don't have random access to the result of our ApplyFilter.
                 // A real application processing logs with ten of thousands of entries may want to store the result of
-                // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
+                // search/ApplyFilter.. especially if the filtering function is not trivial (e.g. reg-exp).
                 for (int line_no = 0; line_no < LineOffsets.Size; line_no++)
                 {
                     const char* line_start = buf + LineOffsets[line_no];
@@ -8761,7 +8761,7 @@ struct ExampleAppLog
                 // - A) random access into your data
                 // - B) items all being the  same height,
                 // both of which we can handle since we have an array pointing to the beginning of each line of text.
-                // When using the filter (in the block of code above) we don't have random access into the data to display
+                // When using the ApplyFilter (in the block of code above) we don't have random access into the data to display
                 // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
                 // it possible (and would be recommended if you want to search through tens of thousands of entries).
                 ImGuiListClipper clipper;
@@ -8891,7 +8891,7 @@ static void ShowExampleAppLayout(bool* p_open)
 // [SECTION] Example App: Property Editor / ShowExampleAppPropertyEditor()
 //-----------------------------------------------------------------------------
 // Some of the interactions are a bit lack-luster:
-// - We would want pressing validating or leaving the filter to somehow restore focus.
+// - We would want pressing validating or leaving the ApplyFilter to somehow restore focus.
 // - We may want more advanced filtering (child nodes) and clipper support: both will need extra work.
 // - We would want to customize some keyboard interactions to easily keyboard navigate between the tree and the properties.
 //-----------------------------------------------------------------------------

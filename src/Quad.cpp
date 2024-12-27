@@ -9,6 +9,10 @@
 //#include "NVIDIA_Nsight.h"
 #include <thread>
 #include <chrono>
+#include "EngineState.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 //extern NsightGraphicsManager& g_NsightGraphicsManager;
 
@@ -153,8 +157,8 @@ void TileQuad::Render(Shader& shader, GLFWwindow* window) {
         //GLCall(glfwSwapBuffers(window));
         GLCall(glFinish());
 #endif
-        if(count % 100 == 0)
-            std::cout << "Rendered " << static_cast<float>(count)/size * 100 << " %" << std::endl;
+        if(count % 10 == 0)
+            std::cout << "Rendered " << static_cast<float>(count)/size * 10 << " %" << std::endl;
         count++;
     }
     shader.Unbind();

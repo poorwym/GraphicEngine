@@ -20,7 +20,6 @@ vec3 CalculateReflectDirection(vec3 direction,vec3 normal, float specExp){
     vec3 localDir = vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta);
     vec3 newDir = normalize(u * localDir.x + v * localDir.y + w * localDir.z);
     return newDir;
-
 }
 
 vec4 TraceRay(Ray ray, vec3 throughput)
@@ -50,19 +49,19 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             float illum = 4;
             float dissolve = GetDissolve(hitIndex);
             // 计算交点
-            vec3 hitPoint = ray.origin + ray.dir * t + normal * 0.0001;
+            vec3 hitPoint = ray.origin + ray.dir * t;
 
             if(alpha < 0.01){
                 ray.origin = hitPoint + ray.dir * 0.01;
                 continue;
             }
             // 计算方向光
-            vec3 viewDir = normalize(ray.dir);// 从光线起点到交点的向量
+            vec3 viewDir = -normalize(ray.dir); // 从光线交点到起点的向量
             for(int i = 0; i < numDirectionalLights; ++i)
             {
                 vec3 ambientColor = CalculateAmbientColor(ambient, directionalLights[i].lightAmbient, AO);
                 vec3 diffuseColor = vec3(0.0);
-                //漫反射
+                // 漫反射
                 if(illum > 0){
                     diffuseColor = CalculateDiffuseColor(diffuse, directionalLights[i].lightDiffuse, directionalLights[i].lightDir, normal);
                 }
@@ -71,7 +70,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                     specularColor = CalculateSpecularColor(specular, directionalLights[i].lightSpecular, directionalLights[i].lightDir, normal, viewDir, roughness, metallic);
                 }
                 float dirLightShadow = CalculateDirectionShadow(hitPoint, directionalLights[i].lightDir, normal);
-                radiance += vec4( throughput * ( emission + ambientColor + (1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
+                radiance += vec4( throughput * ((1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
             }
             // 计算点光源
             for(int i = 0; i < numPointLights; ++i){
@@ -83,31 +82,52 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 vec3 pointSpecular = vec3(0.0);
                 if(illum > 1) {
                     pointSpecular = CalculateSpecularColor(specular, pointLights[i].lightSpecular, lightDir, normal, viewDir, roughness, metallic);
-                }float distance = distance(hitPoint, pointLights[i].lightPos);
+                }
+                float distance = distance(hitPoint, pointLights[i].lightPos);
                 float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + pointLights[i].quadratic * (distance * distance));
                 float pointShadow = CalculatePointShadow(hitPoint, pointLights[i].lightPos, distance, normal);
                 pointDiffuse = pointDiffuse * attenuation;
                 pointSpecular = pointSpecular * attenuation;
                 radiance += vec4( (1 - pointShadow) * (pointDiffuse + pointSpecular), alpha);
             }
+
+            radiance += vec4( throughput * emission, alpha);
             vec3 N = normal;
-            vec3 V = ray.dir;
-            vec3 L = -reflect(ray.dir, normal);
+            vec3 V = -ray.dir;
+            vec3 L = reflect(ray.dir, normal);
             vec3 F0 = mix(vec3(0.04), specular, metallic);
             vec3 CookBrdf = CookTorranceBRDF(N, V, L, F0, roughness);
-            
+
             throughput *= CookBrdf;
-            //停止采样
-            if(metallic < 0.1){
+
+            // 俄罗斯轮盘采样终止逻辑开始
+            // 计算当前路径的概率
+            float maxThroughput = max(max(throughput.r, throughput.g), throughput.b);
+            // 设置一个最低的继续采样概率，以防止概率过低导致过早终止
+            float survivalProbability = clamp(maxThroughput, 0.1, 1.0);
+
+            // 生成一个随机数 [0,1)
+            float randSample = rand(hitPoint.xy * seed * float(depth));
+
+            if(randSample > survivalProbability)
+            {
+                // 路径终止
                 break;
             }
 
-            ray.origin += ray.dir * t + normal * 0.0001;
-            ray.dir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
+            // 如果继续，按生存概率缩放通量
+            throughput /= survivalProbability;
+            // 俄罗斯轮盘采样终止逻辑结束
+
+            // 更新光线起点和方向
+            vec3 reflectDir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
+            ray.origin = hitPoint + reflectDir * 0.0001;
+            ray.dir = reflectDir;
         }
         else
         {
-            radiance += vec4(GetSky(ray.dir), 1.0f);
+            //radiance += vec4(GetSky(ray.dir), 1.0f);
+            radiance += vec4(throughput * GetSky(ray.dir), 1.0f);
             break;
         }
     }

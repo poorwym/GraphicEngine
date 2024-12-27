@@ -4311,7 +4311,7 @@ static bool InputTextFilterCharacter(ImGuiContext* ctx, unsigned int* p_char, Im
         *p_char = c;
     }
 
-    // Custom callback filter
+    // Custom callback ApplyFilter
     if (flags & ImGuiInputTextFlags_CallbackCharFilter)
     {
         ImGuiContext& g = *GImGui;

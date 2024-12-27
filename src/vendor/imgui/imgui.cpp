@@ -1750,7 +1750,7 @@ void ImGuiIO::AddMouseButtonEvent(int mouse_button, bool down)
         {
             IMGUI_DEBUG_LOG_IO("[io] Super+Left Click aliased into Right Click\n");
             MouseCtrlLeftAsRightClick = true;
-            AddMouseButtonEvent(1, true); // This is just quicker to write that passing through, as we need to filter duplicate again.
+            AddMouseButtonEvent(1, true); // This is just quicker to write that passing through, as we need to ApplyFilter duplicate again.
             return;
         }
     }
@@ -1771,7 +1771,7 @@ void ImGuiIO::AddMouseWheelEvent(float wheel_x, float wheel_y)
     IM_ASSERT(Ctx != NULL);
     ImGuiContext& g = *Ctx;
 
-    // Filter duplicate (unlike most events, wheel values are relative and easy to filter)
+    // Filter duplicate (unlike most events, wheel values are relative and easy to ApplyFilter)
     if (!AppAcceptingEvents || (wheel_x == 0.0f && wheel_y == 0.0f))
         return;
 
@@ -9200,7 +9200,7 @@ static int CalcRoutingScore(ImGuiID focus_scope_id, ImGuiID owner_id, ImGuiInput
     return 0;
 }
 
-// - We need this to filter some Shortcut() routes when an item e.g. an InputText() is active
+// - We need this to ApplyFilter some Shortcut() routes when an item e.g. an InputText() is active
 //   e.g. ImGuiKey_G won't be considered a shortcut when item is active, but ImGuiMod|ImGuiKey_G can be.
 // - This is also used by UpdateInputEvents() to avoid trickling in the most common case of e.g. pressing ImGuiKey_G also emitting a G character.
 static bool IsKeyChordPotentiallyCharInput(ImGuiKeyChord key_chord)
@@ -9208,7 +9208,7 @@ static bool IsKeyChordPotentiallyCharInput(ImGuiKeyChord key_chord)
     // Mimic 'ignore_char_inputs' logic in InputText()
     ImGuiContext& g = *GImGui;
 
-    // When the right mods are pressed it cannot be a char input so we won't filter the shortcut out.
+    // When the right mods are pressed it cannot be a char input so we won't ApplyFilter the shortcut out.
     ImGuiKey mods = (ImGuiKey)(key_chord & ImGuiMod_Mask_);
     const bool ignore_char_inputs = ((mods & ImGuiMod_Ctrl) && !(mods & ImGuiMod_Alt)) || (g.IO.ConfigMacOSXBehaviors && (mods & ImGuiMod_Ctrl));
     if (ignore_char_inputs)
@@ -9265,7 +9265,7 @@ bool ImGui::SetShortcutRouting(ImGuiKeyChord key_chord, ImGuiInputFlags flags, I
         // e.g. Shortcut(ImGuiKey_G) also generates 'g' character, should not trigger when InputText() is active.
         // but  Shortcut(Ctrl+G) should generally trigger when InputText() is active.
         // TL;DR: lettered shortcut with no mods or with only Alt mod will not trigger while an item reading text input is active.
-        // (We cannot filter based on io.InputQueueCharacters[] contents because of trickling and key<>chars submission order are undefined)
+        // (We cannot ApplyFilter based on io.InputQueueCharacters[] contents because of trickling and key<>chars submission order are undefined)
         if (g.IO.WantTextInput && IsKeyChordPotentiallyCharInput(key_chord))
         {
             IMGUI_DEBUG_LOG_INPUTROUTING("SetShortcutRouting(%s, flags=%04X, owner_id=0x%08X) -> filtered as potential char input\n", GetKeyChordName(key_chord), flags, owner_id);
@@ -10191,7 +10191,7 @@ bool ImGui::TestKeyOwner(ImGuiKey key, ImGuiID owner_id)
         return (owner_data->LockThisFrame == false);
 
     // Note: SetKeyOwner() sets OwnerCurr. It is not strictly required for most mouse routing overlap (because of ActiveId/HoveredId
-    // are acting as filter before this has a chance to filter), but sane as soon as user tries to look into things.
+    // are acting as ApplyFilter before this has a chance to ApplyFilter), but sane as soon as user tries to look into things.
     // Setting OwnerCurr in SetKeyOwner() is more consistent than testing OwnerNext here: would be inconsistent with getter and other functions.
     if (owner_data->OwnerCurr != owner_id)
     {
@@ -10328,7 +10328,7 @@ bool ImGui::Shortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags, ImGuiID own
     ImGuiContext& g = *GImGui;
     //IMGUI_DEBUG_LOG("Shortcut(%s, flags=%X, owner_id=0x%08X)\n", GetKeyChordName(key_chord, g.TempBuffer.Data, g.TempBuffer.Size), flags, owner_id);
 
-    // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
+    // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and ApplyFilter with this, so IsKeyPressed() is fine with he 0/Any.
     if ((flags & ImGuiInputFlags_RouteTypeMask_) == 0)
         flags |= ImGuiInputFlags_RouteFocused;
 

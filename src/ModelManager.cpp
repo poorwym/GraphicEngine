@@ -12,11 +12,19 @@ ModelManager::ModelManager(Scene* scene)
     // 初始化模型列表和缩放因子
     // 添加之前所有的 OBJ 模型
     AddModel("OBJ", "res/Obj/OBJ_2247/", "OBJ_2247.obj", 0.3f);
-    AddModel("OBJ", "res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
+    //AddModel("OBJ", "res/Obj/OBJ_2269/", "OBJ_2269.obj", 0.3f);
+    AddModel("OBJ", "res/Obj/OBJ_2237/", "OBJ_2237.obj", 1.0f);
     AddModel("OBJ", "res/Obj/RAN Halloween Pumpkin 2024 - OBJ/", "RAN_Halloween_Pumpkin_2024_High_Poly.obj", 10.3f);
     AddModel("OBJ", "res/Obj/9130.哥特王座/", "哥特王座.obj", 0.03f);
-    AddModel("OBJ", "res/Obj/bust/", "bust.obj", 0.3f);
+    //AddModel("OBJ", "res/Obj/bust/", "bust.obj", 0.3f);
     AddModel("OBJ", "res/Obj/Fairy/", "WildFantasyFairy.obj", 50.0f);
+    AddModel("OBJ", "res/Obj/gandam/", "out.obj", 0.5f);
+    
+    AddModel("OBJ", "res/Obj/platform/", "A_round.obj", 0.1f);
+    AddModel("OBJ", "res/Obj/floor/", "02.obj", 1.0f);
+    AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_02.obj", 0.5f);
+    AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_04.obj", 0.5f);
+    AddModel("OBJ", "res/Obj/Chirsmas_obj/", "cgaxis_models_39_05.obj", 0.5f);
 
     // 添加之前所有的 GLTF 模型
     AddModel("GLTF", "res/gltf/kitchen/", "Come Celebrate Thanksgiving With Invrsion!.gltf", 1.0f);

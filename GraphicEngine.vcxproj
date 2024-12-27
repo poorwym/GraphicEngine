@@ -161,8 +161,10 @@
     <ClCompile Include="src\EntityController.cpp" />
     <ClCompile Include="src\FBXManager.cpp" />
     <ClCompile Include="src\Filter.cpp" />
+    <ClCompile Include="src\FilterManager.cpp" />
     <ClCompile Include="src\FrameBuffer.cpp" />
     <ClCompile Include="src\GLTFManager.cpp" />
+    <ClCompile Include="src\ImGuiManager.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\LightController.cpp" />
@@ -221,8 +223,10 @@
     <ClInclude Include="src\EntityController.h" />
     <ClInclude Include="src\FBXManager.h" />
     <ClInclude Include="src\Filter.h" />
+    <ClInclude Include="src\FilterManager.h" />
     <ClInclude Include="src\FrameBuffer.h" />
     <ClInclude Include="src\GLTFManager.h" />
+    <ClInclude Include="src\ImGuiManager.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Light.h" />

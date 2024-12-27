@@ -12,5 +12,5 @@ private:
     Shader* m_Shader;
 public:
     EngineSymbol();
-    void Render(Camera& camera);
+    void Render(Camera& camera, float screenWidth, float screenHeight);
 };

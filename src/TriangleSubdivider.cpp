@@ -10,7 +10,7 @@ void TriangleSubdivider::SubdivideTriangle(
     Subdivide(inputTriangle, subdivisionLevel, outputTriangles);
 }
 
-extern std::vector<Material> g_MaterialList;
+extern std::vector<PBRMaterial> g_MaterialList;
 extern SceneManager g_SceneManager;
 
 Triangle TriangleSubdivider::CreateTriangle(Vertex& v1, Vertex& v2, Vertex& v3)

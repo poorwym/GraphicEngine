@@ -1,73 +1,179 @@
-下面是我给出的Texture.h
+>>> 文件: ./src/AABB.h <<<
 #pragma once
-#include <string>
-#include "Renderer.h"
+#include "glm/glm.hpp"
 
-class Texture
-{
-private:
-	unsigned int m_RendererID;
-	std::string m_FilePath;
-	unsigned char* m_LocalBuffer;
-	int m_Width, m_Height, m_BPP;
-public:
-	Texture(const std::string& path);
-	~Texture();
-
-	void Bind(unsigned int slot = 0) const;
-	void Unbind() const;
-
-	inline int GetWidth() const { return m_Width; }
-	inline int GetHeight() const { return m_Height; }
-	inline unsigned int GetTextureID() const { return m_RendererID; }
+struct AABB {
+    glm::vec3 min;
+    float pad1;
+    glm::vec3 max;
+    float pad2;
 };
-Texture.cpp:
-#include "Texture.h"
+
+
+>>> 文件: ./src/AnimationSystem.h <<<
+#pragma once
+#include "Entity.h"
+class AnimationSystem {
+public:
+    void Update(float deltaTime);                 // （无法转换文件编码：./src/AnimationSystem.h）
+
+
+
+>>> 文件: ./src/Application.cpp <<<
+//version v1.1
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include "Renderer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "Skybox.h"
+#include "Particle.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image/stb_image.h"
 
-Texture::Texture(const std::string& path)
-		:m_RendererID(0), m_FilePath(path), m_LocalBuffer(nullptr),
-		m_Width(0), m_Height(0), m_BPP(0)
+#include "Camera.h"
+#include "Scene.h"
+#include "ResourceManager.h"
+#include "EntityController.h"
+#include "CameraController.h"
+#include "color.h"
+#include "Light.h"
+#include "LightController.h"
+#include "SceneManager.h"
+#include "Quad.h"
+#include <map>
+
+#include "opencv2/opencv.hpp"
+#include "ShaderStorageBuffer.h"
+#include "Filter.h"
+#include "BVHTree.h"
+#include "TextureManager.h"
+#include "TriangleSubdivider.h"
+#include "EngineState.h"
+#include "Octree.h"
+#include "NGFX_Injection.h"
+#include "NVIDIA_Nsight.h"
+#include "ModelManager.h"
+#include "MaterialManager.h"
+#include "LightManager.h"
+
+
+extern std::vector<Material> g_MaterialList;
+extern TextureManager g_TextureManager;
+extern MaterialManager g_MaterialManager;
+extern LightManager g_LightManager;
+
+EngineState g_EngineState;
+SceneManager g_SceneManager(nullptr);
+
+float deltaTime = 0.0f; // （无法转换文件编码：./src/Application.cpp）
+
+
+
+>>> 文件: ./src/BVHTree.cpp <<<
+#include "BVHTree.h"
+
+BVHTree::BVHTree(const std::vector<Triangle>& triangles) {
+    // （无法转换文件编码：./src/BVHTree.cpp）
+
+
+
+>>> 文件: ./src/BVHTree.h <<<
+#pragma once
+#include "Mesh.h"
+#include <algorithm>
+#include "AABB.h"
+
+
+struct BVHNode {
+    AABB bounds;
+    int left;   // （无法转换文件编码：./src/BVHTree.h）
+
+
+
+>>> 文件: ./src/Camera.cpp <<<
+#include "Camera.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <iostream>
+#define Y_LOCKED true
+
+Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
+    :m_CameraPosition(glm::vec3(0.0f, 0.0f, 3.0f)),
+    m_TargetPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
+    m_UpDirection(glm::vec3(0.0f, 1.0f, 0.0f)),
+    m_Fov(fov),m_AspectRatio(aspectRatio),
+    m_NearClip(nearClip), m_FarClip(farClip),
+    m_FocusDepth(0.9f), m_FocusRange(0.1f), m_MaxBlur(0.02f)
 {
-	stbi_set_flip_vertically_on_load(1);//把贴图翻转，好像openGL所有贴图是反的
-	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);//4代表 RGBA（4通道）
-	//std::cout << "m_LocalBuffer " << m_LocalBuffer << std::endl;
-	if (!m_LocalBuffer) {
-		std::cerr << "Failed to load texture at path: " << m_FilePath << std::endl;
-		return; // 或者抛出异常
-	}
-	GLCall(glGenTextures(1, &m_RendererID));//1个贴图
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));//2D texture
+    m_ProjectionMatrix = glm::perspective(
+        glm::radians(m_Fov),      // （无法转换文件编码：./src/Camera.cpp）
 
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));//参数日后解释
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));//参数日后解释
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
-	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_LocalBuffer));//日后解释
-	GLCall(glBindTexture(GL_TEXTURE_2D, 0));//解绑
 
-	if (m_LocalBuffer)
-		stbi_image_free(m_LocalBuffer);//释放内存
-}
+>>> 文件: ./src/Camera.h <<<
+#pragma once
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include <string>
+#include "Shader.h"
 
-Texture::~Texture()
+class Camera {
+private:
+    glm::vec3 m_CameraPosition;
+    glm::vec3 m_TargetPosition;
+    glm::vec3 m_UpDirection;
+    glm::mat4 m_ViewMatrix;
+    glm::mat4 m_ProjectionMatrix;
+    float m_AspectRatio;
+    float m_NearClip;
+    float m_FarClip;
+    float m_Fov;
+    float m_Rate;
+    float m_FocusDepth;   // （无法转换文件编码：./src/Camera.h）
+
+
+
+>>> 文件: ./src/CameraController.cpp <<<
+#include "CameraController.h"
+
+CameraController::CameraController(Camera* camera, GLFWwindow* window)
+    : camera(camera), window(window), movementSpeed(2.5f), mouseSensitivity(0.1f), zoomLevel(45.0f),
+    lastX(0.0f), lastY(0.0f), firstMouse(true),locked(true)
 {
-	GLCall(glDeleteTextures(1, &m_RendererID));
-}
+    // （无法转换文件编码：./src/CameraController.cpp）
 
-void Texture::Bind(unsigned int slot) const
-{
-	GLCall(glActiveTexture(GL_TEXTURE0 + slot));//使用槽位slot
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
-}
- 
-void Texture::Unbind() const
-{
-	GLCall(glBindTexture(GL_TEXTURE_2D, 0));//解绑
-}
 
-模仿这些接口给出TextureArray的类，要求这个类能够动态拓展新的贴图
+
+>>> 文件: ./src/CameraController.h <<<
+#pragma once
+#include "Camera.h"
+#include <GLFW/glfw3.h>
+#include <imgui/imgui.h>
+
+class CameraController {
+public:
+    CameraController(Camera* camera, GLFWwindow* window);
+    ~CameraController();
+
+    void Update(float deltaTime);               // （无法转换文件编码：./src/CameraController.h）
+
+
+
+>>> 文件: ./src/color.h <<<
+#pragma once
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+//

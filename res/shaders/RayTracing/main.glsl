@@ -93,6 +93,8 @@ void main(){
     
     // 光线追踪
     vec4 finalColor = TraceRay(ray, vec3(1.0));
+    // gamma
+    // finalColor = pow(finalColor, vec4(2.2));
     FragColor = finalColor;
 
     //gl_FragDepth = texture(depthMap, uv).r;

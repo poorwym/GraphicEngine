@@ -18,8 +18,8 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "Skybox.h"
 #include "Particle.h"
-
-
+#include "math.h"
+#include <algorithm>
 #include "Camera.h"
 #include "Scene.h"
 #include "ResourceManager.h"
@@ -45,9 +45,14 @@
 #include "ModelManager.h"
 #include "MaterialManager.h"
 #include "LightManager.h"
+#include "EngineSymbol.h"
+#include "FilterManager.h"
+#include <chrono>
+#include <thread>
+#include <Windows.h>
 
 
-extern std::vector<Material> g_MaterialList;
+extern std::vector<PBRMaterial> g_MaterialList;
 extern TextureManager g_TextureManager;
 extern MaterialManager g_MaterialManager;
 extern LightManager g_LightManager;
@@ -63,7 +68,7 @@ CameraController* cameraController = nullptr;
 ResourceManager resourceManager;
 
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& Skybox);
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& Skybox, Filter& filter, const char* name);
 void RealTimeRender(GLFWwindow* window);
 static void RenderFBOtoScreen(ColorFBO& colorFBO);
 static ColorFBO PostRender(ColorFBO& colorFBO, Camera& camera);
@@ -203,15 +208,27 @@ static void InitModel() {
 
 }
 
+static void SetMaterialSSBO(ShaderStorageBuffer& materialSSBO) {
+    static std::vector<Material> materials;
+    materials.clear();
+    for (auto& material : g_MaterialList) {
+        materials.push_back(material.GetMaterial());
+    }
+    materialSSBO = ShaderStorageBuffer(materials.data(), sizeof(Material) * materials.size(), 0);
+}
+
 static void InitCamera(Camera& camera) {
     camera.SetPosition(glm::vec3(25.293f, 2.000f, 4.469f));
     camera.SetTarget(glm::vec3(20.102, 1.561, 3.356));
 }
 void RealTimeRender(GLFWwindow* window) {
+    EngineSymbol symbol;
     // 定义视口宽高
     float width = WINDOW_WIDTH;
     float height = WINDOW_HEIGHT;
     float aspect_ratio = width / height;
+    Filter filter;
+    FilterManager filterManager(filter);
 
     // 定义视野角度（以弧度为单位）、近平面和远平面
     float fov = 30.0f; // 30度视野角
@@ -229,15 +246,17 @@ void RealTimeRender(GLFWwindow* window) {
     LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
-
-    std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
-    std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
-    std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
-    std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
-    std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
-    std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
-    std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
-    std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
+    // 对齐调试
+    {
+        std::cout << "offsetof(MyStruct, Position): " << offsetof(Vertex, Position) << std::endl;
+        std::cout << "offsetof(MyStruct, Normal): " << offsetof(Vertex, Normal) << std::endl;
+        std::cout << "offsetof(MyStruct, TexCoords): " << offsetof(Vertex, TexCoords) << std::endl;
+        std::cout << "offsetof(MyStruct, Tangent): " << offsetof(Vertex, Tangent) << std::endl;
+        std::cout << "offsetof(MyStruct, Bitangent): " << offsetof(Vertex, Bitangent) << std::endl;
+        std::cout << "offsetof(MyStruct, MaterialIndex): " << offsetof(Vertex, MaterialIndex) << std::endl;
+        std::cout << "sizeof(MyStruct):      " << sizeof(Vertex) << std::endl;
+        std::cout << "alignof(MyStruct):     " << alignof(Vertex) << std::endl;
+    }
 
     int sampleRate = 0;
     Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/Batch.glsl");
@@ -252,10 +271,9 @@ void RealTimeRender(GLFWwindow* window) {
     // 创建天空盒实例
     Skybox skybox("BlueSky");
     DepthMapFBO depthMapFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
-    
+    ShaderStorageBuffer materialSSBO(nullptr, 0, 0); // 创建一个 SSBO,支持100个材质
     while (!glfwWindowShouldClose(window))
     {
-        ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
         /* Render here */
          // 获取当前帧的时间
         float currentFrame = glfwGetTime();
@@ -263,7 +281,6 @@ void RealTimeRender(GLFWwindow* window) {
         deltaTime = currentFrame - lastFrame;
         // 更新 lastFrame 为当前帧的时间
         lastFrame = currentFrame;
-
         //ImGui 初始化
         ImGui_ImplGlfw_NewFrame();  // 例如，如果你使用 GLFW
         ImGui_ImplOpenGL3_NewFrame(); // 如果你使用 OpenGL 作为渲染后端
@@ -271,12 +288,13 @@ void RealTimeRender(GLFWwindow* window) {
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-
+        SetMaterialSSBO(materialSSBO);
         // ImGui
         modelManager.OnImGuiRender();
         g_MaterialManager.OnImGuiRender();
         g_LightManager.OnImGuiRender();
         scene->OnImGuiTree();
+
         cameraController->OnImGuiRender();
 
         cameraController->Update(deltaTime);
@@ -300,15 +318,34 @@ void RealTimeRender(GLFWwindow* window) {
 
         //post render
         ColorFBO t = PostRender(colorFBO, camera);
+
+        t.Bind();
+        symbol.Render(camera, width, height);
+        t.Unbind();
         RenderFBOtoScreen(t);
 
         //update
         scene->Update(deltaTime);
 
+        ImGui::Begin("Filter");
+            filterManager.OnImGuiRender();
+            if (ImGui::Button("Apply")) {
+                cv::Mat temp = resourceManager.SaveFBOToMat(t, width, height);
+                temp = filter.ApplyFilter(temp);
+                cv::Mat show;
+                cv::cvtColor(temp, show, cv::COLOR_BGRA2RGBA);
+                resourceManager.SaveMatToPNG(temp, "temp.png", width, height);
+                cv::imshow("temp", show);
+            }
+        ImGui::End();
+
         ImGui::Begin("RayTracing");
             ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
+            static char name[256] = "test.png";
+            ImGui::InputText("File Name", name, sizeof(name));
             if (ImGui::Button("Render")) {
-                RayTracing(camera, scene, sampleRate, window, skybox);
+                ImGui::OpenPopup("RayTracing");
+                RayTracing(camera, scene, sampleRate, window, skybox, filter, name);
             }
         ImGui::End();
 
@@ -317,7 +354,6 @@ void RealTimeRender(GLFWwindow* window) {
                 glfwSetWindowShouldClose(window, true);
             }
         ImGui::End();
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         /* Swap front and back buffers */
@@ -327,7 +363,7 @@ void RealTimeRender(GLFWwindow* window) {
     }
 }
 
-void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox) {
+void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window, Skybox& skybox, Filter& filter, const char* name) {
      Shader* mainShader = resourceManager.Load<Shader>("res/shaders/RayTracing/main.glsl");
      Shader* depthShader = resourceManager.Load<Shader>("res/shaders/RealTimeRendering/depth_shader.glsl");
 
@@ -349,7 +385,8 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
      std::cout << "VAO freed!" << std::endl;
 
      std::cout << "Material SSBO Initializing..." << std::endl;
-     ShaderStorageBuffer materialSSBO(g_MaterialList.data(), g_MaterialList.size() * sizeof(Material), 0);
+     ShaderStorageBuffer materialSSBO(nullptr, g_MaterialList.size() * sizeof(Material), 0);
+     SetMaterialSSBO(materialSSBO);
      int numMaterials = g_MaterialList.size();
      std::cout << "Material SSBO Created!" << std::endl;
 
@@ -417,7 +454,7 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          trianglesSSBO.Bind();
          BVHssbo.Bind();
          triangleIndexBVHSSBO.Bind();
-             skybox.Bind(1);
+         skybox.Bind(1);
              //render
              colorFBO.Bind();
                  GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -509,12 +546,12 @@ void RayTracing(Camera& camera, Scene* scene, int sampleRate, GLFWwindow* window
          std::cerr << "Error: matArray is empty. No images to denoise." << std::endl;
      }
 
-     cv::Mat finalPicture = denoisedPicture;
+     // 应用滤镜
+     cv::Mat finalPicture = filter.ApplyFilter(denoisedPicture);
 
      // 保存去噪后的图像
-     resourceManager.SaveMatToPNG(finalPicture, "final.png", WINDOW_WIDTH, WINDOW_HEIGHT);
-     std::cout << "Final image saved as final.png" << std::endl;
-
+     resourceManager.SaveMatToPNG(finalPicture, name, WINDOW_WIDTH, WINDOW_HEIGHT);
+     std::cout << "Final image saved as " << name << std::endl;
      scene->ResetVAO();
      std::cout << "VAO reset!" << std::endl;
 

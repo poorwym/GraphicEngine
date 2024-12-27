@@ -49,12 +49,15 @@ struct Material {
 class PBRMaterial{
 private:
     Material m_Material; 
+    std::string m_Name;
 public:
     PBRMaterial();
-    PBRMaterial(Material& m) { m_Material = m; };
+    PBRMaterial(const std::string& name);
+    PBRMaterial(Material& m, const std::string& name) { m_Material = m; m_Name = name; };
     ~PBRMaterial();
 
     void SetMaterial(const Material& material);
+    inline const std::string& GetName() const { return m_Name; };
     inline float GetAlbedoMapSlot() const { return m_Material.AlbedoMapIndex; };
     inline float GetNormalMapSlot()  const { return m_Material.NormalMapIndex; };
     inline float GetMetallicMapSlot()   const { return m_Material.MetallicMapIndex;};
@@ -87,5 +90,5 @@ const Material default_material = {
         0.0f, // BumpMutiplier
         0,    // HeightMap
         0.8f, // Roughness
-        0.2f  // Metallic
+        0.0f  // Metallic
 };

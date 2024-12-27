@@ -1,36 +1,4 @@
 #version 450 core
-
-struct Material {
-    float AlbedoMapIndex; //0
-    float NormalMapIndex; //1
-    float MetallicMapIndex; //2
-    float RoughnessMapIndex; //3
-    float AOMapIndex; //4
-    float EmissionMapIndex; //5
-    float AlphaMapIndex; //6
-    float HeightMapIndex; //7
-    //Ka
-    vec4 Ambient;
-    //Kd
-    vec4 Diffuse;
-    //Ks
-    vec4 Specular;
-    //Ke
-    vec4 Emission;
-    //d
-    float Dissolve;
-    //illum
-    float Illum;
-    //Ni
-    float OpticalDensity;
-    //Ns
-    float SpecularExponent;
-    float BumpMutiplier;
-    float padding2;
-    float padding3;
-    float padding4;
-};
-
 struct Vertex {
     vec4 Position;
     vec4 Normal;
@@ -46,12 +14,12 @@ struct Vertex {
 // 定义工作组大小
 layout(local_size_x = 512) in;
 
-// Shader Storage Buffer Object (SSBO) 绑定到位置 0
-layout(std430, binding = 0) buffer InputBuffer {
+// Shader Storage Buffer Object (SSBO) 绑定到位置 1
+layout(std430, binding = 1) buffer InputBuffer {
     Vertex inputVertices[];
 };
 
-layout(std430, binding = 1) buffer OutputBuffer {
+layout(std430, binding = 2) buffer OutputBuffer {
     Vertex outputVertices[];
 };
 
@@ -72,8 +40,9 @@ void main(){
         outputVertices[i].Normal = vec4(normalize(normalMatrix * inputVertices[i].Normal.xyz), 0.0);
         outputVertices[i].Tangent = vec4(normalize(normalMatrix * inputVertices[i].Tangent.xyz), 0.0);
         outputVertices[i].Bitangent = vec4(normalize(normalMatrix * inputVertices[i].Bitangent.xyz), 0.0);
-
+        // 纹理坐标变换
         outputVertices[i].TexCoords =  inputVertices[i].TexCoords;
-        outputVertices[i].MaterialIndex =   inputVertices[i].MaterialIndex;
+        // 材质索引变换
+        outputVertices[i].MaterialIndex = inputVertices[i].MaterialIndex;
     }
 }
