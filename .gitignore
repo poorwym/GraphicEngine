@@ -365,3 +365,6 @@ Dependencies/
 res/Obj
 res/skybox
 res/Textures
+
+._*
+GraphicEngine/

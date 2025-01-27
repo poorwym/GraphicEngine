@@ -155,10 +155,10 @@ void TileQuad::Render(Shader& shader, GLFWwindow* window) {
 #ifdef _DEBUG
         //g_NsightGraphicsManager.CaptureFrame();
         //GLCall(glfwSwapBuffers(window));
-        GLCall(glFinish());
 #endif
+        GLCall(glFinish());
         if(count % 10 == 0)
-            std::cout << "Rendered " << static_cast<float>(count)/size * 10 << " %" << std::endl;
+            std::cout << "Rendered " << static_cast<float>(count)/size * 100 << " %" << std::endl;
         count++;
     }
     shader.Unbind();
