@@ -239,10 +239,10 @@ void RealTimeRender(GLFWwindow* window) {
     InitCamera(camera);
     cameraController = new CameraController(&camera, window);
 
-    Scene* scene = new Scene(10);
+    Scene* scene = new Scene(50);
     ModelManager modelManager(scene);
     g_SceneManager = SceneManager(scene);
-    g_TextureArray = new TextureArray(1024, 1024, 64);
+    g_TextureArray = new TextureArray(1024, 1024, 2048);
     LoadModel(g_SceneManager);
     InitModel();
     scene->ResetVAO();
@@ -340,7 +340,7 @@ void RealTimeRender(GLFWwindow* window) {
         ImGui::End();
 
         ImGui::Begin("RayTracing");
-            ImGui::SliderInt("Sample Rate", &sampleRate, 0, 50);
+            ImGui::SliderInt("Sample Rate", &sampleRate, 0, 500);
             static char name[256] = "test.png";
             ImGui::InputText("File Name", name, sizeof(name));
             if (ImGui::Button("Render")) {
