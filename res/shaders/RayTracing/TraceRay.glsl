@@ -1,14 +1,14 @@
-vec3 GetSky(vec3 dir){
+ï»¿vec3 GetSky(vec3 dir){
     return texture(skybox, normalize(dir)).rgb;
 }
 
 vec3 CalculateReflectDirection(vec3 direction,vec3 normal, float specExp){
-    vec3 R = reflect(direction, normal); // VÎªÈëÉä·½Ïò, NÎª·¨Ïß
-    float xi1 = rand(normal.xy * seed); // [0,1]Çø¼äËæ»úÊı
-    float xi2 = rand(direction.xy * seed); // [0,1]Çø¼äËæ»úÊı
+    vec3 R = reflect(direction, normal); // Vä¸ºå…¥å°„æ–¹å‘, Nä¸ºæ³•çº¿
+    float xi1 = rand(normal.xy * seed); // [0,1]åŒºé—´éšæœºæ•°
+    float xi2 = rand(direction.xy * seed); // [0,1]åŒºé—´éšæœºæ•°
 
     float phi = 2.0 * PI * xi1;
-    // ½«xi2Í¨¹ı n+1 ´Î·½¿ª¸ùÀ´¿ØÖÆ·Ö²¼
+    // å°†xi2é€šè¿‡ n+1 æ¬¡æ–¹å¼€æ ¹æ¥æ§åˆ¶åˆ†å¸ƒ
     float cosTheta = pow(xi2, 1.0 / (specExp + 1.0));
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
@@ -48,20 +48,20 @@ vec4 TraceRay(Ray ray, vec3 throughput)
             //float illum = GetIllum(hitIndex);
             float illum = 4;
             float dissolve = GetDissolve(hitIndex);
-            // ¼ÆËã½»µã
+            // è®¡ç®—äº¤ç‚¹
             vec3 hitPoint = ray.origin + ray.dir * t;
 
             if(alpha < 0.01){
                 ray.origin = hitPoint + ray.dir * 0.01;
                 continue;
             }
-            // ¼ÆËã·½Ïò¹â
-            vec3 viewDir = -normalize(ray.dir); // ´Ó¹âÏß½»µãµ½ÆğµãµÄÏòÁ¿
+            // è®¡ç®—æ–¹å‘å…‰
+            vec3 viewDir = -normalize(ray.dir); // ä»å…‰çº¿äº¤ç‚¹åˆ°èµ·ç‚¹çš„å‘é‡
             for(int i = 0; i < numDirectionalLights; ++i)
             {
                 vec3 ambientColor = CalculateAmbientColor(ambient, directionalLights[i].lightAmbient, AO);
                 vec3 diffuseColor = vec3(0.0);
-                // Âş·´Éä
+                // æ¼«åå°„
                 if(illum > 0){
                     diffuseColor = CalculateDiffuseColor(diffuse, directionalLights[i].lightDiffuse, directionalLights[i].lightDir, normal);
                 }
@@ -72,7 +72,7 @@ vec4 TraceRay(Ray ray, vec3 throughput)
                 float dirLightShadow = CalculateDirectionShadow(hitPoint, directionalLights[i].lightDir, normal);
                 radiance += vec4( throughput * ((1 - dirLightShadow) * (diffuseColor + specularColor) ) , alpha);
             }
-            // ¼ÆËãµã¹âÔ´
+            // è®¡ç®—ç‚¹å…‰æº
             for(int i = 0; i < numPointLights; ++i){
                 vec3 lightDir = normalize(pointLights[i].lightPos - hitPoint);
                 vec3 pointDiffuse = vec3(0.0);
@@ -100,26 +100,26 @@ vec4 TraceRay(Ray ray, vec3 throughput)
 
             throughput *= CookBrdf;
 
-            // ¶íÂŞË¹ÂÖÅÌ²ÉÑùÖÕÖ¹Âß¼­¿ªÊ¼
-            // ¼ÆËãµ±Ç°Â·¾¶µÄ¸ÅÂÊ
+            // ä¿„ç½—æ–¯è½®ç›˜é‡‡æ ·ç»ˆæ­¢é€»è¾‘å¼€å§‹
+            // è®¡ç®—å½“å‰è·¯å¾„çš„æ¦‚ç‡
             float maxThroughput = max(max(throughput.r, throughput.g), throughput.b);
-            // ÉèÖÃÒ»¸ö×îµÍµÄ¼ÌĞø²ÉÑù¸ÅÂÊ£¬ÒÔ·ÀÖ¹¸ÅÂÊ¹ıµÍµ¼ÖÂ¹ıÔçÖÕÖ¹
+            // è®¾ç½®ä¸€ä¸ªæœ€ä½çš„ç»§ç»­é‡‡æ ·æ¦‚ç‡ï¼Œä»¥é˜²æ­¢æ¦‚ç‡è¿‡ä½å¯¼è‡´è¿‡æ—©ç»ˆæ­¢
             float survivalProbability = clamp(maxThroughput, 0.1, 1.0);
 
-            // Éú³ÉÒ»¸öËæ»úÊı [0,1)
+            // ç”Ÿæˆä¸€ä¸ªéšæœºæ•° [0,1)
             float randSample = rand(hitPoint.xy * seed * float(depth));
 
             if(randSample > survivalProbability)
             {
-                // Â·¾¶ÖÕÖ¹
+                // è·¯å¾„ç»ˆæ­¢
                 break;
             }
 
-            // Èç¹û¼ÌĞø£¬°´Éú´æ¸ÅÂÊËõ·ÅÍ¨Á¿
+            // å¦‚æœç»§ç»­ï¼ŒæŒ‰ç”Ÿå­˜æ¦‚ç‡ç¼©æ”¾é€šé‡
             throughput /= survivalProbability;
-            // ¶íÂŞË¹ÂÖÅÌ²ÉÑùÖÕÖ¹Âß¼­½áÊø
+            // ä¿„ç½—æ–¯è½®ç›˜é‡‡æ ·ç»ˆæ­¢é€»è¾‘ç»“æŸ
 
-            // ¸üĞÂ¹âÏßÆğµãºÍ·½Ïò
+            // æ›´æ–°å…‰çº¿èµ·ç‚¹å’Œæ–¹å‘
             vec3 reflectDir = CalculateReflectDirection(ray.dir, normal, GetSpecularExponent(hitIndex));
             ray.origin = hitPoint + reflectDir * 0.0001;
             ray.dir = reflectDir;
